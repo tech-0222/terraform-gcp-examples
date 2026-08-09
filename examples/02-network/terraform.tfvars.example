@@ -1,0 +1,7 @@
+project_id = "your-project-id"
+region     = "asia-northeast1"
+
+# Optional overrides:
+# network_name = "tf-example-vpc"
+# subnet_name  = "tf-example-subnet"
+# subnet_cidr  = "10.10.0.0/24"
