@@ -24,3 +24,6 @@ terraform.rc
 .DS_Store
 .idea/
 .vscode/
+
+# Local handoff notes (machine/session specific; do not commit)
+HANDOFF.md
