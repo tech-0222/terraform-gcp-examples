@@ -1,0 +1,11 @@
+project_id = "your-project-id"
+region     = "asia-northeast1"
+
+# Optional overrides:
+# services = [
+#   "compute.googleapis.com",
+#   "iam.googleapis.com",
+#   "storage.googleapis.com",
+# ]
+# disable_on_destroy         = false
+# disable_dependent_services = false
