@@ -20,19 +20,21 @@ Terraformを使用してGoogle Cloud（GCP）の各種リソースを作成・�
 terraform-gcp-examples/
 ├── README.md
 ├── .gitignore
+├── .terraform-docs.yml           # terraform-docs 設定
+├── .terraform-graph.conf         # terraform graph 設定
+├── scripts/
+│   ├── generate-terraform-docs.sh
+│   ├── generate-terraform-graphs.sh
+│   └── lib/
 ├── docs/
 │   └── CONVENTIONS.md
-├── examples/                 # 基本（単体・最小）
+├── examples/                     # 基本（単体・最小）
 │   ├── README.md
-│   ├── 00-provider-check/
-│   ├── 01-project-service/
-│   ├── 02-network/
-│   ├── 03-cloud-storage/
-│   ├── 04-compute-engine/
-│   ├── 05-iam/
-│   ├── 06-cloud-run/
-│   └── 07-gke/
-└── scenarios/                # 応用（複数サービス連携）
+│   └── <sample>/
+│       ├── PARAMETER.md          # terraform-docs 自動生成
+│       ├── DEPENDENCY-GRAPH.svg  # terraform graph 自動生成
+│       └── ...
+└── scenarios/                    # 応用（複数サービス連携）
     └── README.md
 ```
 
@@ -81,6 +83,30 @@ terraform plan
 ```
 
 詳細は `examples/00-provider-check/README.md` を参照してください。
+
+## PARAMETER.md / DEPENDENCY-GRAPH.svg（ローカル生成）
+
+各 root module（`examples/*` / 将来の `scenarios/*`）に次を生成します。**GitHub Actions は使いません。** ローカルでスクリプトを実行してください。
+
+| 成果物 | 内容 | 生成コマンド |
+|---|---|---|
+| `PARAMETER.md` | requirements / providers / resources / inputs / outputs | `./scripts/generate-terraform-docs.sh --all` |
+| `DEPENDENCY-GRAPH.svg` | `terraform graph` の依存関係図 | `./scripts/generate-terraform-graphs.sh --all` |
+
+前提ツール:
+
+- [terraform-docs](https://terraform-docs.io/)（検証環境: v0.24.0）
+- Terraform
+- Graphviz（`dot` コマンド）
+
+個別実行例:
+
+```bash
+./scripts/generate-terraform-docs.sh examples/04-compute-engine
+./scripts/generate-terraform-graphs.sh examples/04-compute-engine
+```
+
+これらのファイルは自動生成です。手動編集しないでください。`.tf` を変更したら再生成します。
 
 ## 注意
 

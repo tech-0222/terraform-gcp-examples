@@ -97,3 +97,21 @@ Terraform Resource名は、サンプル内で役割が分かる簡潔な名前�
 - 注意点 / 費用
 
 `scenarios/` では特に、関係するサービス一覧とコスト・destroy 手順を明確にする。
+
+## 7. PARAMETER.md / DEPENDENCY-GRAPH.svg
+
+各 root module に次を置く（自動生成。手動編集禁止）。
+
+| ファイル | 生成元 |
+|---|---|
+| `PARAMETER.md` | `terraform-docs`（設定: `.terraform-docs.yml`） |
+| `DEPENDENCY-GRAPH.svg` | `terraform graph` + `dot`（設定: `.terraform-graph.conf`） |
+
+本リポジトリでは **GitHub Actions を使わない**。ローカルで次を実行する。
+
+```bash
+./scripts/generate-terraform-docs.sh --all
+./scripts/generate-terraform-graphs.sh --all
+```
+
+`.tf` 変更後は該当 module、または `--all` で再生成してからコミットする。
