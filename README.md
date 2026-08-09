@@ -41,7 +41,7 @@ terraform-gcp-examples/
 | 01 | `01-project-service` | Service APIの有効化 | 実装済み |
 | 02 | `02-network` | VPC / Subnet / Firewall | 実装済み |
 | 03 | `03-cloud-storage` | Cloud Storage | 実装済み |
-| 04 | `04-compute-engine` | Compute Engine | 準備中 |
+| 04 | `04-compute-engine` | Compute Engine | 実装済み |
 | 05 | `05-iam` | Service Account / IAM | 準備中 |
 | 06 | `06-cloud-run` | Cloud Run | 準備中 |
 | 07 | `07-gke` | Google Kubernetes Engine | 準備中 |

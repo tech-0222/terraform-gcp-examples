@@ -1,0 +1,7 @@
+project_id = "your-project-id"
+region     = "asia-northeast1"
+zone       = "asia-northeast1-a"
+
+# Optional overrides:
+# instance_name = "tf-example-gce-01"
+# machine_type  = "e2-medium"
