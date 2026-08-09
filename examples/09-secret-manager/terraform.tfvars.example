@@ -1,0 +1,8 @@
+project_id = "your-project-id"
+region     = "asia-northeast1"
+
+# Use a non-production test value only.
+secret_data = "replace-with-test-secret"
+
+# Increment when changing secret_data.
+secret_data_version = 1
