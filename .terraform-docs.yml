@@ -1,0 +1,39 @@
+# terraform-docs 共通設定（examples/* / scenarios/* の PARAMETER.md 生成用）
+# https://terraform-docs.io/user-guide/configuration/
+# GitHub Actions は使わない。ローカルで scripts/generate-terraform-docs.sh を実行する。
+
+formatter: markdown table
+
+sections:
+  show:
+    - requirements
+    - providers
+    - modules
+    - resources
+    - inputs
+    - outputs
+
+output:
+  file: PARAMETER.md
+  mode: replace
+  template: |-
+    # Parameters（自動生成）
+
+    このファイルは [terraform-docs](https://github.com/terraform-docs/terraform-docs) により自動生成されます。手動で編集しないでください。
+
+    {{ .Content }}
+
+sort:
+  enabled: true
+  by: required
+
+settings:
+  anchor: false
+  default: true
+  description: true
+  escape: true
+  hide-empty: true
+  html: true
+  required: true
+  sensitive: true
+  type: true

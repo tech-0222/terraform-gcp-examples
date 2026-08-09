@@ -13,3 +13,17 @@
 3. 番号順に各リソースの最小サンプルを確認する
 
 応用・複合の試験は `scenarios/` 側に追加していきます。
+
+## 自動生成ドキュメント
+
+各サンプルディレクトリには次が含まれます（手動編集しない）。
+
+- `PARAMETER.md` … terraform-docs
+- `DEPENDENCY-GRAPH.svg` … terraform graph
+
+再生成:
+
+```bash
+./scripts/generate-terraform-docs.sh --all
+./scripts/generate-terraform-graphs.sh --all
+```
