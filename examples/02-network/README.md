@@ -41,7 +41,7 @@
 ├── versions.tf
 ├── provider.tf
 ├── variables.tf
-├── main.tf
+├── network.tf   # VPC / Subnet / Firewall
 ├── outputs.tf
 └── terraform.tfvars.example
 ```
