@@ -42,7 +42,8 @@
 ├── versions.tf
 ├── provider.tf
 ├── variables.tf
-├── main.tf
+├── network.tf   # VPC / Subnet + secondary ranges（準備）
+├── main.tf      # GKE Cluster / Node Pool（本体）
 ├── outputs.tf
 └── terraform.tfvars.example
 ```
