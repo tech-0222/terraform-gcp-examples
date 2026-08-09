@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-# examples / scenarios 配下の root module ごとに DEPENDENCY-GRAPH.svg を生成する
+# Basic-Examples / Advanced-Examples 配下の root module ごとに DEPENDENCY-GRAPH.svg を生成する
 # GitHub Actions は使わない（ローカル実行専用）
 #
 # 使い方:
 #   ./scripts/generate-terraform-graphs.sh --all
 #   ./scripts/generate-terraform-graphs.sh --changed-from <git-ref>
-#   ./scripts/generate-terraform-graphs.sh examples/01-project-service
+#   ./scripts/generate-terraform-graphs.sh Basic-Examples/01-project-service
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -26,7 +26,7 @@ Usage:
 Examples:
   ./scripts/generate-terraform-graphs.sh --all
   ./scripts/generate-terraform-graphs.sh --changed-from origin/main
-  ./scripts/generate-terraform-graphs.sh examples/04-compute-engine
+  ./scripts/generate-terraform-graphs.sh Basic-Examples/04-compute-engine
 EOF
 }
 
@@ -59,7 +59,7 @@ normalize_module_dir() {
   module_dir="$(cd "${module_dir}" && pwd)"
 
   if ! is_root_module_dir "${module_dir}"; then
-    echo "root module ではありません（examples|scenarios 直下 + versions.tf が必要）: ${input}" >&2
+    echo "root module ではありません（Basic-Examples|Advanced-Examples 直下 + versions.tf が必要）: ${input}" >&2
     return 1
   fi
 

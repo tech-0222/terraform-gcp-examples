@@ -1,10 +1,10 @@
-# Examples
+# Basic-Examples
 
 基本サンプル（単体・最小構成）を置く場所です。
 
 各ディレクトリは Terraform の独立した Root Module です。
 
-複数サービス連携などの応用コードは `../scenarios/` を参照してください。
+複数サービス連携などの応用コードは `../Advanced-Examples/` を参照してください。
 
 ## 進め方
 
@@ -12,7 +12,7 @@
 2. 続けて `01-project-service` で API 有効化を試す
 3. 番号順に各リソースの最小サンプルを確認する
 
-応用・複合の試験は `scenarios/` 側に追加していきます。
+応用・複合の試験は `Advanced-Examples/` 側に追加していきます。
 
 ## 自動生成ドキュメント
 

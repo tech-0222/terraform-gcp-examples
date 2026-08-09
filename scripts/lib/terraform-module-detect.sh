@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
-# examples / scenarios 配下の root module 検知ライブラリ
+# Basic-Examples / Advanced-Examples 配下の root module 検知ライブラリ
 # （terraform-docs / terraform-graph で共有）
 set -euo pipefail
 
 terraform_module_detect_init() {
   REPO_ROOT="$(git rev-parse --show-toplevel)"
-  EXAMPLES_ROOT="${REPO_ROOT}/examples"
-  SCENARIOS_ROOT="${REPO_ROOT}/scenarios"
+  BASIC_ROOT="${REPO_ROOT}/Basic-Examples"
+  ADVANCED_ROOT="${REPO_ROOT}/Advanced-Examples"
 }
 
 _normalize_path() {
@@ -17,21 +17,21 @@ _normalize_path() {
   printf '%s\n' "${path}"
 }
 
-# Root module: examples/<name> or scenarios/<name> with versions.tf
+# Root module: Basic-Examples/<name> or Advanced-Examples/<name> with versions.tf
 # (main.tf が無いサンプルもあるため versions.tf を判定に使う)
 is_root_module_dir() {
   local module_dir="$1"
   [[ -f "${module_dir}/versions.tf" ]] || return 1
-  [[ "${module_dir}" == "${EXAMPLES_ROOT}"/* || "${module_dir}" == "${SCENARIOS_ROOT}"/* ]] || return 1
-  # examples / scenarios の直下1階層のみ（ネストした modules は対象外）
+  [[ "${module_dir}" == "${BASIC_ROOT}"/* || "${module_dir}" == "${ADVANCED_ROOT}"/* ]] || return 1
+  # 直下1階層のみ（ネストした modules は対象外）
   local parent
   parent="$(dirname "${module_dir}")"
-  [[ "${parent}" == "${EXAMPLES_ROOT}" || "${parent}" == "${SCENARIOS_ROOT}" ]]
+  [[ "${parent}" == "${BASIC_ROOT}" || "${parent}" == "${ADVANCED_ROOT}" ]]
 }
 
 list_all_root_module_dirs() {
   local root
-  for root in "${EXAMPLES_ROOT}" "${SCENARIOS_ROOT}"; do
+  for root in "${BASIC_ROOT}" "${ADVANCED_ROOT}"; do
     [[ -d "${root}" ]] || continue
     find "${root}" -mindepth 2 -maxdepth 2 -name 'versions.tf' -not -path '*/.terraform/*' | sort | while IFS= read -r versions_tf; do
       dirname "${versions_tf}"
@@ -43,11 +43,11 @@ resolve_root_module_dir_from_path() {
   local path
   path="$(_normalize_path "$1")"
 
-  if [[ "${path}" != examples/* && "${path}" != scenarios/* ]]; then
+  if [[ "${path}" != Basic-Examples/* && "${path}" != Advanced-Examples/* ]]; then
     return 0
   fi
 
-  # examples/00-provider-check/foo.tf -> examples/00-provider-check
+  # Basic-Examples/00-provider-check/foo.tf -> Basic-Examples/00-provider-check
   local rel="${path}"
   local top="${rel%%/*}"
   local name
@@ -71,7 +71,7 @@ list_changed_root_module_dirs_from_ref() {
   while IFS= read -r changed_path; do
     [[ -n "${changed_path}" ]] || continue
     resolve_root_module_dir_from_path "${changed_path}"
-  done < <(git diff --name-only "${base_ref}" HEAD -- 'examples/**/*.tf' 'scenarios/**/*.tf' | sort -u) | sort -u
+  done < <(git diff --name-only "${base_ref}" HEAD -- 'Basic-Examples/**/*.tf' 'Advanced-Examples/**/*.tf' | sort -u) | sort -u
 }
 
 requires_all_docs_targets_from_ref() {

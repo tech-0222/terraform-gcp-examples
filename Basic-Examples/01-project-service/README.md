@@ -53,7 +53,7 @@
 ## 設定方法
 
 ```bash
-cd examples/01-project-service
+cd Basic-Examples/01-project-service
 
 cp terraform.tfvars.example terraform.tfvars
 ```
