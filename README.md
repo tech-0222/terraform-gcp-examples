@@ -1,12 +1,13 @@
 # terraform-gcp-examples
 
-Terraformを使用してGoogle Cloud（GCP）の各種リソースを作成・検証するためのサンプルコード集です。
+Terraformを使用してGoogle Cloud（GCP）の各種リソースを作成・検証するサンプルコード集です。
 
 現在はPrivateリポジトリで検証を進め、コードと手順が安定した段階でPublic化することを想定しています。
 
 ## 方針
 
-- 各サンプルは可能な限り独立して実行できる構成にする
+- **基本**は `examples/`、**応用・複合**は `scenarios/` に分ける
+- 各サンプル / シナリオは可能な限り独立した Root Module にする
 - `terraform init` → `terraform validate` → `terraform plan` → `terraform apply` → 動作確認 → `terraform destroy` まで検証する
 - 認証情報・Project固有情報・SecretはGitにコミットしない
 - 実値は `terraform.tfvars`、公開用サンプルは `terraform.tfvars.example` を使用する
@@ -21,19 +22,21 @@ terraform-gcp-examples/
 ├── .gitignore
 ├── docs/
 │   └── CONVENTIONS.md
-└── examples/
-    ├── README.md
-    ├── 00-provider-check/
-    ├── 01-project-service/
-    ├── 02-network/
-    ├── 03-cloud-storage/
-    ├── 04-compute-engine/
-    ├── 05-iam/
-    ├── 06-cloud-run/
-    └── 07-gke/
+├── examples/                 # 基本（単体・最小）
+│   ├── README.md
+│   ├── 00-provider-check/
+│   ├── 01-project-service/
+│   ├── 02-network/
+│   ├── 03-cloud-storage/
+│   ├── 04-compute-engine/
+│   ├── 05-iam/
+│   ├── 06-cloud-run/
+│   └── 07-gke/
+└── scenarios/                # 応用（複数サービス連携）
+    └── README.md
 ```
 
-## サンプル一覧
+## examples（基本）一覧
 
 | No. | ディレクトリ | 内容 | 状態 |
 |---|---|---|---|
@@ -45,6 +48,10 @@ terraform-gcp-examples/
 | 05 | `05-iam` | Service Account / IAM | 実装済み |
 | 06 | `06-cloud-run` | Cloud Run | 実装済み |
 | 07 | `07-gke` | Google Kubernetes Engine | 実装済み |
+
+## scenarios（応用）
+
+複数サービスが絡む試験コードは `scenarios/` に追加します。現状はスケルトンのみです。詳細は `scenarios/README.md` を参照してください。
 
 ## 前提
 
