@@ -38,7 +38,7 @@ terraform-gcp-examples/
 | No. | ディレクトリ | 内容 | 状態 |
 |---|---|---|---|
 | 00 | `00-provider-check` | Google Provider・ADC・Project参照確認 | 実装済み |
-| 01 | `01-project-service` | Service APIの有効化 | 準備中 |
+| 01 | `01-project-service` | Service APIの有効化 | 実装済み |
 | 02 | `02-network` | VPC / Subnet / Firewall | 準備中 |
 | 03 | `03-cloud-storage` | Cloud Storage | 準備中 |
 | 04 | `04-compute-engine` | Compute Engine | 準備中 |
