@@ -40,7 +40,7 @@ terraform-gcp-examples/
 | 00 | `00-provider-check` | Google Provider・ADC・Project参照確認 | 実装済み |
 | 01 | `01-project-service` | Service APIの有効化 | 実装済み |
 | 02 | `02-network` | VPC / Subnet / Firewall | 実装済み |
-| 03 | `03-cloud-storage` | Cloud Storage | 準備中 |
+| 03 | `03-cloud-storage` | Cloud Storage | 実装済み |
 | 04 | `04-compute-engine` | Compute Engine | 準備中 |
 | 05 | `05-iam` | Service Account / IAM | 準備中 |
 | 06 | `06-cloud-run` | Cloud Run | 準備中 |
