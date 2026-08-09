@@ -20,6 +20,14 @@ terraform.tfvars.example
 
 必要に応じてファイルを追加します。
 
+### ファイル分割ルール
+
+- **本体リソース**（例: GCE VM、GKE Cluster）は `main.tf`
+- **本体の前提となるネットワーク**（VPC / Subnet / Firewall など）は `network.tf` に分離する
+  - 対象例: `04-compute-engine`, `07-gke`
+- サンプル自体がネットワーク検証（`02-network`）の場合は、ネットワーク定義を `network.tf` に置く
+- 分割は役割が分かる範囲にとどめ、過度に細かくしない
+
 ## 2. 検証フロー
 
 原則として以下を確認します。

@@ -39,7 +39,8 @@ Compute Engine VM（Spot）と、起動に必要な最小ネットワークを T
 ├── versions.tf
 ├── provider.tf
 ├── variables.tf
-├── main.tf
+├── network.tf   # VPC / Subnet / Firewall（準備）
+├── main.tf      # Compute Engine VM（本体）
 ├── outputs.tf
 └── terraform.tfvars.example
 ```

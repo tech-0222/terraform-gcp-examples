@@ -1,4 +1,3 @@
-# Ensure Compute API is enabled for this independent sample.
 # Ref: https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/google_project_service
 resource "google_project_service" "compute" {
   project = var.project_id
@@ -18,11 +17,10 @@ resource "google_compute_network" "vpc" {
 
 # Ref: https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_subnetwork
 resource "google_compute_subnetwork" "primary" {
-  name          = var.subnet_name
-  ip_cidr_range = var.subnet_cidr
-  region        = var.region
-  network       = google_compute_network.vpc.id
-
+  name                     = var.subnet_name
+  ip_cidr_range            = var.subnet_cidr
+  region                   = var.region
+  network                  = google_compute_network.vpc.id
   private_ip_google_access = true
 }
 
