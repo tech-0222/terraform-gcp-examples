@@ -44,7 +44,7 @@ terraform-gcp-examples/
 | 04 | `04-compute-engine` | Compute Engine | 実装済み |
 | 05 | `05-iam` | Service Account / IAM | 実装済み |
 | 06 | `06-cloud-run` | Cloud Run | 実装済み |
-| 07 | `07-gke` | Google Kubernetes Engine | 準備中 |
+| 07 | `07-gke` | Google Kubernetes Engine | 実装済み |
 
 ## 前提
 
