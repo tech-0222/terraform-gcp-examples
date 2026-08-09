@@ -1,0 +1,7 @@
+project_id = "your-project-id"
+region     = "asia-northeast1"
+
+# Optional overrides:
+# service_account_id           = "tf-example-sa"
+# service_account_display_name = "TF Example Service Account"
+# project_iam_role             = "roles/storage.objectViewer"
