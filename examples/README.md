@@ -1,7 +1,15 @@
 # Examples
 
-各ディレクトリはTerraformの独立したサンプルです。
+基本サンプル（単体・最小構成）を置く場所です。
 
-最初は `00-provider-check` を実行し、Terraformから対象のGoogle Cloud Projectを参照できることを確認してください。
+各ディレクトリは Terraform の独立した Root Module です。
 
-接続確認後は `01-project-service` で API 有効化を試せます。その後、番号順にリソース作成のサンプルを追加していきます。
+複数サービス連携などの応用コードは `../scenarios/` を参照してください。
+
+## 進め方
+
+1. 最初は `00-provider-check` を実行し、Terraformから対象の Google Cloud Project を参照できることを確認する
+2. 続けて `01-project-service` で API 有効化を試す
+3. 番号順に各リソースの最小サンプルを確認する
+
+応用・複合の試験は `scenarios/` 側に追加していきます。
