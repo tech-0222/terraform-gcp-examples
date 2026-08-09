@@ -50,6 +50,10 @@ terraform-gcp-examples/
 | 05 | `05-iam` | Service Account / IAM | 実装済み |
 | 06 | `06-cloud-run` | Cloud Run | 実装済み |
 | 07 | `07-gke` | Google Kubernetes Engine | 実装済み |
+| 08 | `08-cloud-dns` | Private Cloud DNS / A Record | 実装済み |
+| 09 | `09-secret-manager` | Secret / Secret Version | 実装済み |
+| 10 | `10-pubsub` | Topic / Pull Subscription | 実装済み |
+| 11 | `11-artifact-registry` | Standard Docker Repository | 実装済み |
 
 ## scenarios（応用）
 

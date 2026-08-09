@@ -1,0 +1,9 @@
+project_id = "your-project-id"
+region     = "asia-northeast1"
+
+# Optional
+# network_name      = "tf-example-dns-vpc"
+# managed_zone_name = "tf-example-private-zone"
+# dns_name          = "example.internal."
+# record_name       = "app"
+# record_ip         = "10.10.0.10"

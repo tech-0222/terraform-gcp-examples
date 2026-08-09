@@ -1,0 +1,5 @@
+project_id = "your-project-id"
+region     = "asia-northeast1"
+
+# Optional
+# repository_id = "tf-example-docker"

@@ -1,0 +1,7 @@
+project_id = "your-project-id"
+region     = "asia-northeast1"
+
+# Optional
+# topic_name            = "tf-example-topic"
+# subscription_name     = "tf-example-subscription"
+# ack_deadline_seconds  = 20
