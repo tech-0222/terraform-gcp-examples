@@ -1,0 +1,7 @@
+project_id = "your-project-id"
+region     = "asia-northeast1"
+
+# Optional overrides:
+# bucket_name_prefix = "tf-example"
+# location           = "ASIA-NORTHEAST1"
+# force_destroy      = true
