@@ -50,6 +50,13 @@ terraform.tfvars.example
 
 詳細ルールは `docs/CONVENTIONS.md` を参照してください。
 
+シナリオ追加後は、基本サンプルと同様に次を生成する（GitHub Actions なし・ローカル実行）。
+
+```bash
+./scripts/generate-terraform-docs.sh scenarios/<name>
+./scripts/generate-terraform-graphs.sh scenarios/<name>
+```
+
 ## シナリオ一覧
 
 | No. | ディレクトリ | 内容 | 状態 |
