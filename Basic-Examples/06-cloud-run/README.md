@@ -49,7 +49,7 @@ Cloud Run（v2）サービスを Terraform で作成・確認・削除するサ�
 ## 設定方法
 
 ```bash
-cd examples/06-cloud-run
+cd Basic-Examples/06-cloud-run
 cp terraform.tfvars.example terraform.tfvars
 ```
 

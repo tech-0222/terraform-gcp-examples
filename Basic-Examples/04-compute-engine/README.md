@@ -48,7 +48,7 @@ Compute Engine VM（Spot）と、起動に必要な最小ネットワークを T
 ## 設定方法
 
 ```bash
-cd examples/04-compute-engine
+cd Basic-Examples/04-compute-engine
 cp terraform.tfvars.example terraform.tfvars
 ```
 
