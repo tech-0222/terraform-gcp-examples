@@ -49,7 +49,7 @@ Artifact Registry の Standard Docker Repository を Terraform で作成・確�
 ## 設定方法
 
 ```bash
-cd examples/11-artifact-registry
+cd Basic-Examples/11-artifact-registry
 cp terraform.tfvars.example terraform.tfvars
 ```
 
@@ -93,4 +93,4 @@ terraform destroy
 - Artifact Registry は保存容量やデータ転送などに応じて料金が発生する可能性があります
 - 本サンプルでは Docker Image を push しません
 - Image を push した場合は、Repository 削除前に内容と destroy 時の挙動を確認してください
-- Cloud Run / GKE との連携は `scenarios/` で扱います
+- Cloud Run / GKE との連携は `Advanced-Examples/` で扱います

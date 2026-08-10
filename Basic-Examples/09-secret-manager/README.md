@@ -52,7 +52,7 @@ Terraform 1.11 以降の write-only argument を利用し、Secret 値を Terraf
 ## 設定方法
 
 ```bash
-cd examples/09-secret-manager
+cd Basic-Examples/09-secret-manager
 cp terraform.tfvars.example terraform.tfvars
 ```
 

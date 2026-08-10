@@ -51,7 +51,7 @@
 ## 設定方法
 
 ```bash
-cd examples/07-gke
+cd Basic-Examples/07-gke
 cp terraform.tfvars.example terraform.tfvars
 ```
 
