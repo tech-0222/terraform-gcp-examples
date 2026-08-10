@@ -256,4 +256,6 @@ Artifact Registry に push した接続確認用イメージも repository 削�
 
 ## 検証状況
 
-コード準備のみです。Terraform CLI / 実GCPでの `fmt / init / validate / plan / apply / connection test / destroy` は未実施です。
+実GCP環境（`tech-0222-tf-examples`）で `fmt / init / validate / plan / apply` を実施し、接続確認アプリを Artifact Registry へ push 後に Cloud Run イメージを差し替え、認証付き curl で `status=ok` / `database=appdb` / `user=appuser` / `connection=cloud-sql-unix-socket` を確認しました。`terraform destroy` まで完了しています。
+
+`PARAMETER.md` / `DEPENDENCY-GRAPH.svg` / `.terraform.lock.hcl` は検証時に生成済みです。
