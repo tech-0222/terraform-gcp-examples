@@ -1,0 +1,9 @@
+project_id = "your-project-id"
+region     = "asia-northeast1"
+
+# Grant invoke to your user (recommended). Leave empty to skip.
+invoker_member = "user:you@example.com"
+
+# First apply can use the public hello image. After pushing to AR, set:
+# container_image = "asia-northeast1-docker.pkg.dev/your-project-id/tf-adv-run/hello:latest"
+# allow_unauthenticated = false
