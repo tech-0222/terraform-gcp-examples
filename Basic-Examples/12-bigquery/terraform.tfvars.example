@@ -1,0 +1,6 @@
+project_id = "your-project-id"
+region     = "asia-northeast1"
+location   = "asia-northeast1"
+
+dataset_id = "tf_example_dataset"
+table_id   = "messages"

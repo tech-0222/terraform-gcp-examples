@@ -1,0 +1,11 @@
+project_id = "your-project-id"
+region     = "asia-northeast1"
+
+alert_policy_name = "tf-example-gce-cpu-high"
+cpu_threshold     = 0.8
+duration          = "300s"
+alignment_period  = "300s"
+
+# Optional. Uncomment when testing email notifications.
+# notification_email        = "you@example.com"
+# notification_channel_name = "tf-example-email"
