@@ -1,0 +1,25 @@
+name: wif-demo
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  gcp:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: "projects/527031335407/locations/global/workloadIdentityPools/tf-adv-github-pool/providers/tf-adv-github-provider"
+          service_account: "tf-adv-github-actions@tech-0222-tf-examples.iam.gserviceaccount.com"
+
+      - uses: google-github-actions/setup-gcloud@v2
+
+      - name: Read demo object
+        run: gcloud storage cat "gs://tf-adv-wif-demo-tech-0222-tf-examples/hello-wif.txt"
