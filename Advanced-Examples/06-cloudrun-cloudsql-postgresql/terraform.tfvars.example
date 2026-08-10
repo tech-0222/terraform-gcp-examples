@@ -1,0 +1,12 @@
+project_id = "your-project-id"
+region     = "asia-northeast1"
+
+# Keep the real value only in local terraform.tfvars and never commit it.
+db_password         = "replace-with-a-strong-test-password"
+db_password_version = 1
+
+# Optional authenticated invoker.
+# invoker_member = "user:you@example.com"
+
+# Public access is disabled by default.
+allow_unauthenticated = false
