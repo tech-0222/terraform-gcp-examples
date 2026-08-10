@@ -61,6 +61,7 @@ terraform-gcp-examples/
 |---|---|---|---|
 | 01 | `01-gce-iap-vpc` | GCE Spot + 専用 VPC + IAP SSH / OS Login IAM | 実装済み |
 | 02 | `02-cloudrun-artifact-registry` | Cloud Run + Artifact Registry + ランタイム SA / invoker IAM | 実装済み |
+| 03 | `03-gke-workload-identity-gcs` | GKE Spot + Workload Identity + GCS 書き込み | 実装済み |
 
 詳細は `Advanced-Examples/README.md` を参照してください。
 
