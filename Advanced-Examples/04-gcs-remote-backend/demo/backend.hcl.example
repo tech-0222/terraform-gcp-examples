@@ -1,0 +1,6 @@
+# Generated locally during verification; do not commit real values if policy forbids.
+# Example:
+#   bucket = "tf-adv-tfstate-your-project-id"
+#   prefix = "demo"
+bucket = "REPLACE_ME"
+prefix = "demo"
