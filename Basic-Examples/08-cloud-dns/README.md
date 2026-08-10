@@ -55,7 +55,7 @@ Public DNS はドメイン取得や NS 委譲が必要になるため、この�
 ## 設定方法
 
 ```bash
-cd examples/08-cloud-dns
+cd Basic-Examples/08-cloud-dns
 cp terraform.tfvars.example terraform.tfvars
 ```
 

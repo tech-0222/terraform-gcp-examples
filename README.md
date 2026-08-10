@@ -6,7 +6,7 @@ Terraformを使用してGoogle Cloud（GCP）の各種リソースを作成・�
 
 ## 方針
 
-- **基本**は `examples/`、**応用・複合**は `scenarios/` に分ける
+- **基本**は `Basic-Examples/`、**応用・複合**は `Advanced-Examples/` に分ける
 - 各サンプル / シナリオは可能な限り独立した Root Module にする
 - `terraform init` → `terraform validate` → `terraform plan` → `terraform apply` → 動作確認 → `terraform destroy` まで検証する
 - 認証情報・Project固有情報・SecretはGitにコミットしない
@@ -28,17 +28,17 @@ terraform-gcp-examples/
 │   └── lib/
 ├── docs/
 │   └── CONVENTIONS.md
-├── examples/                     # 基本（単体・最小）
+├── Basic-Examples/                     # 基本（単体・最小）
 │   ├── README.md
 │   └── <sample>/
 │       ├── PARAMETER.md          # terraform-docs 自動生成
 │       ├── DEPENDENCY-GRAPH.svg  # terraform graph 自動生成
 │       └── ...
-└── scenarios/                    # 応用（複数サービス連携）
+└── Advanced-Examples/                    # 応用（複数サービス連携）
     └── README.md
 ```
 
-## examples（基本）一覧
+## Basic-Examples（基本）一覧
 
 | No. | ディレクトリ | 内容 | 状態 |
 |---|---|---|---|
@@ -55,9 +55,9 @@ terraform-gcp-examples/
 | 10 | `10-pubsub` | Topic / Pull Subscription | 実装済み |
 | 11 | `11-artifact-registry` | Standard Docker Repository | 実装済み |
 
-## scenarios（応用）
+## Advanced-Examples（応用）
 
-複数サービスが絡む試験コードは `scenarios/` に追加します。現状はスケルトンのみです。詳細は `scenarios/README.md` を参照してください。
+複数サービスが絡む試験コードは `Advanced-Examples/` に追加します。現状はスケルトンのみです。詳細は `Advanced-Examples/README.md` を参照してください。
 
 ## 前提
 
@@ -73,7 +73,7 @@ Terraformのバージョン条件は各サンプルの `versions.tf` を参照�
 まずはリソースを作成しない `00-provider-check` で、TerraformからGoogle Cloudへアクセスできることを確認します。
 
 ```bash
-cd examples/00-provider-check
+cd Basic-Examples/00-provider-check
 
 gcloud auth application-default login
 
@@ -86,11 +86,11 @@ terraform validate
 terraform plan
 ```
 
-詳細は `examples/00-provider-check/README.md` を参照してください。
+詳細は `Basic-Examples/00-provider-check/README.md` を参照してください。
 
 ## PARAMETER.md / DEPENDENCY-GRAPH.svg（ローカル生成）
 
-各 root module（`examples/*` / 将来の `scenarios/*`）に次を生成します。**GitHub Actions は使いません。** ローカルでスクリプトを実行してください。
+各 root module（`Basic-Examples/*` / 将来の `Advanced-Examples/*`）に次を生成します。**GitHub Actions は使いません。** ローカルでスクリプトを実行してください。
 
 | 成果物 | 内容 | 生成コマンド |
 |---|---|---|
@@ -106,8 +106,8 @@ terraform plan
 個別実行例:
 
 ```bash
-./scripts/generate-terraform-docs.sh examples/04-compute-engine
-./scripts/generate-terraform-graphs.sh examples/04-compute-engine
+./scripts/generate-terraform-docs.sh Basic-Examples/04-compute-engine
+./scripts/generate-terraform-graphs.sh Basic-Examples/04-compute-engine
 ```
 
 これらのファイルは自動生成です。手動編集しないでください。`.tf` を変更したら再生成します。

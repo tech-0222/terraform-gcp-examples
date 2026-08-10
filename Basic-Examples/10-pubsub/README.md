@@ -49,7 +49,7 @@ Pub/Sub Topic と Pull Subscription を Terraform で作成し、メッセージ
 ## 設定方法
 
 ```bash
-cd examples/10-pubsub
+cd Basic-Examples/10-pubsub
 cp terraform.tfvars.example terraform.tfvars
 ```
 
@@ -97,4 +97,4 @@ terraform destroy
 
 - Pub/Sub はデータ量や配信量に応じて料金が発生する可能性があります
 - 本サンプルは Push / BigQuery / Cloud Storage Subscription を扱いません
-- 応用連携は `scenarios/` で扱います
+- 応用連携は `Advanced-Examples/` で扱います

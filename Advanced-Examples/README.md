@@ -1,15 +1,15 @@
-# Scenarios
+# Advanced-Examples
 
 複数の GCP サービスが絡む応用・試験コードを置く場所です。
 
-## `examples/` との違い
+## `Basic-Examples/` との違い
 
 | 置き場 | 役割 |
 |---|---|
-| `examples/` | 単体・最小の基本コード（1トピック = 1 Root Module） |
-| `scenarios/` | 複数サービス連携・より実践的な試験コード |
+| `Basic-Examples/` | 単体・最小の基本コード（1トピック = 1 Root Module） |
+| `Advanced-Examples/` | 複数サービス連携・より実践的な試験コード |
 
-`examples/` を先に理解してから、こちらに進む想定です。
+`Basic-Examples/` を先に理解してから、こちらに進む想定です。
 
 ## 方針
 
@@ -22,7 +22,7 @@
 ## ディレクトリ命名
 
 ```text
-scenarios/
+Advanced-Examples/
 ├── README.md
 └── <番号>-<短い名前>/
 ```
@@ -53,8 +53,8 @@ terraform.tfvars.example
 シナリオ追加後は、基本サンプルと同様に次を生成する（GitHub Actions なし・ローカル実行）。
 
 ```bash
-./scripts/generate-terraform-docs.sh scenarios/<name>
-./scripts/generate-terraform-graphs.sh scenarios/<name>
+./scripts/generate-terraform-docs.sh Advanced-Examples/<name>
+./scripts/generate-terraform-graphs.sh Advanced-Examples/<name>
 ```
 
 ## シナリオ一覧
