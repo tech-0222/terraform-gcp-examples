@@ -57,7 +57,12 @@ terraform-gcp-examples/
 
 ## Advanced-Examples（応用）
 
-複数サービスが絡む試験コードは `Advanced-Examples/` に追加します。現状はスケルトンのみです。詳細は `Advanced-Examples/README.md` を参照してください。
+| No. | ディレクトリ | 内容 | 状態 |
+|---|---|---|---|
+| 01 | `01-gce-iap-vpc` | GCE Spot + 専用 VPC + IAP SSH / OS Login IAM | 実装済み |
+| 02 | `02-cloudrun-artifact-registry` | Cloud Run + Artifact Registry + ランタイム SA / invoker IAM | 実装済み |
+
+詳細は `Advanced-Examples/README.md` を参照してください。
 
 ## 前提
 
@@ -90,7 +95,7 @@ terraform plan
 
 ## PARAMETER.md / DEPENDENCY-GRAPH.svg（ローカル生成）
 
-各 root module（`Basic-Examples/*` / 将来の `Advanced-Examples/*`）に次を生成します。**GitHub Actions は使いません。** ローカルでスクリプトを実行してください。
+各 root module（`Basic-Examples/*` / `Advanced-Examples/*`）に次を生成します。**GitHub Actions は使いません。** ローカルでスクリプトを実行してください。
 
 | 成果物 | 内容 | 生成コマンド |
 |---|---|---|
