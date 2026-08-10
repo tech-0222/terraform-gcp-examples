@@ -1,0 +1,8 @@
+project_id = "your-project-id"
+region     = "asia-northeast1"
+
+instance_name    = "tf-example-postgres"
+database_name    = "appdb"
+database_version = "POSTGRES_15"
+tier             = "db-f1-micro"
+disk_size_gb     = 10

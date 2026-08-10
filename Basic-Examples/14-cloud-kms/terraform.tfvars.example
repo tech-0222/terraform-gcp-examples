@@ -1,0 +1,6 @@
+project_id = "your-project-id"
+region     = "asia-northeast1"
+location   = "global"
+
+key_ring_name_prefix = "tf-example-keyring"
+crypto_key_name      = "tf-example-key"
