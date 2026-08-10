@@ -57,7 +57,7 @@ Private IP やアプリ接続は `Advanced-Examples/` 側で扱う想定です�
 └── terraform.tfvars.example
 ```
 
-`PARAMETER.md` / `DEPENDENCY-GRAPH.svg` は実検証時に生成します。
+`PARAMETER.md` / `DEPENDENCY-GRAPH.svg` / `.terraform.lock.hcl` は検証時に生成済みです。
 
 ## 設定方法
 
@@ -105,4 +105,4 @@ terraform destroy
 
 ## 検証状況
 
-コード準備のみ。`fmt / init / validate / plan / apply / destroy` は未実施です。
+実GCP環境（`YOUR_PROJECT_ID`）で `fmt / init / validate / plan / apply` を実施し、Instance が `RUNNABLE`（`POSTGRES_15` / `db-f1-micro`）であることと Database `appdb` を確認後、`terraform destroy` まで完了しています。
