@@ -1,0 +1,6 @@
+project_id = "your-project-id"
+region     = "asia-northeast1"
+zone       = "asia-northeast1-a"
+
+# Principal that will use IAP SSH (must match your ADC / gcloud user for verification).
+iap_member = "user:you@example.com"
