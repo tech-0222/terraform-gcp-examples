@@ -68,6 +68,7 @@ terraform-gcp-examples/
 | 03 | `03-gke-workload-identity-gcs` | GKE Spot + Workload Identity + GCS 書き込み | 実装済み |
 | 04 | `04-gcs-remote-backend` | GCS Remote Backend（State）+ demo | 実装済み |
 | 05 | `05-wif-github-actions` | Workload Identity Federation（GitHub Actions OIDC） | 実装済み |
+| 06 | `06-cloudrun-cloudsql-postgresql` | Cloud Run + Cloud SQL PostgreSQL + Secret Manager | 実装済み |
 
 詳細は `Advanced-Examples/README.md` を参照してください。
 
