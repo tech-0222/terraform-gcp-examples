@@ -63,12 +63,12 @@ terraform.tfvars.example
 |---|---|---|---|
 | 01 | `01-gce-iap-vpc` | GCE Spot + 専用 VPC + IAP SSH / OS Login IAM | 実装済み |
 | 02 | `02-cloudrun-artifact-registry` | Cloud Run + Artifact Registry + ランタイム SA / invoker IAM | 実装済み |
+| 03 | `03-gke-workload-identity-gcs` | GKE Spot + Workload Identity + GCS 書き込み | 実装済み |
 
 ## 候補（未着手）
 
 実装時は上記一覧に追加する。
 
-- GKE + Workload Identity + Cloud Storage
 - GCS Remote Backend（State）の検証
 - Workload Identity Federation（GitHub Actions 等）
 

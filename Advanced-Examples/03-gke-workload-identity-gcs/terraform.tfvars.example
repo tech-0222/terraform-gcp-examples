@@ -1,0 +1,9 @@
+project_id = "your-project-id"
+region     = "asia-northeast1"
+zone       = "asia-northeast1-a"
+
+# Optional overrides:
+# cluster_name        = "tf-adv-gke-wi"
+# bucket_name_prefix  = "tf-adv-gke-wi"
+# k8s_namespace       = "wi-demo"
+# k8s_service_account = "gcs-writer"
