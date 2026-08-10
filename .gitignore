@@ -13,6 +13,9 @@
 *.tfplan
 tfplan
 
+# Local GCS backend config (may contain project-specific bucket names)
+backend.hcl
+
 # Crash logs
 crash.log
 crash.*.log

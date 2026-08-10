@@ -1,0 +1,52 @@
+# Example GitHub Actions workflow (copy to .github/workflows/ when you want to enable it).
+# Ref: https://github.com/google-github-actions/auth
+#
+# name: wif-demo
+#
+# on:
+#   workflow_dispatch:
+#
+# permissions:
+#   contents: read
+#   id-token: write
+#
+# jobs:
+#   gcp:
+#     runs-on: ubuntu-latest
+#     steps:
+#       - uses: actions/checkout@v4
+#       - id: auth
+#         uses: google-github-actions/auth@v2
+#         with:
+#           workload_identity_provider: "projects/PROJECT_NUMBER/locations/global/workloadIdentityPools/POOL/providers/PROVIDER"
+#           service_account: "tf-adv-github-actions@PROJECT_ID.iam.gserviceaccount.com"
+#       - uses: google-github-actions/setup-gcloud@v2
+#       - run: gcloud storage cat gs://BUCKET/hello-wif.txt
+
+name: wif-demo
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  gcp:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          # Replace with: terraform output -raw workload_identity_provider_name
+          workload_identity_provider: "REPLACE_WITH_PROVIDER_NAME"
+          # Replace with: terraform output -raw service_account_email
+          service_account: "REPLACE_WITH_SA_EMAIL"
+
+      - uses: google-github-actions/setup-gcloud@v2
+
+      - name: Read demo object
+        run: gcloud storage cat "gs://REPLACE_WITH_DEMO_BUCKET/hello-wif.txt"
