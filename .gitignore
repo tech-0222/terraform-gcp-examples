@@ -31,3 +31,7 @@ terraform.rc
 
 # Local handoff notes (machine/session specific; do not commit)
 HANDOFF.md
+
+# Python
+__pycache__/
+*.py[cod]
