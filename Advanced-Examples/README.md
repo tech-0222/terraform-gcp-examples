@@ -33,6 +33,8 @@ Advanced-Examples/
 01-gce-iap-vpc/
 02-cloudrun-artifact-registry/
 03-gke-workload-identity-gcs/
+04-gcs-remote-backend/
+05-wif-github-actions/
 ```
 
 ## 基本ファイル（各シナリオ）
@@ -50,7 +52,7 @@ terraform.tfvars.example
 
 詳細ルールは `docs/CONVENTIONS.md` を参照してください。
 
-シナリオ追加後は、基本サンプルと同様に次を生成する（GitHub Actions なし・ローカル実行）。
+シナリオ追加後は、基本サンプルと同様に次を生成する（**ドキュメント生成用の GitHub Actions は使わない**。ローカル実行）。WIF デモ用 workflow は `.github/workflows/wif-demo.yml` を参照。
 
 ```bash
 ./scripts/generate-terraform-docs.sh Advanced-Examples/<name>
@@ -64,13 +66,12 @@ terraform.tfvars.example
 | 01 | `01-gce-iap-vpc` | GCE Spot + 専用 VPC + IAP SSH / OS Login IAM | 実装済み |
 | 02 | `02-cloudrun-artifact-registry` | Cloud Run + Artifact Registry + ランタイム SA / invoker IAM | 実装済み |
 | 03 | `03-gke-workload-identity-gcs` | GKE Spot + Workload Identity + GCS 書き込み | 実装済み |
+| 04 | `04-gcs-remote-backend` | GCS Remote Backend（State）+ demo | 実装済み |
+| 05 | `05-wif-github-actions` | Workload Identity Federation（GitHub Actions OIDC） | 実装済み |
 
 ## 候補（未着手）
 
-実装時は上記一覧に追加する。
-
-- GCS Remote Backend（State）の検証
-- Workload Identity Federation（GitHub Actions 等）
+（なし）
 
 ## 注意
 
