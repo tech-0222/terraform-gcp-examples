@@ -54,6 +54,10 @@ terraform-gcp-examples/
 | 09 | `09-secret-manager` | Secret / Secret Version | 実装済み |
 | 10 | `10-pubsub` | Topic / Pull Subscription | 実装済み |
 | 11 | `11-artifact-registry` | Standard Docker Repository | 実装済み |
+| 12 | `12-bigquery` | Dataset / Table | 実装済み |
+| 13 | `13-cloud-sql-postgresql` | Cloud SQL for PostgreSQL / Database | 実装済み |
+| 14 | `14-cloud-kms` | KeyRing / CryptoKey | 実装済み |
+| 15 | `15-cloud-monitoring` | Alert Policy / 任意のEmail Notification Channel | 実装済み |
 
 ## Advanced-Examples（応用）
 
