@@ -48,7 +48,7 @@ Bucket 名はデフォルトで `tf-example-<project_id>` です（グローバ�
 ## 設定方法
 
 ```bash
-cd examples/03-cloud-storage
+cd Basic-Examples/03-cloud-storage
 cp terraform.tfvars.example terraform.tfvars
 ```
 

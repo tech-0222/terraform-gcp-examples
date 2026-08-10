@@ -46,7 +46,7 @@ Service Account を作成し、Project に最小権限の IAM を付与するサ
 ## 設定方法
 
 ```bash
-cd examples/05-iam
+cd Basic-Examples/05-iam
 cp terraform.tfvars.example terraform.tfvars
 ```
 

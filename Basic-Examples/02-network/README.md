@@ -49,7 +49,7 @@
 ## 設定方法
 
 ```bash
-cd examples/02-network
+cd Basic-Examples/02-network
 cp terraform.tfvars.example terraform.tfvars
 ```
 
