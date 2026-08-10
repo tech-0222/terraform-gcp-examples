@@ -10,21 +10,6 @@ resource "google_project_service" "dns" {
   disable_on_destroy = false
 }
 
-resource "google_project_service" "compute" {
-  project = var.project_id
-  service = "compute.googleapis.com"
-
-  disable_on_destroy = false
-}
-
-# Ref: https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_network
-resource "google_compute_network" "dns" {
-  name                    = var.network_name
-  auto_create_subnetworks = false
-
-  depends_on = [google_project_service.compute]
-}
-
 # Ref: https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/dns_managed_zone
 resource "google_dns_managed_zone" "private" {
   name        = var.managed_zone_name
