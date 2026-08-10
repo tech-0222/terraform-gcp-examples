@@ -46,7 +46,8 @@ Public DNS はドメイン取得や NS 委譲が必要になるため、この�
 ├── versions.tf
 ├── provider.tf
 ├── variables.tf
-├── main.tf
+├── network.tf   # VPC（Private Zone 用の準備）
+├── main.tf      # DNS Zone / Record（本体）
 ├── outputs.tf
 └── terraform.tfvars.example
 ```
