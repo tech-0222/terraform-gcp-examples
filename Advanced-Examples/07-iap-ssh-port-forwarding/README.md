@@ -153,6 +153,20 @@ terraform destroy
 - Project IAM Memberはdestroy時に削除されるため、既存の同Role付与との関係を確認します
 - Service Account Keyは作成しません
 
+## 検証状況
+
+2026-08-12に`YOUR_PROJECT_ID`で実環境検証を実施しました。
+
+- `terraform init`、`terraform fmt -check`、`terraform validate`が成功
+- `terraform plan`で14リソースの作成、変更0、削除0を確認
+- `terraform apply`が成功し、VMが外部IPを持たないことを確認
+- IAP経由のSSH接続に成功し、VM上のnginxが`active`であることを確認
+- SSH Port Forwarding経由の`http://127.0.0.1:8080/`でHTTP 200と期待したHTMLを確認
+- 検証後に`terraform destroy`を実行し、14リソースを削除
+- Terraform Stateが空であり、VMとVPCがGoogle Cloud API上に残っていないことを確認
+
+`disable_on_destroy = false`としているため、必要なAPIの有効化状態はdestroy後も維持されます。
+
 ## 参考資料
 
 - [IAP TCP forwarding](https://cloud.google.com/iap/docs/using-tcp-forwarding)
