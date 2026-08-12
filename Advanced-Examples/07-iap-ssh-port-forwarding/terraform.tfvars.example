@@ -1,0 +1,8 @@
+project_id = "your-project-id"
+iap_member = "user:you@example.com"
+
+# Optional overrides
+# region       = "asia-northeast1"
+# zone         = "asia-northeast1-a"
+# machine_type = "e2-small"
+# local_port   = 8080
