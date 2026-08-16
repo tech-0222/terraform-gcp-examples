@@ -102,7 +102,7 @@ Terraform 実行者:
 ```text
 06-cloudrun-cloudsql-postgresql/
 ├── README.md
-├── RESOURCE-PARAMETERS.md  # コンソール / API / Terraform の対応（手書き）
+├── docs/RESOURCE-PARAMETERS.md  # コンソール / API / Terraform の対応（手書き）
 ├── versions.tf
 ├── provider.tf
 ├── variables.tf
@@ -118,7 +118,7 @@ Terraform 実行者:
     └── app.py
 ```
 
-リソースの明示設定と公式ドキュメント上の既定値の対応は `RESOURCE-PARAMETERS.md` を参照してください。`PARAMETER.md` は terraform-docs の自動生成です。
+リソースの明示設定と公式ドキュメント上の既定値の対応は `docs/RESOURCE-PARAMETERS.md` を参照してください。`PARAMETER.md` は terraform-docs の自動生成です。
 
 `PARAMETER.md` / `DEPENDENCY-GRAPH.svg` / `.terraform.lock.hcl` は実検証時に生成します。
 

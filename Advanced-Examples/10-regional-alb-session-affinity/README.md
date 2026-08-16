@@ -7,7 +7,7 @@
 | :81 | `GENERATED_COOKIE` | LB が `GCLB=` を発行 |
 | :83 | `HTTP_COOKIE` + RING_HASH | アプリが `ROUTE=backend-a` または `backend-a2`（Path=/） |
 
-ネットワークの正本は 08 の `RESOURCE-PARAMETERS.md` です。
+ネットワークの正本は 08 の `docs/RESOURCE-PARAMETERS.md` です。
 
 ## 確認すること
 

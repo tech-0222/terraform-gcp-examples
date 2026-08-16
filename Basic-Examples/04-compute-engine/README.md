@@ -36,8 +36,8 @@ Compute Engine VM（Spot）と、起動に必要な最小ネットワークを T
 ```text
 04-compute-engine/
 ├── README.md
-├── RESOURCE-PARAMETERS.md  # コンソール / API / Terraform の対応（手書き）
-├── INSTANCE-PARAMETERS.md  # コンソール / gcloud JSON / Terraform の対応（手書き）
+├── docs/RESOURCE-PARAMETERS.md  # コンソール / API / Terraform の対応（手書き）
+├── docs/INSTANCE-PARAMETERS.md  # コンソール / gcloud JSON / Terraform の対応（手書き）
 ├── PARAMETER.md            # terraform-docs（自動生成。手動編集しない）
 ├── versions.tf
 ├── provider.tf
@@ -48,7 +48,7 @@ Compute Engine VM（Spot）と、起動に必要な最小ネットワークを T
 └── terraform.tfvars.example
 ```
 
-コンソール項目と Terraform 属性の対応は `RESOURCE-PARAMETERS.md`（ネットワーク）と `INSTANCE-PARAMETERS.md`（VM）を参照してください。`PARAMETER.md` は Inputs / Outputs の自動生成です。
+コンソール項目と Terraform 属性の対応は `docs/RESOURCE-PARAMETERS.md`（ネットワーク）と `docs/INSTANCE-PARAMETERS.md`（VM）を参照してください。`PARAMETER.md` は Inputs / Outputs の自動生成です。
 
 ## 設定方法
 
@@ -81,7 +81,7 @@ gcloud compute instances describe "$(terraform output -raw instance_name)" \
   --format=json
 ```
 
-コンソール項目との対応は `INSTANCE-PARAMETERS.md` を参照してください。
+コンソール項目との対応は `docs/INSTANCE-PARAMETERS.md` を参照してください。
 
 IAP SSH 例（権限がある場合）:
 

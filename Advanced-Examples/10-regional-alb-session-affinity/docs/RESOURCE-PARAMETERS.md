@@ -1,6 +1,6 @@
 # 10 - リソースパラメータ対応
 
-08 と同型の Regional External ALB に **セッションアフィニティ** を足した差分です。VPC / proxy-only / NEG は [08 の RESOURCE-PARAMETERS.md](../08-regional-external-alb-neg/RESOURCE-PARAMETERS.md) を正本とします。
+08 と同型の Regional External ALB に **セッションアフィニティ** を足した差分です。VPC / proxy-only / NEG は [08 の RESOURCE-PARAMETERS.md](../../08-regional-external-alb-neg/docs/RESOURCE-PARAMETERS.md) を正本とします。
 
 一次情報:
 
