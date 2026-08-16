@@ -6,7 +6,7 @@
 
 コンソール項目の切り口は Obsidian の GKE Parameter カタログ（クラスタ設定 / ノードプール設定）に合わせています。**値は本サンプルのコード**です。別 PoC のリージョナル・プライベートクラスタ（Dataplane V2、Cloud DNS、max pods 32、専用ノード SA など）の実測値は使いません。
 
-記載は次の一次情報に合わせています（2026-08-16 照合）。
+記載は次の一次情報に合わせています。
 
 - [google_container_cluster](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/container_cluster)
 - [google_container_node_pool](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/container_node_pool)

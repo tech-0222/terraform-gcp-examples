@@ -2,7 +2,7 @@
 
 このファイルは **本サンプルの Service Account と Project IAM** について対応づけます。自動生成の `PARAMETER.md` とは別物です。
 
-一次情報（2026-08-16 照合）:
+一次情報:
 
 - [google_service_account](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/google_service_account)
 - [google_project_iam_member](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/google_project_iam)

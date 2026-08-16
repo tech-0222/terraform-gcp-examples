@@ -2,7 +2,7 @@
 
 このファイルは **本サンプルの BigQuery Dataset / Table** について対応づけます。自動生成の `PARAMETER.md` とは別物です。
 
-一次情報（2026-08-16 照合）:
+一次情報:
 
 - [google_bigquery_dataset](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/bigquery_dataset)
 - [google_bigquery_table](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/bigquery_table)

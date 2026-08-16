@@ -4,7 +4,7 @@ GKE 本体のコンソール項目対応は Basic 07 の **[GKE-PARAMETERS.md](.
 
 このファイルは **名前・CIDR の差** と **GCS / Kubernetes 側** だけを書きます。
 
-一次情報（2026-08-16 照合）:
+一次情報:
 
 - [Workload Identity](https://cloud.google.com/kubernetes-engine/docs/how-to/workload-identity)
 - [google_container_cluster](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/container_cluster)
