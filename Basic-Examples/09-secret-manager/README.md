@@ -41,6 +41,7 @@ Terraform 1.11 以降の write-only argument を利用し、Secret 値を Terraf
 ```text
 09-secret-manager/
 ├── README.md
+├── RESOURCE-PARAMETERS.md  # コンソール / API / Terraform の対応（手書き）
 ├── versions.tf
 ├── provider.tf
 ├── variables.tf
@@ -49,12 +50,16 @@ Terraform 1.11 以降の write-only argument を利用し、Secret 値を Terraf
 └── terraform.tfvars.example
 ```
 
+リソースの明示設定と公式ドキュメント上の既定値の対応は `RESOURCE-PARAMETERS.md` を参照してください。`PARAMETER.md` は terraform-docs の自動生成です。
+
+
 ## 設定方法
 
 ```bash
 cd Basic-Examples/09-secret-manager
 cp terraform.tfvars.example terraform.tfvars
 ```
+
 
 `terraform.tfvars` の `secret_data` は検証専用値に置き換えます。
 
