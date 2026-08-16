@@ -2,7 +2,7 @@
 
 このファイルは **本サンプルの `google_storage_bucket`** について、GCP / `gcloud --format=json` / Terraform 属性を対応づけます。自動生成の `PARAMETER.md` とは別物です。
 
-一次情報（2026-08-16 照合）:
+一次情報:
 
 - [google_storage_bucket](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/storage_bucket)
 - [Buckets](https://cloud.google.com/storage/docs/json_api/v1/buckets)

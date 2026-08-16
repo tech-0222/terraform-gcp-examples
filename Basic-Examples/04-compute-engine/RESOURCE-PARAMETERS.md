@@ -2,7 +2,7 @@
 
 VM（`google_compute_instance`）のコンソール項目対応は **[INSTANCE-PARAMETERS.md](./INSTANCE-PARAMETERS.md)** を正本とします。このファイルは準備ネットワークと API 有効化をまとめます。
 
-一次情報（2026-08-16 照合）:
+一次情報:
 
 - [google_compute_network](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_network)
 - [google_compute_subnetwork](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_subnetwork)

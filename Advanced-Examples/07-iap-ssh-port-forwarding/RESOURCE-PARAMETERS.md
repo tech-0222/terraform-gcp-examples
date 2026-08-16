@@ -2,7 +2,7 @@
 
 このファイルは **IAP SSH + Local Port Forwarding + 非公開 nginx** について対応づけます。自動生成の `PARAMETER.md` とは別物です。Advanced 01 との差分は NAT・startup・スコープ・HTTP 非公開です。
 
-一次情報（2026-08-16 照合）:
+一次情報:
 
 - [IAP TCP forwarding](https://cloud.google.com/iap/docs/using-tcp-forwarding)
 - [Cloud NAT](https://cloud.google.com/nat/docs/overview)

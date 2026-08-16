@@ -2,7 +2,7 @@
 
 このファイルは **Terraform GCS Remote Backend 用バケット** について対応づけます。自動生成の `PARAMETER.md` とは別物です。ネストした `demo/` は [demo/RESOURCE-PARAMETERS.md](./demo/RESOURCE-PARAMETERS.md) です。
 
-一次情報（2026-08-16 照合）:
+一次情報:
 
 - [GCS backend](https://developer.hashicorp.com/terraform/language/backend/gcs)
 - [google_storage_bucket](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/storage_bucket)

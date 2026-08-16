@@ -2,7 +2,7 @@
 
 08 と同型の Regional External ALB に **セッションアフィニティ** を足した差分です。VPC / proxy-only / NEG は [08 の RESOURCE-PARAMETERS.md](../08-regional-external-alb-neg/RESOURCE-PARAMETERS.md) を正本とします。
 
-一次情報（2026-08-16 照合）:
+一次情報:
 
 - [Request distribution](https://cloud.google.com/load-balancing/docs/https/request-distribution)
 - [google_compute_region_backend_service](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_region_backend_service)
