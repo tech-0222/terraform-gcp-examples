@@ -54,7 +54,7 @@ Zonal Spot GKE 上の Pod が **Workload Identity** 経由で GCP SA になり�
 └── terraform.tfvars.example
 ```
 
-リソースの明示設定と公式ドキュメント上の既定値の対応は `docs/RESOURCE-PARAMETERS.md` を参照してください。GKE 項目の正本は Basic 07 の `docs/GKE-PARAMETERS.md` です。`PARAMETER.md` は terraform-docs の自動生成です。
+リソースの明示設定と公式ドキュメント上の既定値の対応は `docs/RESOURCE-PARAMETERS.md` を参照してください。GKE 項目の正本は Basic 07 の `docs/GKE-PARAMETERS.md` です。`docs/PARAMETER.md` は terraform-docs の自動生成です。
 
 ## 設定方法
 
