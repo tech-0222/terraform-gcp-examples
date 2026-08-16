@@ -17,7 +17,7 @@
 - `terraform init` → `fmt` → `validate` → `plan` → `apply` → 確認 → `destroy` まで検証できること
 - Secret / `terraform.tfvars` / state はコミットしない（`terraform.tfvars.example` を用意する）
 - コストと destroy 可否を README に必ず書く
-- 共通化（`modules/`）は、シナリオ間で重複が目立ってから検討する（最初から必須にしない）
+- 共通化（`modules/`）は、シナリオ間で重複が目立ってから検討する（最初から必須にしない）。08〜10 の ALB も **Terraform モジュールは使わず** `google_*` のみ。
 
 ## ディレクトリ命名
 
@@ -37,6 +37,9 @@ Advanced-Examples/
 05-wif-github-actions/
 06-cloudrun-cloudsql-postgresql/
 07-iap-ssh-port-forwarding/
+08-regional-external-alb-neg/
+09-regional-alb-cloud-armor/
+10-regional-alb-session-affinity/
 ```
 
 ## 基本ファイル（各シナリオ）
@@ -73,6 +76,9 @@ terraform.tfvars.example
 | 05 | `05-wif-github-actions` | Workload Identity Federation（GitHub Actions OIDC） | 実装済み |
 | 06 | `06-cloudrun-cloudsql-postgresql` | Cloud Run + Cloud SQL PostgreSQL + Secret Manager | 実装済み |
 | 07 | `07-iap-ssh-port-forwarding` | IAP SSH + Local Port Forwarding + 非公開 nginx | 実装済み |
+| 08 | `08-regional-external-alb-neg` | Regional External ALB + zonal NEG（:81 / :82） | 実装済み |
+| 09 | `09-regional-alb-cloud-armor` | Regional External ALB + Cloud Armor（許可 IP 以外 403） | 実装済み |
+| 10 | `10-regional-alb-session-affinity` | Regional External ALB セッション（GENERATED_COOKIE / HTTP_COOKIE） | 実装済み |
 
 ## 候補（未着手）
 
