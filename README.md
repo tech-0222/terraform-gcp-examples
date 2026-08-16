@@ -31,7 +31,7 @@ terraform-gcp-examples/
 ├── Basic-Examples/                     # 基本（単体・最小）
 │   ├── README.md
 │   └── <sample>/
-│       ├── PARAMETER.md          # terraform-docs 自動生成
+│       ├── docs/PARAMETER.md          # terraform-docs 自動生成
 │       ├── DEPENDENCY-GRAPH.svg  # terraform graph 自動生成
 │       └── ...
 └── Advanced-Examples/                    # 応用（複数サービス連携）
@@ -105,13 +105,13 @@ terraform plan
 
 詳細は `Basic-Examples/00-provider-check/README.md` を参照してください。
 
-## PARAMETER.md / DEPENDENCY-GRAPH.svg（ローカル生成）
+## docs/PARAMETER.md / DEPENDENCY-GRAPH.svg（ローカル生成）
 
 各 root module（`Basic-Examples/*` / `Advanced-Examples/*`）に次を生成します。**GitHub Actions は使いません。** ローカルでスクリプトを実行してください。
 
 | 成果物 | 内容 | 生成コマンド |
 |---|---|---|
-| `PARAMETER.md` | requirements / providers / resources / inputs / outputs | `./scripts/generate-terraform-docs.sh --all` |
+| `docs/PARAMETER.md` | requirements / providers / resources / inputs / outputs | `./scripts/generate-terraform-docs.sh --all` |
 | `DEPENDENCY-GRAPH.svg` | `terraform graph` の依存関係図 | `./scripts/generate-terraform-graphs.sh --all` |
 
 前提ツール:

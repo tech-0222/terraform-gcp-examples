@@ -1,4 +1,4 @@
-# terraform-docs 共通設定（Basic-Examples/* / Advanced-Examples/* の PARAMETER.md 生成用）
+# terraform-docs 共通設定（Basic-Examples/* / Advanced-Examples/* の docs/PARAMETER.md 生成用）
 # https://terraform-docs.io/user-guide/configuration/
 # GitHub Actions は使わない。ローカルで scripts/generate-terraform-docs.sh を実行する。
 
@@ -14,7 +14,7 @@ sections:
     - outputs
 
 output:
-  file: PARAMETER.md
+  file: docs/PARAMETER.md
   mode: replace
   template: |-
     # Parameters（自動生成）
