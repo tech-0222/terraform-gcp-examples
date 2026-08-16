@@ -38,6 +38,7 @@
 ```text
 02-network/
 ├── README.md
+├── RESOURCE-PARAMETERS.md  # コンソール / API / Terraform の対応（手書き）
 ├── versions.tf
 ├── provider.tf
 ├── variables.tf
@@ -46,12 +47,16 @@
 └── terraform.tfvars.example
 ```
 
+リソースの明示設定と公式ドキュメント上の既定値の対応は `RESOURCE-PARAMETERS.md` を参照してください。`PARAMETER.md` は terraform-docs の自動生成です。
+
+
 ## 設定方法
 
 ```bash
 cd Basic-Examples/02-network
 cp terraform.tfvars.example terraform.tfvars
 ```
+
 
 ```hcl
 project_id = "your-project-id"
