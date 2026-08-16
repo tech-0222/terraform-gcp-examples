@@ -8,19 +8,19 @@ locals {
     a = {
       name     = "tf-adv-elb08-a"
       zone     = var.zone_a
-      script   = "startup-a.sh"
+      script   = "scripts/startup-a.sh"
       identity = "backend-a"
     }
     a2 = {
       name     = "tf-adv-elb08-a2"
       zone     = var.zone_a
-      script   = "startup-a2.sh"
+      script   = "scripts/startup-a2.sh"
       identity = "backend-a2"
     }
     b = {
       name     = "tf-adv-elb08-b"
       zone     = var.zone_c
-      script   = "startup-b.sh"
+      script   = "scripts/startup-b.sh"
       identity = "backend-b"
     }
   }
