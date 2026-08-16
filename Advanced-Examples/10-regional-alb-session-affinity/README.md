@@ -1,6 +1,6 @@
 # 10 - Regional External ALB session affinity
 
-同一 NEG 上の 2 VM（backend-a / backend-a2）に対し、Cookie でセッションを固定します。Terraform モジュールは使いません。`:82`（1 台）は検証にならないため入れていません。
+同一 NEG 上の 2 VM（backend-a / backend-a2）に対し、Cookie でセッションを固定します。`:82`（1 台）は検証にならないため入れていません。
 
 | ポート | session_affinity | Cookie |
 |---|---|---|
