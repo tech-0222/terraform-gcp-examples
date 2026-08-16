@@ -39,7 +39,7 @@ resource "google_compute_instance" "be" {
   }
 
   metadata = {
-    startup-script = templatefile("${path.module}/startup-cookie.sh.tftpl", {
+    startup-script = templatefile("${path.module}/scripts/startup-cookie.sh.tftpl", {
       identity = each.value.identity
     })
   }
