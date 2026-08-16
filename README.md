@@ -70,6 +70,9 @@ terraform-gcp-examples/
 | 05 | `05-wif-github-actions` | Workload Identity Federation（GitHub Actions OIDC） | 実装済み |
 | 06 | `06-cloudrun-cloudsql-postgresql` | Cloud Run + Cloud SQL PostgreSQL + Secret Manager | 実装済み |
 | 07 | `07-iap-ssh-port-forwarding` | IAP SSH + Local Port Forwarding + 非公開 nginx | 実装済み |
+| 08 | `08-regional-external-alb-neg` | Regional External ALB + zonal NEG（:81 / :82） | 実装済み |
+| 09 | `09-regional-alb-cloud-armor` | Regional External ALB + Cloud Armor | 実装済み |
+| 10 | `10-regional-alb-session-affinity` | Regional External ALB セッションアフィニティ | 実装済み |
 
 詳細は `Advanced-Examples/README.md` を参照してください。
 

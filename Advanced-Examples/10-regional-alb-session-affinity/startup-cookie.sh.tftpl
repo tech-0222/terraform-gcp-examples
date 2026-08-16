@@ -1,0 +1,33 @@
+#!/bin/bash
+set -euxo pipefail
+IDENTITY="${identity}"
+mkdir -p /var/www
+echo "$IDENTITY" > /var/www/identity.txt
+echo "$IDENTITY" > /var/www/index.html
+echo "$IDENTITY" > /var/www/id
+cat > /var/www/server.py << 'PY'
+import http.server
+import os
+
+DIR = "/var/www"
+COOKIE = "ROUTE"
+
+def identity():
+    try:
+        return open(os.path.join(DIR, "identity.txt"), encoding="utf-8").read().strip()
+    except OSError:
+        return "unknown"
+
+class Handler(http.server.SimpleHTTPRequestHandler):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, directory=DIR, **kwargs)
+
+    def end_headers(self):
+        self.send_header("Set-Cookie", f"{COOKIE}={identity()}; Path=/; Max-Age=3600")
+        super().end_headers()
+
+os.chdir(DIR)
+http.server.HTTPServer(("0.0.0.0", 8080), Handler).serve_forever()
+PY
+nohup python3 /var/www/server.py > /var/log/http.log 2>&1 &
+sleep 1
