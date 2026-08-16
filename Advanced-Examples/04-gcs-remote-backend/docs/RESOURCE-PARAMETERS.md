@@ -1,6 +1,6 @@
 # 04 - リソースパラメータ対応
 
-このファイルは **Terraform GCS Remote Backend 用バケット** について対応づけます。自動生成の `PARAMETER.md` とは別物です。ネストした `demo/` は [demo/RESOURCE-PARAMETERS.md](./demo/RESOURCE-PARAMETERS.md) です。
+このファイルは **Terraform GCS Remote Backend 用バケット** について対応づけます。自動生成の `PARAMETER.md` とは別物です。ネストした `demo/` は [demo/RESOURCE-PARAMETERS.md](../demo/docs/RESOURCE-PARAMETERS.md) です。
 
 一次情報:
 

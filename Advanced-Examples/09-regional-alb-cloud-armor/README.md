@@ -2,7 +2,7 @@
 
 `08-regional-external-alb-neg` と同型の Regional External ALB に、**リージョナル Cloud Armor** を付けます。許可した送信元 IP だけ 200、それ以外は **403** です。
 
-ネットワーク項目の正本は 08 の `RESOURCE-PARAMETERS.md` です。ここでは Armor の差分だけ書きます。
+ネットワーク項目の正本は 08 の `docs/RESOURCE-PARAMETERS.md` です。ここでは Armor の差分だけ書きます。
 
 ## 確認すること
 

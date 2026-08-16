@@ -35,7 +35,7 @@
 ```text
 08-regional-external-alb-neg/
 ├── README.md
-├── RESOURCE-PARAMETERS.md
+├── docs/RESOURCE-PARAMETERS.md
 ├── versions.tf
 ├── provider.tf
 ├── variables.tf

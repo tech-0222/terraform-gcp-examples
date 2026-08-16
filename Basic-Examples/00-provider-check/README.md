@@ -23,7 +23,7 @@ TerraformからGoogle Cloudへ認証し、指定したProjectの情報を取得�
 ```text
 00-provider-check/
 ├── README.md
-├── RESOURCE-PARAMETERS.md  # コンソール / API / Terraform の対応（手書き）
+├── docs/RESOURCE-PARAMETERS.md  # コンソール / API / Terraform の対応（手書き）
 ├── versions.tf
 ├── provider.tf
 ├── variables.tf
@@ -32,7 +32,7 @@ TerraformからGoogle Cloudへ認証し、指定したProjectの情報を取得�
 └── terraform.tfvars.example
 ```
 
-リソースの明示設定と公式ドキュメント上の既定値の対応は `RESOURCE-PARAMETERS.md` を参照してください。`PARAMETER.md` は terraform-docs の自動生成です。
+リソースの明示設定と公式ドキュメント上の既定値の対応は `docs/RESOURCE-PARAMETERS.md` を参照してください。`PARAMETER.md` は terraform-docs の自動生成です。
 
 
 ## 1. ADCでログイン

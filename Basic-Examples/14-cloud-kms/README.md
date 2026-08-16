@@ -50,7 +50,7 @@ Google Provider の `google_kms_key_ring` ドキュメントでは、KeyRing は
 ```text
 14-cloud-kms/
 ├── README.md
-├── RESOURCE-PARAMETERS.md  # コンソール / API / Terraform の対応（手書き）
+├── docs/RESOURCE-PARAMETERS.md  # コンソール / API / Terraform の対応（手書き）
 ├── versions.tf
 ├── provider.tf
 ├── variables.tf
@@ -59,7 +59,7 @@ Google Provider の `google_kms_key_ring` ドキュメントでは、KeyRing は
 └── terraform.tfvars.example
 ```
 
-リソースの明示設定と公式ドキュメント上の既定値の対応は `RESOURCE-PARAMETERS.md` を参照してください。`PARAMETER.md` は terraform-docs の自動生成です。
+リソースの明示設定と公式ドキュメント上の既定値の対応は `docs/RESOURCE-PARAMETERS.md` を参照してください。`PARAMETER.md` は terraform-docs の自動生成です。
 
 
 `PARAMETER.md` / `DEPENDENCY-GRAPH.svg` / `.terraform.lock.hcl` は検証時に生成済みです。
