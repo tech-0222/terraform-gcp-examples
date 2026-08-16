@@ -20,7 +20,7 @@
 
 ```text
 README.md
-RESOURCE-PARAMETERS.md  # 手書き。PARAMETER.md とは別
+docs/RESOURCE-PARAMETERS.md  # 手書き。PARAMETER.md とは別
 versions.tf
 provider.tf
 variables.tf
@@ -124,8 +124,8 @@ Terraform Resource名は、サンプル内で役割が分かる簡潔な名前�
 | ファイル | 役割 |
 |---|---|
 | `PARAMETER.md` | terraform-docs。Inputs / Outputs / Resources。**手動編集禁止** |
-| `RESOURCE-PARAMETERS.md` | そのサンプルの明示設定と未指定（デフォルト）を、公式 Provider / GCP ドキュメントに照らして記載。**手書き** |
-| `INSTANCE-PARAMETERS.md` | Basic 04 のみ。GCE インスタンス項目の詳細対応（`RESOURCE-PARAMETERS.md` から参照） |
-| `GKE-PARAMETERS.md` | Basic 07 のみ。GKE クラスタ / ノードプール項目の詳細対応（`RESOURCE-PARAMETERS.md` から参照）。Advanced 03 は同ファイルを正本とし差分だけ書く |
+| `docs/RESOURCE-PARAMETERS.md` | そのサンプルの明示設定と未指定（デフォルト）を、公式 Provider / GCP ドキュメントに照らして記載。**手書き** |
+| `docs/INSTANCE-PARAMETERS.md` | Basic 04 のみ。GCE インスタンス項目の詳細対応（`docs/RESOURCE-PARAMETERS.md` から参照） |
+| `docs/GKE-PARAMETERS.md` | Basic 07 のみ。GKE クラスタ / ノードプール項目の詳細対応（`docs/RESOURCE-PARAMETERS.md` から参照）。Advanced 03 は同ファイルを正本とし差分だけ書く |
 
-`Basic-Examples/` および `Advanced-Examples/` の各サンプルに `RESOURCE-PARAMETERS.md` を置く。値はコードのデフォルト変数を前提とし、推測の属性は書かない。
+`Basic-Examples/` および `Advanced-Examples/` の各サンプルに `docs/RESOURCE-PARAMETERS.md` を置く。値はコードのデフォルト変数を前提とし、推測の属性は書かない。

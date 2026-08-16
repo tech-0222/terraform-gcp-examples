@@ -39,8 +39,8 @@
 ```text
 07-gke/
 ├── README.md
-├── RESOURCE-PARAMETERS.md  # ネットワーク等の対応（手書き）
-├── GKE-PARAMETERS.md       # クラスタ / ノードプールの詳細対応（手書き）
+├── docs/RESOURCE-PARAMETERS.md  # ネットワーク等の対応（手書き）
+├── docs/GKE-PARAMETERS.md       # クラスタ / ノードプールの詳細対応（手書き）
 ├── versions.tf
 ├── provider.tf
 ├── variables.tf
@@ -50,7 +50,7 @@
 └── terraform.tfvars.example
 ```
 
-リソースの明示設定と公式ドキュメント上の既定値の対応は `RESOURCE-PARAMETERS.md` と `GKE-PARAMETERS.md` を参照してください。`PARAMETER.md` は terraform-docs の自動生成です。
+リソースの明示設定と公式ドキュメント上の既定値の対応は `docs/RESOURCE-PARAMETERS.md` と `docs/GKE-PARAMETERS.md` を参照してください。`PARAMETER.md` は terraform-docs の自動生成です。
 
 
 ## 設定方法
