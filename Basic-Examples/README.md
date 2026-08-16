@@ -18,7 +18,7 @@
 
 各サンプルディレクトリには次が含まれます（手動編集しない）。
 
-- `PARAMETER.md` … terraform-docs
+- `docs/PARAMETER.md` … terraform-docs
 - `DEPENDENCY-GRAPH.svg` … terraform graph
 - `docs/RESOURCE-PARAMETERS.md` … コンソール / API / Terraform 属性の対応（手書き。公式ドキュメント照合）
 

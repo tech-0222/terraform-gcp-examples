@@ -53,7 +53,7 @@ Public DNS はドメイン取得や NS 委譲が必要になるため、この�
 └── terraform.tfvars.example
 ```
 
-リソースの明示設定と公式ドキュメント上の既定値の対応は `docs/RESOURCE-PARAMETERS.md` を参照してください。`PARAMETER.md` は terraform-docs の自動生成です。
+リソースの明示設定と公式ドキュメント上の既定値の対応は `docs/RESOURCE-PARAMETERS.md` を参照してください。`docs/PARAMETER.md` は terraform-docs の自動生成です。
 
 
 ## 設定方法

@@ -118,9 +118,9 @@ Terraform 実行者:
     └── app.py
 ```
 
-リソースの明示設定と公式ドキュメント上の既定値の対応は `docs/RESOURCE-PARAMETERS.md` を参照してください。`PARAMETER.md` は terraform-docs の自動生成です。
+リソースの明示設定と公式ドキュメント上の既定値の対応は `docs/RESOURCE-PARAMETERS.md` を参照してください。`docs/PARAMETER.md` は terraform-docs の自動生成です。
 
-`PARAMETER.md` / `DEPENDENCY-GRAPH.svg` / `.terraform.lock.hcl` は実検証時に生成します。
+`docs/PARAMETER.md` / `DEPENDENCY-GRAPH.svg` / `.terraform.lock.hcl` は実検証時に生成します。
 
 ## 1. 設定
 
@@ -261,4 +261,4 @@ Artifact Registry に push した接続確認用イメージも repository 削�
 
 実GCP環境（`tech-0222-tf-examples`）で `fmt / init / validate / plan / apply` を実施し、接続確認アプリを Artifact Registry へ push 後に Cloud Run イメージを差し替え、認証付き curl で `status=ok` / `database=appdb` / `user=appuser` / `connection=cloud-sql-unix-socket` を確認しました。`terraform destroy` まで完了しています。
 
-`PARAMETER.md` / `DEPENDENCY-GRAPH.svg` / `.terraform.lock.hcl` は検証時に生成済みです。
+`docs/PARAMETER.md` / `DEPENDENCY-GRAPH.svg` / `.terraform.lock.hcl` は検証時に生成済みです。

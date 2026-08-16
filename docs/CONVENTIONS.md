@@ -20,7 +20,7 @@
 
 ```text
 README.md
-docs/RESOURCE-PARAMETERS.md  # 手書き。PARAMETER.md とは別
+docs/RESOURCE-PARAMETERS.md  # 手書き。docs/PARAMETER.md とは別
 versions.tf
 provider.tf
 variables.tf
@@ -99,13 +99,13 @@ Terraform Resource名は、サンプル内で役割が分かる簡潔な名前�
 
 `Advanced-Examples/` では特に、関係するサービス一覧とコスト・destroy 手順を明確にする。
 
-## 7. PARAMETER.md / DEPENDENCY-GRAPH.svg
+## 7. docs/PARAMETER.md / DEPENDENCY-GRAPH.svg
 
 各 root module に次を置く（自動生成。手動編集禁止）。
 
 | ファイル | 生成元 |
 |---|---|
-| `PARAMETER.md` | `terraform-docs`（設定: `.terraform-docs.yml`） |
+| `docs/PARAMETER.md` | `terraform-docs`（設定: `.terraform-docs.yml`） |
 | `DEPENDENCY-GRAPH.svg` | `terraform graph` + `dot`（設定: `.terraform-graph.conf`） |
 
 本リポジトリでは **GitHub Actions を使わない**。ローカルで次を実行する。
@@ -119,11 +119,11 @@ Terraform Resource名は、サンプル内で役割が分かる簡潔な名前�
 
 ### リソースパラメータ対応（手書き）
 
-コンソール / API 項目と Terraform 属性の対応表。自動生成の `PARAMETER.md` とは別。
+コンソール / API 項目と Terraform 属性の対応表。自動生成の `docs/PARAMETER.md` とは別。
 
 | ファイル | 役割 |
 |---|---|
-| `PARAMETER.md` | terraform-docs。Inputs / Outputs / Resources。**手動編集禁止** |
+| `docs/PARAMETER.md` | terraform-docs。Inputs / Outputs / Resources。**手動編集禁止** |
 | `docs/RESOURCE-PARAMETERS.md` | そのサンプルの明示設定と未指定（デフォルト）を、公式 Provider / GCP ドキュメントに照らして記載。**手書き** |
 | `docs/INSTANCE-PARAMETERS.md` | Basic 04 のみ。GCE インスタンス項目の詳細対応（`docs/RESOURCE-PARAMETERS.md` から参照） |
 | `docs/GKE-PARAMETERS.md` | Basic 07 のみ。GKE クラスタ / ノードプール項目の詳細対応（`docs/RESOURCE-PARAMETERS.md` から参照）。Advanced 03 は同ファイルを正本とし差分だけ書く |
