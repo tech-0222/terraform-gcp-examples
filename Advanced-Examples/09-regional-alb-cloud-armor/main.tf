@@ -30,7 +30,7 @@ resource "google_compute_instance" "be" {
   }
 
   metadata = {
-    startup-script = file("${path.module}/startup-a.sh")
+    startup-script = file("${path.module}/scripts/startup-a.sh")
   }
 
   labels = {
