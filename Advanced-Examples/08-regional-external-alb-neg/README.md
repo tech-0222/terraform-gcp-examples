@@ -1,6 +1,6 @@
 # 08 - Regional External Application Load Balancer + zonal NEG
 
-インターネット向けの **Regional External Application Load Balancer**（`EXTERNAL_MANAGED` / Envoy）を、**zonal NEG（`GCE_VM_IP_PORT`）** に載せる応用サンプルです。Terraform モジュールは使いません。`google_*` リソースのみです。
+インターネット向けの **Regional External Application Load Balancer**（`EXTERNAL_MANAGED` / Envoy）を、**zonal NEG（`GCE_VM_IP_PORT`）** に載せる応用サンプルです。
 
 同一 VIP の **:81 → bs-a（zone_a の 2 VM）**、**:82 → bs-b（zone_c の 1 VM）** で入口を分けます。パス振り分けではありません。
 
@@ -85,4 +85,3 @@ terraform destroy
 
 - バックエンドはヘルスチェック安定のため **Spot にしていません**
 - クライアントから見える送信元はインターネット IP ですが、VM から見た送信元は **proxy-only subnet** です
-- モジュール（`terraform-google-modules` 等）は使いません
