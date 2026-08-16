@@ -2,7 +2,7 @@
 
 このファイルは **Regional External ALB + zonal NEG** の明示設定と公式既定を対応づけます。自動生成の `PARAMETER.md` とは別物です。09 / 10 の共通ネットワーク項目の正本はここです。
 
-一次情報（2026-08-16 照合）:
+一次情報:
 
 - [Proxy-only subnets](https://cloud.google.com/load-balancing/docs/proxy-only-subnets)
 - [Regional external Application Load Balancer](https://cloud.google.com/load-balancing/docs/https)

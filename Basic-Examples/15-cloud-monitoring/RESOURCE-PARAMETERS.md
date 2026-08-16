@@ -2,7 +2,7 @@
 
 このファイルは **本サンプルの Cloud Monitoring Alert Policy** について対応づけます。自動生成の `PARAMETER.md` とは別物です。GCE VM は作りません。メトリクス条件だけです。
 
-一次情報（2026-08-16 照合）:
+一次情報:
 
 - [google_monitoring_alert_policy](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/monitoring_alert_policy)
 - [google_monitoring_notification_channel](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/monitoring_notification_channel)

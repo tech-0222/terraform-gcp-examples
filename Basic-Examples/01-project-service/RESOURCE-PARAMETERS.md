@@ -2,7 +2,7 @@
 
 このファイルは **本サンプルの `google_project_service`** について、GCP / `gcloud --format=json` / Terraform 属性を対応づけます。自動生成の `PARAMETER.md` とは別物です。
 
-一次情報（2026-08-16 照合）:
+一次情報:
 
 - [google_project_service](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/google_project_service)
 - [Enabling and Disabling Services](https://cloud.google.com/service-usage/docs/enable-disable)

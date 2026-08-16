@@ -2,7 +2,7 @@
 
 08 と同型の Regional External ALB に **リージョナル Cloud Armor** を足した差分です。VPC / proxy-only / NEG の説明は [08 の RESOURCE-PARAMETERS.md](../08-regional-external-alb-neg/RESOURCE-PARAMETERS.md) を正本とします。
 
-一次情報（2026-08-16 照合）:
+一次情報:
 
 - [Cloud Armor](https://cloud.google.com/armor/docs)
 - [google_compute_region_security_policy](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_region_security_policy)

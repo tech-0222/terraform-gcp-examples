@@ -4,7 +4,7 @@
 
 自動生成の `PARAMETER.md`（terraform-docs: Inputs / Outputs / Resources）とは別物です。手で編集してよい参照資料です。
 
-記載は次の一次情報に合わせています（2026-08-16 照合）。
+記載は次の一次情報に合わせています。
 
 - [google_compute_instance](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_instance)
 - [Resource: Instance](https://cloud.google.com/compute/docs/reference/rest/v1/instances)
