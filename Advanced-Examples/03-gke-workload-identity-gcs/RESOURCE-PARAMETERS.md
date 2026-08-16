@@ -1,6 +1,8 @@
 # 03 - リソースパラメータ対応
 
-このファイルは **GKE Workload Identity + GCS 書き込み Job** について対応づけます。自動生成の `PARAMETER.md` とは別物です。
+GKE 本体のコンソール項目対応は Basic 07 の **[GKE-PARAMETERS.md](../../Basic-Examples/07-gke/GKE-PARAMETERS.md)** を正本とします。クラスタ / ノードプールの形は Basic 07 と同型（zonal Standard、公開エンドポイント、Spot 1 ノード、WI 有効、Dataplane V2 なし）です。
+
+このファイルは **名前・CIDR の差** と **GCS / Kubernetes 側** だけを書きます。
 
 一次情報（2026-08-16 照合）:
 
@@ -12,19 +14,20 @@
 ## 確認コマンド
 
 ```bash
-gcloud container clusters describe tf-adv-gke-wi --zone=asia-northeast1-a --format=json
-gcloud storage buckets describe "gs://tf-adv-gke-wi-PROJECT_ID" --format=json
+gcloud container clusters describe "$(terraform output -raw cluster_name)" \
+  --zone="$(terraform output -raw cluster_location)" --format=json
+gcloud storage buckets describe "gs://$(terraform output -raw bucket_name)" --format=json
 ```
 
-## ネットワーク / GKE（Basic 07 と同型）
+## Basic 07 との差分（GKE）
 
-| 項目 | 本サンプル | Terraform / 公式 |
+| 項目 | Basic 07 | 本サンプル |
 |---|---|---|
-| クラスタ | zonal `asia-northeast1-a` | `location` がゾーンなら zonal |
-| デフォルトプール | 削除 | `remove_default_node_pool` + `initial_node_count` |
-| Workload Identity | `{project}.svc.id.goog` | `workload_identity_config.workload_pool` |
-| ノード | Spot / `GKE_METADATA` | WI 利用時はノードの `workload_metadata_config.mode = GKE_METADATA` が必要 |
-| Pods/Services CIDR | `10.51.0.0/16` / `10.52.0.0/20` | VPC-native セカンダリ |
+| クラスタ名 | `tf-example-gke` | `tf-adv-gke-wi` |
+| VPC / Subnet | `10.40.0.0/24` | `10.50.0.0/24` |
+| Pods / Services | `10.41.0.0/16` / `10.42.0.0/20` | `10.51.0.0/16` / `10.52.0.0/20` |
+| `resource_labels.example` | `07-gke` | `03-gke-workload-identity-gcs` |
+| WI / Spot / `GKE_METADATA` | あり | 同じ |
 
 ## GCS と IAM
 
