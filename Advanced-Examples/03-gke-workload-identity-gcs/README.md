@@ -43,6 +43,7 @@ Zonal Spot GKE 上の Pod が **Workload Identity** 経由で GCP SA になり�
 ```text
 03-gke-workload-identity-gcs/
 ├── README.md
+├── RESOURCE-PARAMETERS.md  # コンソール / API / Terraform の対応（手書き）
 ├── versions.tf
 ├── provider.tf   # google + kubernetes
 ├── variables.tf
@@ -52,6 +53,8 @@ Zonal Spot GKE 上の Pod が **Workload Identity** 経由で GCP SA になり�
 ├── outputs.tf
 └── terraform.tfvars.example
 ```
+
+リソースの明示設定と公式ドキュメント上の既定値の対応は `RESOURCE-PARAMETERS.md` を参照してください。`PARAMETER.md` は terraform-docs の自動生成です。
 
 ## 設定方法
 

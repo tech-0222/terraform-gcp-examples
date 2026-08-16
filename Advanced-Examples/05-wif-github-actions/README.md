@@ -13,6 +13,9 @@ GitHub Actions から **JSON 鍵なし** で GCP の Service Account を借用�
 
 ## 作成されるGCPリソース
 
+リソースの明示設定と公式ドキュメント上の既定値の対応は `RESOURCE-PARAMETERS.md` を参照してください。`PARAMETER.md` は terraform-docs の自動生成です。
+
+
 | リソース | 内容 |
 |---|---|
 | `google_iam_workload_identity_pool` | GitHub 用プール |

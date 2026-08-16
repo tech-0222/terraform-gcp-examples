@@ -43,6 +43,7 @@ Advanced-Examples/
 
 ```text
 README.md
+RESOURCE-PARAMETERS.md     # コンソール / API / Terraform の対応（手書き）
 versions.tf
 provider.tf
 variables.tf
@@ -54,7 +55,7 @@ terraform.tfvars.example
 
 詳細ルールは `docs/CONVENTIONS.md` を参照してください。
 
-シナリオ追加後は、基本サンプルと同様に次を生成する（**ドキュメント生成用の GitHub Actions は使わない**。ローカル実行）。WIF デモ用 workflow は `.github/workflows/wif-demo.yml` を参照。
+シナリオ追加後は、基本サンプルと同様に次を生成する（**ドキュメント生成用の GitHub Actions は使わない**。ローカル実行）。WIF デモ用 workflow は `.github/workflows/wif-demo.yml` を参照。手書きの `RESOURCE-PARAMETERS.md` も更新する。
 
 ```bash
 ./scripts/generate-terraform-docs.sh Advanced-Examples/<name>
