@@ -17,7 +17,7 @@
 - `terraform init` → `fmt` → `validate` → `plan` → `apply` → 確認 → `destroy` まで検証できること
 - Secret / `terraform.tfvars` / state はコミットしない（`terraform.tfvars.example` を用意する）
 - コストと destroy 可否を README に必ず書く
-- 共通化（`modules/`）は、シナリオ間で重複が目立ってから検討する（最初から必須にしない）。08〜10 の ALB も **Terraform モジュールは使わず** `google_*` のみ。
+- 共通化（`modules/`）は、シナリオ間で重複が目立ってから検討する（最初から必須にしない）
 
 ## ディレクトリ命名
 
