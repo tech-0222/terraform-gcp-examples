@@ -1,0 +1,7 @@
+project_id = "your-project-id"
+
+# Optional overrides
+# region       = "asia-northeast1"
+# zone_a       = "asia-northeast1-a"
+# zone_c       = "asia-northeast1-c"
+# machine_type = "e2-micro"
