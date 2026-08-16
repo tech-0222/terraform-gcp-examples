@@ -115,3 +115,14 @@ Terraform Resource名は、サンプル内で役割が分かる簡潔な名前�
 ```
 
 `.tf` 変更後は該当 module、または `--all` で再生成してからコミットする。
+
+### インスタンスパラメータ対応（試作）
+
+GCE のようにコンソール項目が多いリソースでは、サンプル固有の対応表を手書きしてよい。
+
+| ファイル | 役割 |
+|---|---|
+| `PARAMETER.md` | terraform-docs。Inputs / Outputs / Resources。**手動編集禁止** |
+| `INSTANCE-PARAMETERS.md` | コンソール項目 / `gcloud --format=json` / Terraform 属性。**手書き**。そのサンプルの明示設定と未指定（デフォルト）を区別する |
+
+試作の正本: `Basic-Examples/04-compute-engine/INSTANCE-PARAMETERS.md`。他サンプルへ広げる前に、この形式で足りるか確認する。
