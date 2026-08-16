@@ -20,7 +20,7 @@
 
 - `PARAMETER.md` … terraform-docs
 - `DEPENDENCY-GRAPH.svg` … terraform graph
-- `RESOURCE-PARAMETERS.md` … コンソール / API / Terraform 属性の対応（手書き。公式ドキュメント照合）
+- `docs/RESOURCE-PARAMETERS.md` … コンソール / API / Terraform 属性の対応（手書き。公式ドキュメント照合）
 
 再生成:
 

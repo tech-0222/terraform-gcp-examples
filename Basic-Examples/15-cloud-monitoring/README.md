@@ -40,7 +40,7 @@ Cloud Monitoring の Alert Policy と、任意の Email Notification Channel を
 ```text
 15-cloud-monitoring/
 ├── README.md
-├── RESOURCE-PARAMETERS.md  # コンソール / API / Terraform の対応（手書き）
+├── docs/RESOURCE-PARAMETERS.md  # コンソール / API / Terraform の対応（手書き）
 ├── versions.tf
 ├── provider.tf
 ├── variables.tf
@@ -49,7 +49,7 @@ Cloud Monitoring の Alert Policy と、任意の Email Notification Channel を
 └── terraform.tfvars.example
 ```
 
-リソースの明示設定と公式ドキュメント上の既定値の対応は `RESOURCE-PARAMETERS.md` を参照してください。`PARAMETER.md` は terraform-docs の自動生成です。
+リソースの明示設定と公式ドキュメント上の既定値の対応は `docs/RESOURCE-PARAMETERS.md` を参照してください。`PARAMETER.md` は terraform-docs の自動生成です。
 
 
 `PARAMETER.md` / `DEPENDENCY-GRAPH.svg` / `.terraform.lock.hcl` は検証時に生成済みです。

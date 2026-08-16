@@ -1,6 +1,6 @@
 # 03 - リソースパラメータ対応
 
-GKE 本体のコンソール項目対応は Basic 07 の **[GKE-PARAMETERS.md](../../Basic-Examples/07-gke/GKE-PARAMETERS.md)** を正本とします。クラスタ / ノードプールの形は Basic 07 と同型（zonal Standard、公開エンドポイント、Spot 1 ノード、WI 有効、Dataplane V2 なし）です。
+GKE 本体のコンソール項目対応は Basic 07 の **[GKE-PARAMETERS.md](../../../Basic-Examples/07-gke/docs/GKE-PARAMETERS.md)** を正本とします。クラスタ / ノードプールの形は Basic 07 と同型（zonal Standard、公開エンドポイント、Spot 1 ノード、WI 有効、Dataplane V2 なし）です。
 
 このファイルは **名前・CIDR の差** と **GCS / Kubernetes 側** だけを書きます。
 
