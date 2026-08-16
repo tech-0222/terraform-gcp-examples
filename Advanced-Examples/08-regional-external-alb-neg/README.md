@@ -42,9 +42,10 @@
 ├── network.tf
 ├── main.tf
 ├── outputs.tf
-├── startup-a.sh
-├── startup-a2.sh
-├── startup-b.sh
+├── scripts/
+│   ├── startup-a.sh
+│   ├── startup-a2.sh
+│   └── startup-b.sh
 └── terraform.tfvars.example
 ```
 
