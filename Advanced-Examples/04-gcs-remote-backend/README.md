@@ -20,7 +20,7 @@ Terraform State を **GCS バケット（Object Versioning 有効）** に置く
 
 ## 作成されるGCPリソース
 
-リソースの明示設定と公式ドキュメント上の既定値の対応は `docs/RESOURCE-PARAMETERS.md` を参照してください。`PARAMETER.md` は terraform-docs の自動生成です。
+リソースの明示設定と公式ドキュメント上の既定値の対応は `docs/RESOURCE-PARAMETERS.md` を参照してください。`docs/PARAMETER.md` は terraform-docs の自動生成です。
 
 
 | 置き場 | リソース | 内容 |

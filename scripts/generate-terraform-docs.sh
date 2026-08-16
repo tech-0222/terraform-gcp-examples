@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Basic-Examples / Advanced-Examples 配下の root module ごとに PARAMETER.md を生成する
+# Basic-Examples / Advanced-Examples 配下の root module ごとに docs/PARAMETER.md を生成する
 # GitHub Actions は使わない（ローカル実行専用）
 #
 # 使い方:
@@ -66,7 +66,8 @@ normalize_module_dir() {
 generate_for_module() {
   local module_dir="$1"
   local rel="${module_dir#"${REPO_ROOT}/"}"
-  echo "Generating PARAMETER.md: ${rel}"
+  echo "Generating docs/PARAMETER.md: ${rel}"
+  mkdir -p "${module_dir}/docs"
   terraform-docs --config "${CONFIG_FILE}" "${module_dir}"
 }
 

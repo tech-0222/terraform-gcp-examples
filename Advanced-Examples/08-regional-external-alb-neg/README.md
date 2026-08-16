@@ -49,7 +49,7 @@
 └── terraform.tfvars.example
 ```
 
-`PARAMETER.md` は terraform-docs の自動生成です。
+`docs/PARAMETER.md` は terraform-docs の自動生成です。
 
 ## 設定方法
 
