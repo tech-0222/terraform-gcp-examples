@@ -2,7 +2,7 @@
 
 GKE クラスタ / ノードプールのコンソール項目対応は **[GKE-PARAMETERS.md](./GKE-PARAMETERS.md)** を正本とします。このファイルは API 有効化と準備ネットワークをまとめます。
 
-一次情報（2026-08-16 照合）:
+一次情報:
 
 - [google_compute_network](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_network)
 - [google_compute_subnetwork](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_subnetwork)

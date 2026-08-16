@@ -2,7 +2,7 @@
 
 このファイルは **本サンプルの Artifact Registry** について対応づけます。自動生成の `PARAMETER.md` とは別物です。
 
-一次情報（2026-08-16 照合）:
+一次情報:
 
 - [google_artifact_registry_repository](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/artifact_registry_repository)
 - [Repositories](https://cloud.google.com/artifact-registry/docs/reference/rest/v1/projects.locations.repositories)

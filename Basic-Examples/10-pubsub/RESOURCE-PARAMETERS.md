@@ -2,7 +2,7 @@
 
 このファイルは **本サンプルの Pub/Sub Topic / Pull Subscription** について対応づけます。自動生成の `PARAMETER.md` とは別物です。
 
-一次情報（2026-08-16 照合）:
+一次情報:
 
 - [google_pubsub_topic](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/pubsub_topic)
 - [google_pubsub_subscription](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/pubsub_subscription)

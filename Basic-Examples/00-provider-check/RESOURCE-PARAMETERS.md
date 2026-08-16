@@ -4,7 +4,7 @@
 
 本サンプルはリソースを作成しません。Project の参照確認だけです。
 
-一次情報（2026-08-16 照合）:
+一次情報:
 
 - [data.google_project](https://registry.terraform.io/providers/hashicorp/google/latest/docs/data-sources/project)
 - [projects.get](https://cloud.google.com/resource-manager/reference/rest/v1/projects)

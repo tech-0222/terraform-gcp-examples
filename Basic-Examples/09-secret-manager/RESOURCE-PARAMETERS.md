@@ -2,7 +2,7 @@
 
 このファイルは **本サンプルの Secret Manager** について対応づけます。自動生成の `PARAMETER.md` とは別物です。
 
-一次情報（2026-08-16 照合）:
+一次情報:
 
 - [google_secret_manager_secret](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/secret_manager_secret)
 - [google_secret_manager_secret_version](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/secret_manager_secret_version)

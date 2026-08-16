@@ -2,7 +2,7 @@
 
 このファイルは **IAP SSH + OS Login + 専用 SA の Spot VM** について、明示設定と公式既定を対応づけます。自動生成の `PARAMETER.md` とは別物です。GCE 項目の読み方は Basic 04 の `INSTANCE-PARAMETERS.md` と同じです。
 
-一次情報（2026-08-16 照合）:
+一次情報:
 
 - [google_compute_instance](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_instance)
 - [IAP TCP forwarding](https://cloud.google.com/iap/docs/using-tcp-forwarding)
