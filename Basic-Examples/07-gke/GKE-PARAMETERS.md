@@ -97,20 +97,17 @@ gcloud container clusters describe "$(terraform output -raw cluster_name)" \
 
 ## クラスタ ネットワーキング
 
-VPC / Subnet 本体は `network.tf`（クラスタ外）です。
+VPC / Subnet / セカンダリ CIDR の値は **[RESOURCE-PARAMETERS.md](./RESOURCE-PARAMETERS.md)** が正本です。ここではクラスタがそれらをどう参照するかと、クラスタ専用のネットワーク機能だけ書きます。
 
 | 項目 | 本サンプル | 区分 | 再作成 | Terraform | gcloud パス |
 |---|---|---|---|---|---|
-| 自動 IPAM | 使わない。セカンダリ範囲を明示 | 明示 | クラスタ ○ | `ip_allocation_policy` に範囲名 | `ipAllocationPolicy.useIpAliases` |
+| ネットワーク / サブネット | RESOURCE-PARAMETERS の VPC / Subnet を参照 | 明示 | クラスタ ○ | `network` / `subnetwork`（名前参照。CIDR は Subnet 側） | `network` / `subnetwork` |
+| 自動 IPAM | 使わない | 明示 | クラスタ ○ | `ip_allocation_policy` に範囲**名** | `ipAllocationPolicy.useIpAliases` |
+| VPC ネイティブ | 有効 | 明示 | クラスタ ○ | `cluster_secondary_range_name = "pods"`、`services_secondary_range_name = "services"`。新規クラスタの `networking_mode` 既定は `VPC_NATIVE` | `ipAllocationPolicy` |
 | デフォルト SNAT | 有効のまま | 未指定 | − | `default_snat_status` 未指定 | `defaultSnatStatus` |
-| ネットワーク | `tf-example-gke-vpc` | 明示 | クラスタ ○ | `network` | `network` |
-| サブネット | `tf-example-gke-subnet` / `10.40.0.0/24` / PGA オン | 明示 | クラスタ ○ | `subnetwork`。PGA は Subnet 側 | `subnetwork` |
 | マルチサブネット | なし | 未指定 | クラスタ ○ | 追加 subnet なし | |
 | スタックタイプ | IPv4 | 未指定 | クラスタ ○ | `ip_allocation_policy.stack_type` 未指定 | |
 | プライベート CP エンドポイント用サブネット | なし | 未指定 | クラスタ ○ | `private_endpoint_subnetwork` | |
-| VPC ネイティブ | 有効 | 明示 | クラスタ ○ | `ip_allocation_policy`。新規クラスタの `networking_mode` 既定は `VPC_NATIVE` | `ipAllocationPolicy` |
-| Pod IPv4 範囲 | セカンダリ `pods` / `10.41.0.0/16` | 明示 | クラスタ ○ | `cluster_secondary_range_name = "pods"` | `ipAllocationPolicy.clusterSecondaryRangeName` |
-| Service IPv4 範囲 | セカンダリ `services` / `10.42.0.0/20` | 明示 | クラスタ ○ | `services_secondary_range_name = "services"` | `ipAllocationPolicy.servicesSecondaryRangeName` |
 | 追加 Pod 範囲 / マルチサブネット Pod 範囲 | なし | 未指定 | − | | |
 | ノードあたりの最大ポッド数 | **未指定 → VPC-native 既定 110** | 未指定 | クラスタ ○（クラスタ既定） | `default_max_pods_per_node`。プールは `max_pods_per_node` | `defaultMaxPodsConstraint` |
 | ネットワーク サービス ティア | Default | 未指定 | − | | |
