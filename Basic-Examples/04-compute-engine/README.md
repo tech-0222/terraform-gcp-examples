@@ -36,14 +36,17 @@ Compute Engine VM（Spot）と、起動に必要な最小ネットワークを T
 ```text
 04-compute-engine/
 ├── README.md
-├── docs/RESOURCE-PARAMETERS.md  # コンソール / API / Terraform の対応（手書き）
-├── docs/INSTANCE-PARAMETERS.md  # コンソール / gcloud JSON / Terraform の対応（手書き）
-├── docs/PARAMETER.md            # terraform-docs（自動生成。手動編集しない）
+├── docs/
+│   ├── PARAMETER.md                  # terraform-docs（自動生成。手動編集しない）
+│   ├── INSTANCE-PARAMETERS.md        # コンソール / gcloud JSON / Terraform の対応（手書き）
+│   └── RESOURCE-PARAMETERS.md        # ネットワークの対応（手書き）
+├── DEPENDENCY-GRAPH.svg          # terraform graph（自動生成。手動編集しない）
+├── .terraform.lock.hcl
 ├── versions.tf
 ├── provider.tf
 ├── variables.tf
 ├── network.tf   # VPC / Subnet / Firewall（準備）
-├── main.tf      # Compute Engine VM（本体）
+├── main.tf   # Compute Engine VM（本体）
 ├── outputs.tf
 └── terraform.tfvars.example
 ```

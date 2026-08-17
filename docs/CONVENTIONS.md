@@ -20,7 +20,11 @@
 
 ```text
 README.md
-docs/RESOURCE-PARAMETERS.md  # 手書き。docs/PARAMETER.md とは別
+docs/
+  PARAMETER.md               # terraform-docs。自動生成。手動編集禁止
+  RESOURCE-PARAMETERS.md     # 手書き
+DEPENDENCY-GRAPH.svg         # terraform graph。自動生成。手動編集禁止
+.terraform.lock.hcl
 versions.tf
 provider.tf
 variables.tf
@@ -92,6 +96,7 @@ Terraform Resource名は、サンプル内で役割が分かる簡潔な名前�
 - 何を検証するか
 - 作成されるGCPリソース
 - 前提条件
+- ファイル構成（実ディレクトリと一致させる。`docs/` と自動生成物を含める）
 - 使用方法
 - 確認方法
 - 削除方法
