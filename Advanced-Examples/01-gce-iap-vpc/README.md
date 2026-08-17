@@ -41,12 +41,16 @@
 ```text
 01-gce-iap-vpc/
 ├── README.md
-├── docs/RESOURCE-PARAMETERS.md  # コンソール / API / Terraform の対応（手書き）
+├── docs/
+│   ├── PARAMETER.md                  # terraform-docs（自動生成。手動編集しない）
+│   └── RESOURCE-PARAMETERS.md        # コンソール / API / Terraform の対応（手書き）
+├── DEPENDENCY-GRAPH.svg          # terraform graph（自動生成。手動編集しない）
+├── .terraform.lock.hcl
 ├── versions.tf
 ├── provider.tf
 ├── variables.tf
 ├── network.tf   # VPC / Subnet / Firewall
-├── main.tf      # API / SA / VM / IAM
+├── main.tf   # API / SA / VM / IAM
 ├── outputs.tf
 └── terraform.tfvars.example
 ```

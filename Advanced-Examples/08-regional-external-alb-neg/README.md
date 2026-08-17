@@ -35,7 +35,11 @@
 ```text
 08-regional-external-alb-neg/
 ├── README.md
-├── docs/RESOURCE-PARAMETERS.md
+├── docs/
+│   ├── PARAMETER.md              # terraform-docs（自動生成。手動編集しない）
+│   └── RESOURCE-PARAMETERS.md    # コンソール / API / Terraform の対応（手書き）
+├── DEPENDENCY-GRAPH.svg          # terraform graph（自動生成。手動編集しない）
+├── .terraform.lock.hcl
 ├── versions.tf
 ├── provider.tf
 ├── variables.tf
@@ -49,7 +53,7 @@
 └── terraform.tfvars.example
 ```
 
-`docs/PARAMETER.md` は terraform-docs の自動生成です。
+リソースの明示設定と公式ドキュメント上の既定値の対応は `docs/RESOURCE-PARAMETERS.md` を参照してください。`docs/PARAMETER.md` と `DEPENDENCY-GRAPH.svg` は自動生成です。
 
 ## 設定方法
 

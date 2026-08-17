@@ -14,13 +14,18 @@
 
 応用・複合の試験は `Advanced-Examples/` 側に追加していきます。
 
-## 自動生成ドキュメント
+## ドキュメント
 
-各サンプルディレクトリには次が含まれます（手動編集しない）。
+各サンプルの README に実ディレクトリと一致するファイル構成を書きます。
+
+自動生成（手動編集しない）:
 
 - `docs/PARAMETER.md` … terraform-docs
 - `DEPENDENCY-GRAPH.svg` … terraform graph
-- `docs/RESOURCE-PARAMETERS.md` … コンソール / API / Terraform 属性の対応（手書き。公式ドキュメント照合）
+
+手書き:
+
+- `docs/RESOURCE-PARAMETERS.md` … コンソール / API / Terraform 属性の対応（公式ドキュメント照合）
 
 再生成:
 

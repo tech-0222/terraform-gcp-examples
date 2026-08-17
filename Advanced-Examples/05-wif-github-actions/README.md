@@ -32,6 +32,27 @@ GitHub Actions から **JSON 鍵なし** で GCP の Service Account を借用�
 - 検証用 Project
 - GitHub リポジトリ名（default: `tech-0222/terraform-gcp-examples`）
 
+## ファイル構成
+
+```text
+05-wif-github-actions/
+├── README.md
+├── docs/
+│   ├── PARAMETER.md              # terraform-docs（自動生成。手動編集しない）
+│   └── RESOURCE-PARAMETERS.md    # コンソール / API / Terraform の対応（手書き）
+├── DEPENDENCY-GRAPH.svg          # terraform graph（自動生成。手動編集しない）
+├── .terraform.lock.hcl
+├── versions.tf
+├── provider.tf
+├── variables.tf
+├── main.tf
+├── outputs.tf
+├── workflow.example.yml          # GitHub Actions のテンプレート
+└── terraform.tfvars.example
+```
+
+リポジトリ直下の `.github/workflows/wif-demo.yml` は本モジュール apply 後に手動実行する検証用 workflow です。
+
 ## 使用方法
 
 ```bash

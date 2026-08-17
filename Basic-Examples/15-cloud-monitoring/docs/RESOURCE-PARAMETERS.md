@@ -1,6 +1,6 @@
 # 15 - リソースパラメータ対応
 
-このファイルは **本サンプルの Cloud Monitoring Alert Policy** について対応づけます。自動生成の `PARAMETER.md` とは別物です。GCE VM は作りません。メトリクス条件だけです。
+このファイルは **本サンプルの Cloud Monitoring Alert Policy** について対応づけます。自動生成の `docs/PARAMETER.md` とは別物です。GCE VM は作りません。メトリクス条件だけです。
 
 一次情報:
 

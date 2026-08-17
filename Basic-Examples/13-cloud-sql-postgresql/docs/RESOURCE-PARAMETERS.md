@@ -1,6 +1,6 @@
 # 13 - リソースパラメータ対応
 
-このファイルは **本サンプルの Cloud SQL for PostgreSQL** について対応づけます。自動生成の `PARAMETER.md` とは別物です。
+このファイルは **本サンプルの Cloud SQL for PostgreSQL** について対応づけます。自動生成の `docs/PARAMETER.md` とは別物です。
 
 一次情報:
 

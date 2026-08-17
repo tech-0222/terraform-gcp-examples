@@ -2,7 +2,7 @@
 
 このファイルは **本サンプルの Standard GKE**（`google_container_cluster.primary` + `google_container_node_pool.spot`）について、コンソール項目・`gcloud --format=json`・Terraform 属性を対応づけます。
 
-自動生成の `PARAMETER.md`（terraform-docs）とは別物です。手で編集してよい参照資料です。
+自動生成の `docs/PARAMETER.md`（terraform-docs）とは別物です。手で編集してよい参照資料です。
 
 コンソール項目の切り口は Obsidian の GKE Parameter カタログ（クラスタ設定 / ノードプール設定）に合わせています。**値は本サンプルのコード**です。別 PoC のリージョナル・プライベートクラスタ（Dataplane V2、Cloud DNS、max pods 32、専用ノード SA など）の実測値は使いません。
 

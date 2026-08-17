@@ -56,6 +56,26 @@ Cloud NATはVMがnginxをInstallするためのOutbound経路です。IAPからV
 - API、Compute Engine、Network、Service Account、Project IAMを操作できる権限
 - `iap_member`に指定するUserまたはPrincipal
 
+## ファイル構成
+
+```text
+07-iap-ssh-port-forwarding/
+├── README.md
+├── docs/
+│   ├── PARAMETER.md              # terraform-docs（自動生成。手動編集しない）
+│   └── RESOURCE-PARAMETERS.md    # コンソール / API / Terraform の対応（手書き）
+├── DEPENDENCY-GRAPH.svg          # terraform graph（自動生成。手動編集しない）
+├── .terraform.lock.hcl
+├── versions.tf
+├── provider.tf
+├── variables.tf
+├── network.tf                    # VPC / Subnet / NAT / Firewall
+├── main.tf                       # API / SA / VM / IAM
+├── outputs.tf
+├── startup.sh                    # nginx 導入
+└── terraform.tfvars.example
+```
+
 ## 設定
 
 ```bash

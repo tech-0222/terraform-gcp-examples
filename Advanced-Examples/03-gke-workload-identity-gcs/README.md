@@ -43,13 +43,17 @@ Zonal Spot GKE 上の Pod が **Workload Identity** 経由で GCP SA になり�
 ```text
 03-gke-workload-identity-gcs/
 ├── README.md
-├── docs/RESOURCE-PARAMETERS.md  # コンソール / API / Terraform の対応（手書き）
+├── docs/
+│   ├── PARAMETER.md                  # terraform-docs（自動生成。手動編集しない）
+│   └── RESOURCE-PARAMETERS.md        # コンソール / API / Terraform の対応（手書き）
+├── DEPENDENCY-GRAPH.svg          # terraform graph（自動生成。手動編集しない）
+├── .terraform.lock.hcl
 ├── versions.tf
 ├── provider.tf   # google + kubernetes
 ├── variables.tf
 ├── network.tf
-├── main.tf       # GKE / GCS / IAM
-├── k8s.tf        # Namespace / KSA / Job
+├── main.tf   # GKE / GCS / IAM
+├── k8s.tf   # Namespace / KSA / Job
 ├── outputs.tf
 └── terraform.tfvars.example
 ```

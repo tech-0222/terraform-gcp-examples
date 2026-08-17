@@ -31,8 +31,10 @@ terraform-gcp-examples/
 ├── Basic-Examples/                     # 基本（単体・最小）
 │   ├── README.md
 │   └── <sample>/
-│       ├── docs/PARAMETER.md          # terraform-docs 自動生成
-│       ├── DEPENDENCY-GRAPH.svg  # terraform graph 自動生成
+│       ├── docs/
+│       │   ├── PARAMETER.md              # terraform-docs 自動生成
+│       │   └── RESOURCE-PARAMETERS.md    # 手書き
+│       ├── DEPENDENCY-GRAPH.svg          # terraform graph 自動生成
 │       └── ...
 └── Advanced-Examples/                    # 応用（複数サービス連携）
     └── README.md
