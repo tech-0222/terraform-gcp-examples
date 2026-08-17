@@ -1,6 +1,6 @@
 # 01 - リソースパラメータ対応
 
-このファイルは **本サンプルの `google_project_service`** について、GCP / `gcloud --format=json` / Terraform 属性を対応づけます。自動生成の `PARAMETER.md` とは別物です。
+このファイルは **本サンプルの `google_project_service`** について、GCP / `gcloud --format=json` / Terraform 属性を対応づけます。自動生成の `docs/PARAMETER.md` とは別物です。
 
 一次情報:
 

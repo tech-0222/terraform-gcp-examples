@@ -1,6 +1,6 @@
 # 07 - リソースパラメータ対応
 
-このファイルは **IAP SSH + Local Port Forwarding + 非公開 nginx** について対応づけます。自動生成の `PARAMETER.md` とは別物です。Advanced 01 との差分は NAT・startup・スコープ・HTTP 非公開です。
+このファイルは **IAP SSH + Local Port Forwarding + 非公開 nginx** について対応づけます。自動生成の `docs/PARAMETER.md` とは別物です。Advanced 01 との差分は NAT・startup・スコープ・HTTP 非公開です。
 
 一次情報:
 

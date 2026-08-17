@@ -41,7 +41,11 @@ Terraform 1.11 以降の write-only argument を利用し、Secret 値を Terraf
 ```text
 09-secret-manager/
 ├── README.md
-├── docs/RESOURCE-PARAMETERS.md  # コンソール / API / Terraform の対応（手書き）
+├── docs/
+│   ├── PARAMETER.md                  # terraform-docs（自動生成。手動編集しない）
+│   └── RESOURCE-PARAMETERS.md        # コンソール / API / Terraform の対応（手書き）
+├── DEPENDENCY-GRAPH.svg          # terraform graph（自動生成。手動編集しない）
+├── .terraform.lock.hcl
 ├── versions.tf
 ├── provider.tf
 ├── variables.tf

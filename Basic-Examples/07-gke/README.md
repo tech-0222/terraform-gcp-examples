@@ -39,13 +39,17 @@
 ```text
 07-gke/
 ├── README.md
-├── docs/RESOURCE-PARAMETERS.md  # ネットワーク等の対応（手書き）
-├── docs/GKE-PARAMETERS.md       # クラスタ / ノードプールの詳細対応（手書き）
+├── docs/
+│   ├── PARAMETER.md                  # terraform-docs（自動生成。手動編集しない）
+│   ├── GKE-PARAMETERS.md             # クラスタ / ノードプールの詳細対応（手書き）
+│   └── RESOURCE-PARAMETERS.md        # ネットワーク等の対応（手書き）
+├── DEPENDENCY-GRAPH.svg          # terraform graph（自動生成。手動編集しない）
+├── .terraform.lock.hcl
 ├── versions.tf
 ├── provider.tf
 ├── variables.tf
 ├── network.tf   # VPC / Subnet + secondary ranges（準備）
-├── main.tf      # GKE Cluster / Node Pool（本体）
+├── main.tf   # GKE Cluster / Node Pool（本体）
 ├── outputs.tf
 └── terraform.tfvars.example
 ```

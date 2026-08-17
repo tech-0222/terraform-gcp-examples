@@ -38,7 +38,11 @@ BigQuery Dataset と Table を Terraform で作成・確認・削除する基本
 ```text
 12-bigquery/
 ├── README.md
-├── docs/RESOURCE-PARAMETERS.md  # コンソール / API / Terraform の対応（手書き）
+├── docs/
+│   ├── PARAMETER.md                  # terraform-docs（自動生成。手動編集しない）
+│   └── RESOURCE-PARAMETERS.md        # コンソール / API / Terraform の対応（手書き）
+├── DEPENDENCY-GRAPH.svg          # terraform graph（自動生成。手動編集しない）
+├── .terraform.lock.hcl
 ├── versions.tf
 ├── provider.tf
 ├── variables.tf
@@ -50,7 +54,6 @@ BigQuery Dataset と Table を Terraform で作成・確認・削除する基本
 リソースの明示設定と公式ドキュメント上の既定値の対応は `docs/RESOURCE-PARAMETERS.md` を参照してください。`docs/PARAMETER.md` は terraform-docs の自動生成です。
 
 
-`docs/PARAMETER.md` / `DEPENDENCY-GRAPH.svg` / `.terraform.lock.hcl` は検証時に生成済みです。
 
 ## 設定方法
 

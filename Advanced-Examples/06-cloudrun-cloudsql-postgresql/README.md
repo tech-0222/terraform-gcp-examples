@@ -102,7 +102,11 @@ Terraform 実行者:
 ```text
 06-cloudrun-cloudsql-postgresql/
 ├── README.md
-├── docs/RESOURCE-PARAMETERS.md  # コンソール / API / Terraform の対応（手書き）
+├── docs/
+│   ├── PARAMETER.md              # terraform-docs（自動生成。手動編集しない）
+│   └── RESOURCE-PARAMETERS.md    # コンソール / API / Terraform の対応（手書き）
+├── DEPENDENCY-GRAPH.svg          # terraform graph（自動生成。手動編集しない）
+├── .terraform.lock.hcl
 ├── versions.tf
 ├── provider.tf
 ├── variables.tf
@@ -120,7 +124,6 @@ Terraform 実行者:
 
 リソースの明示設定と公式ドキュメント上の既定値の対応は `docs/RESOURCE-PARAMETERS.md` を参照してください。`docs/PARAMETER.md` は terraform-docs の自動生成です。
 
-`docs/PARAMETER.md` / `DEPENDENCY-GRAPH.svg` / `.terraform.lock.hcl` は実検証時に生成します。
 
 ## 1. 設定
 
@@ -261,4 +264,3 @@ Artifact Registry に push した接続確認用イメージも repository 削�
 
 実GCP環境（`YOUR_PROJECT_ID`）で `fmt / init / validate / plan / apply` を実施し、接続確認アプリを Artifact Registry へ push 後に Cloud Run イメージを差し替え、認証付き curl で `status=ok` / `database=appdb` / `user=appuser` / `connection=cloud-sql-unix-socket` を確認しました。`terraform destroy` まで完了しています。
 
-`docs/PARAMETER.md` / `DEPENDENCY-GRAPH.svg` / `.terraform.lock.hcl` は検証時に生成済みです。
