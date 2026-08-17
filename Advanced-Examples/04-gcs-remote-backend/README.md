@@ -9,13 +9,33 @@ Terraform State を **GCS バケット（Object Versioning 有効）** に置く
 | Cloud Storage | State 保管（versioning） / demo リソース |
 | Terraform GCS backend | Remote State + locking |
 
-## 構成
+## ファイル構成
 
 ```text
-04-gcs-remote-backend/     # ① State 用バケットを作成（local state）
-├── docs/RESOURCE-PARAMETERS.md
-└── demo/                  # ② GCS backend で小さなバケットを作成
-    └── docs/RESOURCE-PARAMETERS.md
+04-gcs-remote-backend/            # ① State 用バケットを作成（local state）
+├── README.md
+├── docs/
+│   ├── PARAMETER.md              # terraform-docs（自動生成。手動編集しない）
+│   └── RESOURCE-PARAMETERS.md    # コンソール / API / Terraform の対応（手書き）
+├── DEPENDENCY-GRAPH.svg          # terraform graph（自動生成。手動編集しない）
+├── .terraform.lock.hcl
+├── versions.tf
+├── provider.tf
+├── variables.tf
+├── main.tf
+├── outputs.tf
+├── terraform.tfvars.example
+└── demo/                         # ② GCS backend で小さなバケットを作成
+    ├── docs/
+    │   └── RESOURCE-PARAMETERS.md
+    ├── .terraform.lock.hcl
+    ├── versions.tf
+    ├── provider.tf
+    ├── variables.tf
+    ├── main.tf
+    ├── outputs.tf
+    ├── backend.hcl.example
+    └── terraform.tfvars.example
 ```
 
 ## 作成されるGCPリソース

@@ -2,7 +2,7 @@
 
 このファイルは **本サンプルの `google_compute_instance.vm`** について、GCP コンソール項目・`gcloud --format=json`・Terraform 属性を対応づけます。
 
-自動生成の `PARAMETER.md`（terraform-docs: Inputs / Outputs / Resources）とは別物です。手で編集してよい参照資料です。
+自動生成の `docs/PARAMETER.md`（terraform-docs: Inputs / Outputs / Resources）とは別物です。手で編集してよい参照資料です。
 
 記載は次の一次情報に合わせています。
 

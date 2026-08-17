@@ -1,6 +1,6 @@
 # 06 - リソースパラメータ対応
 
-このファイルは **Cloud Run + Cloud SQL PostgreSQL + Secret Manager** について対応づけます。自動生成の `PARAMETER.md` とは別物です。
+このファイルは **Cloud Run + Cloud SQL PostgreSQL + Secret Manager** について対応づけます。自動生成の `docs/PARAMETER.md` とは別物です。
 
 一次情報:
 

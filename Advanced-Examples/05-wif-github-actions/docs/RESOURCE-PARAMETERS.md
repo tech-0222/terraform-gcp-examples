@@ -1,6 +1,6 @@
 # 05 - リソースパラメータ対応
 
-このファイルは **GitHub Actions 向け Workload Identity Federation** について対応づけます。自動生成の `PARAMETER.md` とは別物です。
+このファイルは **GitHub Actions 向け Workload Identity Federation** について対応づけます。自動生成の `docs/PARAMETER.md` とは別物です。
 
 一次情報:
 

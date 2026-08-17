@@ -2,6 +2,8 @@
 
 同一 NEG 上の 2 VM（backend-a / backend-a2）に対し、Cookie でセッションを固定します。`:82`（1 台）は検証にならないため入れていません。
 
+`08-regional-external-alb-neg` を先に理解してください。state は共有しません。
+
 | ポート | session_affinity | Cookie |
 |---|---|---|
 | :81 | `GENERATED_COOKIE` | LB が `GCLB=` を発行 |
@@ -14,15 +16,66 @@
 - `:81` 初回に `Set-Cookie` があり、Cookie 付き 5 回が同じ identity
 - `:83` 初回に `ROUTE=` があり、Cookie 付き 5 回が同じ identity
 - Cookie なしでは a / a2 が混ざることがある（参考）
+- destroy できる
 
 複数のフロントエンドが関与すると「常に同一」は保証されないことがあります。
 
-## 使用方法
+## 作成される Google Cloud リソース
+
+- Compute API
+- カスタム VPC / ワークロード Subnet / **proxy-only Subnet**
+- Cloud Router / Cloud NAT
+- Health check / proxy-only / IAP SSH 用 Firewall
+- バックエンド VM 2 台（同一ゾーン、外部 IP なし、Debian 12、tcp/8080）
+- zonal NEG 1 つと Network Endpoint ×2
+- Regional Backend Service ×2（GENERATED_COOKIE / HTTP_COOKIE）
+- URL map / Target HTTP Proxy / Forwarding Rule ×2（**:81** / **:83**）
+- 外部 VIP（PREMIUM）
+
+## 前提条件
+
+- ADC 認証済み
+- 課金有効な検証用 Project
+- インターネットから VIP:81 / :83 へ到達できること
+
+## ファイル構成
+
+```text
+10-regional-alb-session-affinity/
+├── README.md
+├── docs/
+│   ├── PARAMETER.md              # terraform-docs（自動生成。手動編集しない）
+│   └── RESOURCE-PARAMETERS.md    # セッション差分（手書き。ネットワーク正本は 08）
+├── DEPENDENCY-GRAPH.svg          # terraform graph（自動生成。手動編集しない）
+├── .terraform.lock.hcl
+├── versions.tf
+├── provider.tf
+├── variables.tf
+├── network.tf
+├── main.tf
+├── outputs.tf
+├── scripts/
+│   └── startup-cookie.sh.tftpl
+└── terraform.tfvars.example
+```
+
+リソースの明示設定と公式ドキュメント上の既定値の対応は `docs/RESOURCE-PARAMETERS.md` を参照してください。VPC / proxy-only / NEG は [08 の RESOURCE-PARAMETERS.md](../08-regional-external-alb-neg/docs/RESOURCE-PARAMETERS.md) が正本です。`docs/PARAMETER.md` と `DEPENDENCY-GRAPH.svg` は自動生成です。
+
+## 設定方法
 
 ```bash
 cd Advanced-Examples/10-regional-alb-session-affinity
 cp terraform.tfvars.example terraform.tfvars
+# project_id を設定
+```
+
+## 使用方法
+
+```bash
 terraform init
+terraform fmt -check
+terraform validate
+terraform plan
 terraform apply
 terraform output -raw curl_generated_cookie
 terraform output -raw curl_http_cookie
@@ -34,4 +87,4 @@ terraform output -raw curl_http_cookie
 terraform destroy
 ```
 
-**必ず destroy してください。**
+**必ず destroy してください。** 外部 VIP・NAT・VM は課金されます。

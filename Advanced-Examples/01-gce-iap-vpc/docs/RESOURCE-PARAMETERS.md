@@ -1,6 +1,6 @@
 # 01 - リソースパラメータ対応
 
-このファイルは **IAP SSH + OS Login + 専用 SA の Spot VM** について、明示設定と公式既定を対応づけます。自動生成の `PARAMETER.md` とは別物です。GCE 項目の読み方は Basic 04 の `INSTANCE-PARAMETERS.md` と同じです。
+このファイルは **IAP SSH + OS Login + 専用 SA の Spot VM** について、明示設定と公式既定を対応づけます。自動生成の `docs/PARAMETER.md` とは別物です。GCE 項目の読み方は Basic 04 の `docs/INSTANCE-PARAMETERS.md` と同じです。
 
 一次情報:
 
