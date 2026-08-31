@@ -7,6 +7,7 @@
 - VPC / Subnet（Pods/Services secondary range 付き）を作成できる
 - GKE Cluster と Spot Node Pool を作成できる
 - `get-credentials` で接続準備ができる
+- Spot Node Pool上にPodを実際にスケジュールできる（Node起動確認とは別）
 - `terraform destroy` で削除できる
 
 ## 作成されるGCPリソース
@@ -91,6 +92,14 @@ gcloud container clusters describe "$(terraform output -raw cluster_name)" \
 
 $(terraform output -raw get_credentials_example)
 kubectl get nodes
+```
+
+Nodeが `Ready` になっていることは、Clusterが実際にPodを動かせることを保証しない。Spot Node Pool上でPodが起動できるかを別途確認する。
+
+```bash
+kubectl run test-pod --image=nginx --restart=Never
+kubectl get pod test-pod -o wide --watch   # STATUS が Running になるまで待つ
+kubectl delete pod test-pod
 ```
 
 ## 削除方法
