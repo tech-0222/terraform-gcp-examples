@@ -98,3 +98,4 @@ terraform destroy
 - Provider の `attribute_condition` を緩めすぎない（`*` や org 全体は避ける）
 - SA 鍵（JSON）は作成しません
 - Private リポジトリでも OIDC は利用できます（Actions の権限設定に注意）
+- **destroy した Pool / Provider は30日間ソフトデリート状態で残り、同じIDでの再作成が `409 Requested entity already exists` で失敗する。** 再検証時は `gcloud iam workload-identity-pools undelete` / `... providers undelete` で復元してから `terraform import` する

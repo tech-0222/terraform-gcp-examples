@@ -18,8 +18,8 @@ def connect():
     )
 
 
-@app.get("/healthz")
-def healthz():
+@app.get("/health")
+def health():
     return jsonify(status="ok")
 
 

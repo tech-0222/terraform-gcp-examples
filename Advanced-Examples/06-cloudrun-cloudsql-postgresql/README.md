@@ -224,8 +224,10 @@ eval "$(terraform output -raw curl_authenticated_example)"
 
 ```bash
 curl -H "Authorization: Bearer $(gcloud auth print-identity-token)" \
-  "$(terraform output -raw service_url)/healthz"
+  "$(terraform output -raw service_url)/health"
 ```
+
+**パス名に`healthz`を使わない。** Cloud Runのデフォルトドメイン（`*.run.app`）では`/healthz`が予約パス扱いで、Google Frontendの段階でコンテナに到達せず404になる（`/health`など他のパスは到達する）。過去このアプリは`/healthz`を使っていたため、実際には呼び出せないエンドポイントだった。
 
 ## 6. Password rotation
 
