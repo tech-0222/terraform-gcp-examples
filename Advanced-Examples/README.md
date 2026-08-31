@@ -84,12 +84,12 @@ terraform.tfvars.example
 | 09 | `09-regional-alb-cloud-armor` | Regional External ALB + Cloud Armor（許可 IP 以外 403） | 実装済み |
 | 10 | `10-regional-alb-session-affinity` | Regional External ALB セッション（GENERATED_COOKIE / HTTP_COOKIE） | 実装済み |
 | 11 | `11-gke-private-bastion` | GKE Standard プライベートクラスタ（private endpoint + private nodes）+ 踏み台 + Artifact Registry | 実装済み |
+| 12 | `12-gke-bastion-redis-instance` | 11 + Memorystore for Redis（BASIC、PSA接続） | 実装済み |
 
 ## 候補（未着手）
 
 GKEプライベートクラスタ＋踏み台（11）を土台に拡張する予定のシナリオ。詳細はhugo-blog側`docs/HANDOVER.md`の「次の作業」を参照。
 
-- Redis Memorystore（Instance、PSA接続）との連携
 - Redis Memorystore Cluster（PSC接続）との連携
 - Internal HTTP LB（複数NEGバックエンド）
 - プライベート＋パブリックエンドポイント併用
