@@ -1,0 +1,26 @@
+project_id = "your-project-id"
+region     = "asia-northeast1"
+zone       = "asia-northeast1-a"
+
+# Must match your ADC / gcloud user so you can IAP SSH to the bastion for verification.
+iap_member = "user:you@example.com"
+
+# Optional overrides:
+# network_name             = "tf-adv-gke-ilbneg-vpc"
+# gke_subnet_cidr          = "10.40.0.0/24"
+# pods_cidr                = "10.41.0.0/16"
+# services_cidr            = "10.42.0.0/20"
+# bastion_subnet_cidr      = "10.43.0.0/24"
+# master_ipv4_cidr_block   = "172.16.4.0/28"
+# cluster_name             = "tf-adv-gke-ilbneg"
+# gke_zones                = ["asia-northeast1-a", "asia-northeast1-b", "asia-northeast1-c"]
+# node_machine_type        = "e2-small"
+# use_spot                 = true
+# bastion_machine_type     = "e2-medium"
+# artifact_registry_repository_id = "tf-adv-gke-ilbneg-repo"
+#
+# Leave enable_ilb=false for the first apply. Set it only after deploying
+# k8s/ilb-app-*.yaml and waiting for the NEGs to be created (see README).
+# enable_ilb               = false
+# ilb_proxy_subnet_cidr    = "10.44.0.0/23"
+# ilb_vip_address          = "10.40.0.250"
