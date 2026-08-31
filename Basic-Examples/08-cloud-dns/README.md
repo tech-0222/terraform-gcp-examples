@@ -1,6 +1,6 @@
 # 08 - Cloud DNS
 
-Private Cloud DNS Zone と A Record を Terraform で作成・確認・削除する最小サンプルです。
+Private Cloud DNS Zone と A Record を Terraform で作成・確認・削除する最小サンプルです。VM を2台作成し、Private Zone に紐づく VPC からは名前解決できること、紐づかない別 VPC やインターネット経由では解決できないことを実際に確認します。
 
 Public DNS はドメイン取得や NS 委譲が必要になるため、この基本サンプルでは専用 VPC に紐づく Private DNS を扱います。
 
@@ -10,6 +10,9 @@ Public DNS はドメイン取得や NS 委譲が必要になるため、この�
 - Custom mode VPC を作成できる
 - VPC から参照できる Private Managed Zone を作成できる
 - Private Zone に A Record を作成できる
+- **Private Zoneに紐づいたVPC内のVMからは名前解決できる**
+- **紐づかない別VPCのVMからは名前解決できない**（Instanceの状態確認とは別）
+- **インターネット経由（手元の端末）でも名前解決できない**
 - `terraform destroy` で削除できる
 
 ## 作成されるGCPリソース
@@ -17,9 +20,12 @@ Public DNS はドメイン取得や NS 委譲が必要になるため、この�
 | リソース | 内容 |
 |---|---|
 | `google_project_service` | Cloud DNS / Compute Engine API |
-| `google_compute_network` | Private DNS の参照元となる専用 VPC |
+| `google_compute_network` | Private DNSの参照元となる専用VPCと、紐づかない別VPC（2つ） |
+| `google_compute_subnetwork` | 各VPCのSubnet（2つ） |
+| `google_compute_firewall` | IAP SSH許可（2つ） |
 | `google_dns_managed_zone` | Private Managed Zone |
 | `google_dns_record_set` | 検証用 A Record |
+| `google_compute_instance` | 検証用VM（Private Zoneに紐づくVPC / 紐づかない別VPCに各1台） |
 
 ## 前提条件
 
@@ -36,6 +42,8 @@ Public DNS はドメイン取得や NS 委譲が必要になるため、この�
 
 - DNS Administrator 相当
 - Compute Network Admin 相当
+- Compute Instance Admin 相当
+- IAP-secured Tunnel User（VMへのSSHに必要）
 - Service Usage Consumer
 
 ## ファイル構成
@@ -51,8 +59,8 @@ Public DNS はドメイン取得や NS 委譲が必要になるため、この�
 ├── versions.tf
 ├── provider.tf
 ├── variables.tf
-├── network.tf   # VPC（Private Zone 用の準備）
-├── main.tf   # DNS Zone / Record（本体）
+├── network.tf   # VPC×2 / Subnet / Firewall（準備）
+├── main.tf   # DNS Zone / Record / 検証用VM×2（本体）
 ├── outputs.tf
 └── terraform.tfvars.example
 ```
@@ -101,7 +109,35 @@ gcloud dns record-sets list \
   --project="$(grep project_id terraform.tfvars | cut -d'"' -f2)"
 ```
 
-Private DNS の実際の名前解決は、対象 VPC に接続された VM などから確認します。本サンプルでは VM は作成しません。
+ManagedZoneとRecordが存在することは、実際に名前解決できることを意味しない。3つの経路で実際に確認する。
+
+**1. Private Zoneに紐づいたVPC内のVMから（解決できるはず）**
+
+```bash
+gcloud compute ssh "$(terraform output -raw vm_in_zone_name)" \
+  --zone="$(terraform output -raw zone)" \
+  --tunnel-through-iap \
+  --project="$(grep project_id terraform.tfvars | cut -d'"' -f2)" \
+  --command="getent hosts $(terraform output -raw record_fqdn)"
+```
+
+**2. 紐づかない別VPCのVMから（解決できないはず）**
+
+```bash
+gcloud compute ssh "$(terraform output -raw vm_outside_zone_name)" \
+  --zone="$(terraform output -raw zone)" \
+  --tunnel-through-iap \
+  --project="$(grep project_id terraform.tfvars | cut -d'"' -f2)" \
+  --command="getent hosts $(terraform output -raw record_fqdn)"
+```
+
+**3. 手元の端末から（インターネット経由。解決できないはず）**
+
+```bash
+getent hosts "$(terraform output -raw record_fqdn)"
+```
+
+`getent`は見つからない場合、出力なしで終了コード`2`を返す。「解決できない」ことの確認が重要。Private Zoneを使う理由がそこにあるため。
 
 ## 削除方法
 
@@ -109,8 +145,20 @@ Private DNS の実際の名前解決は、対象 VPC に接続された VM な�
 terraform destroy
 ```
 
+**必ず destroy してください。** VMが2台起動したままだと課金が続きます。
+
 ## 注意点 / 費用
 
 - Cloud DNS の Managed Zone / Query は料金が発生する可能性があります
+- 検証用VM（Spot、外部IPなし）2台が課金対象です。短時間で destroy すれば数円程度の見込みです
 - Public Zone / ドメイン取得 / NS 委譲は本サンプルの対象外です
-- A Record の IP は説明用の Private IP であり、実体の VM は作成しません
+
+## 検証状況
+
+実GCP環境（`YOUR_PROJECT_ID`）で `fmt / init / validate / plan / apply` を実施し、以下を確認しました。
+
+- Private Zoneに紐づいたVPC内のVMから`getent hosts`で名前解決できること
+- 紐づかない別VPCのVMからは解決できないこと（`getent`終了コード2）
+- 手元の端末（インターネット経由）からも解決できないこと（`getent`終了コード2）
+
+確認後、`terraform destroy`まで完了しています。
