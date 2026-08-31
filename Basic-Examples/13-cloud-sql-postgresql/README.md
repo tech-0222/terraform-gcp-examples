@@ -7,6 +7,7 @@ Cloud SQL for PostgreSQL の最小インスタンスと Database を Terraform �
 - Cloud SQL Admin API を有効化できる
 - PostgreSQL Instance を作成できる
 - Instance 内に Database を作成できる
+- Public IP が払い出されていても、Authorized Network 未設定のため実際には接続できない（Instance の状態確認とは別）
 - `terraform destroy` で削除できる
 
 ## 作成されるGCPリソース
@@ -97,6 +98,14 @@ gcloud sql databases list \
   --project="$(terraform output -raw project_id)"
 ```
 
+Instanceが`RUNNABLE`であることは、Public IPへ実際に接続できることを意味しない。Authorized Networkを設定していないため、接続は拒否・タイムアウトする。これも確認する。
+
+```bash
+nc -zv -w 5 "$(terraform output -raw public_ip_address)" 5432
+```
+
+タイムアウトすれば意図通り。接続できてしまった場合はAuthorized Networkの設定漏れを疑う。
+
 ## 削除方法
 
 ```bash
@@ -113,4 +122,4 @@ terraform destroy
 
 ## 検証状況
 
-実GCP環境（`YOUR_PROJECT_ID`）で `fmt / init / validate / plan / apply` を実施し、Instance が `RUNNABLE`（`POSTGRES_15` / `db-f1-micro`）であることと Database `appdb` を確認後、`terraform destroy` まで完了しています。
+実GCP環境（`YOUR_PROJECT_ID`）で `fmt / init / validate / plan / apply` を実施し、Instance が `RUNNABLE`（`POSTGRES_15` / `db-f1-micro`）であることと Database `appdb` を確認しました。Public IP（`nc -zv` でTCP:5432）への接続がAuthorized Network未設定によりタイムアウトすることも確認済みです。`terraform destroy` まで完了しています。
