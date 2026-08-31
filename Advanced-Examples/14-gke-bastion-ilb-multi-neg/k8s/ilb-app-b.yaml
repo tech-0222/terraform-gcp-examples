@@ -1,0 +1,55 @@
+# Applied manually from the bastion (the cluster has no path reachable by
+# Terraform's kubernetes provider). The cloud.google.com/neg annotation is
+# what makes GKE create the neg-app-b Network Endpoint Group that ilb.tf's
+# backend service references by name. This NEG must exist before
+# `terraform apply -var="enable_ilb=true"` -- wait 1-2 minutes after
+# applying this manifest, since NEG creation is asynchronous.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app-b
+  namespace: default
+  labels:
+    app: app-b
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: app-b
+  template:
+    metadata:
+      labels:
+        app: app-b
+    spec:
+      containers:
+        - name: app-b
+          image: hashicorp/http-echo:0.2.3
+          args:
+            - "-listen=:8080"
+            - "-text=backend-b"
+          ports:
+            - containerPort: 8080
+          resources:
+            requests:
+              memory: "16Mi"
+              cpu: "10m"
+            limits:
+              memory: "32Mi"
+              cpu: "50m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: app-b
+  namespace: default
+  annotations:
+    cloud.google.com/neg: '{"exposed_ports":{"8080":{"name":"neg-app-b"}}}'
+spec:
+  type: ClusterIP
+  selector:
+    app: app-b
+  ports:
+    - name: http
+      port: 8080
+      targetPort: 8080
+      protocol: TCP
