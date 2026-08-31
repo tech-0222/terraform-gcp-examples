@@ -54,3 +54,57 @@ variable "record_ttl" {
   type        = number
   default     = 300
 }
+
+variable "zone" {
+  description = "Zone for the verification VMs."
+  type        = string
+  default     = "asia-northeast1-a"
+}
+
+variable "subnet_name" {
+  description = "Subnet name for the VPC bound to the private zone."
+  type        = string
+  default     = "tf-example-dns-subnet"
+}
+
+variable "subnet_cidr" {
+  description = "Subnet CIDR for the VPC bound to the private zone."
+  type        = string
+  default     = "10.30.0.0/24"
+}
+
+variable "external_network_name" {
+  description = "Name of a separate VPC NOT bound to the private zone. Used to verify that resolution fails from outside the authorized network."
+  type        = string
+  default     = "tf-example-dns-external-vpc"
+}
+
+variable "external_subnet_name" {
+  description = "Subnet name for the external VPC."
+  type        = string
+  default     = "tf-example-dns-external-subnet"
+}
+
+variable "external_subnet_cidr" {
+  description = "Subnet CIDR for the external VPC."
+  type        = string
+  default     = "10.31.0.0/24"
+}
+
+variable "machine_type" {
+  description = "Machine type for the verification VMs."
+  type        = string
+  default     = "e2-medium"
+}
+
+variable "vm_in_zone_name" {
+  description = "Name of the VM inside the VPC bound to the private zone."
+  type        = string
+  default     = "tf-example-dns-vm-in-zone"
+}
+
+variable "vm_outside_zone_name" {
+  description = "Name of the VM in the separate VPC, not bound to the private zone."
+  type        = string
+  default     = "tf-example-dns-vm-outside-zone"
+}
