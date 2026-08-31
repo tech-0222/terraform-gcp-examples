@@ -32,6 +32,9 @@ terraform.rc
 # Local handoff notes (machine/session specific; do not commit)
 HANDOFF.md
 
+# Local execution logs (may contain project-specific output; do not commit)
+.local-logs/
+
 # Python
 __pycache__/
 *.py[cod]
