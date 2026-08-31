@@ -1,0 +1,53 @@
+# Applied manually from the bastion (see nginx-deployment.yaml for why).
+# __REDIS_HOST__ / __REDIS_PORT__ are replaced with terraform output values
+# before apply. Redis Cluster requires redis-cli -c (cluster mode) --
+# without it, a MOVED redirect from the server looks like a failure.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: redis-test-config
+  namespace: default
+data:
+  REDIS_HOST: "__REDIS_HOST__"
+  REDIS_PORT: "__REDIS_PORT__"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis-test
+  namespace: default
+  labels:
+    app: redis-test
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis-test
+  template:
+    metadata:
+      labels:
+        app: redis-test
+    spec:
+      containers:
+        - name: redis-test
+          image: redis:7-alpine
+          command:
+            - /bin/sh
+            - -c
+            - |
+              echo "Connecting to Redis Cluster at $REDIS_HOST:$REDIS_PORT ..."
+              redis-cli -c -h "$REDIS_HOST" -p "$REDIS_PORT" ping
+              redis-cli -c -h "$REDIS_HOST" -p "$REDIS_PORT" set test-key "hello-from-pod"
+              redis-cli -c -h "$REDIS_HOST" -p "$REDIS_PORT" get test-key
+              echo "Redis Cluster test completed successfully."
+              sleep 3600
+          envFrom:
+            - configMapRef:
+                name: redis-test-config
+          resources:
+            requests:
+              memory: "32Mi"
+              cpu: "50m"
+            limits:
+              memory: "64Mi"
+              cpu: "100m"
