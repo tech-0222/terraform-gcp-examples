@@ -134,3 +134,11 @@ Terraform Resource名は、サンプル内で役割が分かる簡潔な名前�
 | `docs/GKE-PARAMETERS.md` | Basic 07 のみ。GKE クラスタ / ノードプール項目の詳細対応（`docs/RESOURCE-PARAMETERS.md` から参照）。Advanced 03 は同ファイルを正本とし差分だけ書く |
 
 `Basic-Examples/` および `Advanced-Examples/` の各サンプルに `docs/RESOURCE-PARAMETERS.md` を置く。値はコードのデフォルト変数を前提とし、推測の属性は書かない。
+
+## 8. 作業ログ（`.local-logs/`）
+
+`terraform apply` / `destroy` や動作確認コマンドの実行結果は、リポジトリ直下の `.local-logs/` に保存する。Gitにはコミットしない（`.gitignore` で除外。Project固有の値が出力に含まれるため）。
+
+命名: `<番号>-<種別>.log`（例: `04-apply.log`, `04-verify.log`）。**Basic-Examples と Advanced-Examples で番号が重複する**ため、Advanced-Examples 側は `a<番号>-<種別>.log` とする（例: `a04-apply.log`）。
+
+用途: hugo-blog で記事に載せる実行結果は、想像や既存記事からの流用ではなくここに保存した実際の出力を参照する。hugo-blog 側のルールと参照先は `hugo-blog/docs/HANDOVER.md` にある。
