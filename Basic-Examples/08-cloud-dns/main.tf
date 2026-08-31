@@ -34,3 +34,73 @@ resource "google_dns_record_set" "example" {
   ttl          = var.record_ttl
   rrdatas      = [var.record_ip]
 }
+
+data "google_compute_image" "debian" {
+  family  = "debian-12"
+  project = "debian-cloud"
+}
+
+# VM in the VPC bound to the private zone: resolution is expected to succeed.
+# Ref: https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_instance
+resource "google_compute_instance" "vm_in_zone" {
+  name         = var.vm_in_zone_name
+  machine_type = var.machine_type
+  zone         = var.zone
+  tags         = ["iap-ssh"]
+
+  boot_disk {
+    initialize_params {
+      image = data.google_compute_image.debian.self_link
+      size  = 20
+      type  = "pd-balanced"
+    }
+  }
+
+  network_interface {
+    subnetwork = google_compute_subnetwork.dns.id
+    # No external IP: access via IAP TCP forwarding.
+  }
+
+  scheduling {
+    provisioning_model = "SPOT"
+    preemptible        = true
+    automatic_restart  = false
+  }
+
+  metadata = {
+    enable-oslogin = "TRUE"
+  }
+}
+
+# VM in a separate VPC, not bound to the private zone: resolution is
+# expected to fail (timeout / NXDOMAIN depending on the resolver).
+# Ref: https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_instance
+resource "google_compute_instance" "vm_outside_zone" {
+  name         = var.vm_outside_zone_name
+  machine_type = var.machine_type
+  zone         = var.zone
+  tags         = ["iap-ssh"]
+
+  boot_disk {
+    initialize_params {
+      image = data.google_compute_image.debian.self_link
+      size  = 20
+      type  = "pd-balanced"
+    }
+  }
+
+  network_interface {
+    subnetwork = google_compute_subnetwork.external.id
+    # No external IP: access via IAP TCP forwarding.
+  }
+
+  scheduling {
+    provisioning_model = "SPOT"
+    preemptible        = true
+    automatic_restart  = false
+  }
+
+  metadata = {
+    enable-oslogin = "TRUE"
+  }
+}
