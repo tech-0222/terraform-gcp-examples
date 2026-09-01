@@ -87,11 +87,11 @@ terraform.tfvars.example
 | 12 | `12-gke-bastion-redis-instance` | 11 + Memorystore for Redis（BASIC、PSA接続） | 実装済み |
 | 13 | `13-gke-bastion-redis-cluster` | 11 + Memorystore for Redis Cluster（PSC接続） | 実装済み |
 | 14 | `14-gke-bastion-ilb-multi-neg` | 11のGKEをリージョナル・3ゾーンに変更し、Internal HTTP LB（NEG + GKE Pod）で3バックエンドをポート別に振り分け | 実装済み |
+| 15 | `15-gke-dual-endpoint` | 11の`enable_private_endpoint`を`false`にし、プライベート（踏み台経由）＋パブリック（IP制限付き）の両エンドポイントで接続可能に | 実装済み |
 
 ## 候補（未着手）
 
 GKEプライベートクラスタ＋踏み台（11）を土台に拡張する予定のシナリオ。詳細はhugo-blog側`docs/HANDOVER.md`の「次の作業」を参照。
-- プライベート＋パブリックエンドポイント併用
 - Dataplane V2等を有効化したハードニング設定
 
 ## 注意
