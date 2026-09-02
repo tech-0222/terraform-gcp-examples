@@ -38,6 +38,11 @@ resource "google_container_cluster" "primary" {
 
   deletion_protection = false
 
+  # null (the default) omits this entirely, which keeps existing behavior
+  # (GKE's own default of 110). Set only to deliberately constrain how many
+  # Pods a node can hold, e.g. to demonstrate the ceiling in practice.
+  default_max_pods_per_node = var.max_pods_per_node
+
   release_channel {
     channel = "REGULAR"
   }

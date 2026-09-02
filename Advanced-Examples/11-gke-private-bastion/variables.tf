@@ -44,6 +44,12 @@ variable "pods_cidr" {
   default     = "10.41.0.0/16"
 }
 
+variable "max_pods_per_node" {
+  description = "Maximum Pods per node (default_max_pods_per_node). null leaves it unset, which uses the GKE default (110). Immutable after cluster creation -- changing it requires recreating the node pool."
+  type        = number
+  default     = null
+}
+
 variable "services_cidr" {
   description = "Secondary CIDR for Services (VPC-native)."
   type        = string
