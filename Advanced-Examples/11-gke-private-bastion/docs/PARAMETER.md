@@ -58,6 +58,7 @@
 | gke\_subnet\_cidr | Primary CIDR of the GKE subnet. | `string` | `"10.40.0.0/24"` | no |
 | gke\_subnet\_name | Subnet name for GKE nodes. | `string` | `"tf-adv-gke-bastion-subnet"` | no |
 | master\_ipv4\_cidr\_block | CIDR for the private cluster control plane. Must not overlap with any subnet. | `string` | `"172.16.4.0/28"` | no |
+| max\_pods\_per\_node | Maximum Pods per node (default\_max\_pods\_per\_node). null leaves it unset, which uses the GKE default (110). Immutable after cluster creation -- changing it requires recreating the node pool. | `number` | `null` | no |
 | network\_name | VPC network name. | `string` | `"tf-adv-gke-bastion-vpc"` | no |
 | node\_machine\_type | Machine type for the GKE node pool. | `string` | `"e2-small"` | no |
 | pods\_cidr | Secondary CIDR for Pods (VPC-native). | `string` | `"10.41.0.0/16"` | no |

@@ -36,6 +36,7 @@ gcloud compute instances describe "$(terraform output -raw bastion_name)" \
 | 接続許可元 | 踏み台SubnetのCIDRのみ | 明示 | `master_authorized_networks_config` | 送信元はプライベートIPで判定。NAT外部IPは無関係 |
 | Workload Identity | 有効 | 明示 | `workload_identity_config.workload_pool` | Pool設定のみ。Podでの実利用は`03-gke-workload-identity-gcs`を参照 |
 | ノードプール | Spot、`e2-small`x1 | 明示 | `node_config.spot = true` | コスト優先。可用性が必要な用途には不向き |
+| ノードあたり最大Pod数 | 未指定（GKEデフォルトの110） | `var.max_pods_per_node`（デフォルト`null`） | `default_max_pods_per_node = var.max_pods_per_node` | `null`の場合は属性自体を省略し、既存の動作（デフォルト110）を完全に維持する。作成後変更不可。小さい値を指定して検証する例は`docs/blog`側の「Pod/ServiceのIPレンジ設計」記事を参照 |
 
 未指定（デフォルト）の項目はコンソール/APIのデフォルト値に従う。推測での記載はしない。
 
