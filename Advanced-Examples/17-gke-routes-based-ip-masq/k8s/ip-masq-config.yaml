@@ -1,0 +1,25 @@
+# Applied manually from the bastion (see curlpod.yaml for why).
+# __POD_CIDR__ / __SERVICES_CIDR__ / __GKE_SUBNET_CIDR__ are replaced with
+# terraform output / var values before apply -- see README.
+#
+# ip-masq-agent already runs on every GKE node by default (it's a built-in
+# component, ConfigMap: Optional: true), using --nomasq-all-reserved-ranges.
+# That means any RFC 1918 destination -- including the target VM's subnet
+# -- is treated as non-masquerade (Pod IP kept) unless this ConfigMap says
+# otherwise. Deliberately NOT listing the target VM's subnet here is what
+# makes ip-masq-agent SNAT traffic to it: the Pod IP is replaced with the
+# Node IP, and Node-subnet routes are always exchanged over VPC Peering
+# regardless of peering_custom_routes.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ip-masq-agent
+  namespace: kube-system
+data:
+  config: |
+    nonMasqueradeCIDRs:
+      - __POD_CIDR__
+      - __SERVICES_CIDR__
+      - __GKE_SUBNET_CIDR__
+    masqLinkLocal: true
+    resyncInterval: 60s

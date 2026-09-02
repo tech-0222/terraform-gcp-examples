@@ -1,0 +1,28 @@
+project_id        = "your-project-a-id"
+target_project_id = "your-project-b-id"
+region            = "asia-northeast1"
+zone              = "asia-northeast1-a"
+
+# Must match your ADC / gcloud user so you can IAP SSH to the bastion (Project A)
+# and the target VM (Project B) for verification.
+iap_member = "user:you@example.com"
+
+# Optional overrides:
+# network_a_name           = "tf-adv-gke-ipmasq-a-vpc"
+# gke_subnet_cidr          = "10.10.0.0/28"
+# bastion_subnet_cidr      = "10.10.1.0/28"
+# pod_cidr                 = "172.16.0.0/16"
+# services_cidr            = "172.17.0.0/20"
+# master_ipv4_cidr_block   = "192.168.255.0/28"
+# network_b_name           = "tf-adv-gke-ipmasq-b-vpc"
+# target_subnet_cidr       = "10.20.0.0/24"
+# target_vm_ip             = "10.20.0.10"
+# cluster_name             = "tf-adv-gke-ipmasq"
+# node_machine_type        = "e2-standard-2"
+# use_spot                 = true
+# bastion_machine_type     = "e2-medium"
+# target_vm_machine_type   = "e2-medium"
+#
+# Always false in this example -- the point is to fix the failure with
+# ip-masq-agent, not by exchanging custom routes.
+# peering_custom_routes    = false
