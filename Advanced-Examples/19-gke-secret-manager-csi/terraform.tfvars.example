@@ -1,0 +1,24 @@
+project_id = "your-project-id"
+region     = "asia-northeast1"
+zone       = "asia-northeast1-a"
+
+# Must match your ADC / gcloud user so you can IAP SSH to the bastion for verification.
+iap_member = "user:you@example.com"
+
+# Optional overrides:
+# network_name             = "tf-adv-gke-smcsi-vpc"
+# gke_subnet_cidr          = "10.40.0.0/24"
+# pods_cidr                = "10.41.0.0/16"
+# services_cidr            = "10.42.0.0/20"
+# bastion_subnet_cidr      = "10.43.0.0/24"
+# master_ipv4_cidr_block   = "172.16.4.0/28"
+# cluster_name             = "tf-adv-gke-smcsi"
+# node_machine_type        = "e2-small"
+# use_spot                 = true
+# bastion_machine_type     = "e2-medium"
+# secret_id                = "tf-adv-smcsi-demo"
+# k8s_namespace            = "default"
+# k8s_service_account_name = "app-ksa"
+#
+# Set to false and re-apply to make the CSI mount fail on purpose (see README).
+# grant_ksa_secret_access  = true

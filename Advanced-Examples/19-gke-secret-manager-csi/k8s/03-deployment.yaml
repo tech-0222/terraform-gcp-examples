@@ -1,0 +1,42 @@
+# Mounts the secret as a read-only file at /var/secrets/db-password.txt.
+#
+# The secret never appears in the Pod spec, in environment variables, or in
+# `kubectl describe` output -- only the SecretProviderClass name does. That
+# is the point of mounting over injecting.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app-secret-file
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: app-secret-file
+  template:
+    metadata:
+      labels:
+        app: app-secret-file
+    spec:
+      serviceAccountName: app-ksa
+      containers:
+        - name: app
+          image: nginx:1.25-alpine
+          volumeMounts:
+            - name: secret-vol
+              mountPath: /var/secrets
+              readOnly: true
+          resources:
+            requests:
+              memory: "32Mi"
+              cpu: "50m"
+            limits:
+              memory: "64Mi"
+              cpu: "100m"
+      volumes:
+        - name: secret-vol
+          csi:
+            driver: secrets-store-gke.csi.k8s.io
+            readOnly: true
+            volumeAttributes:
+              secretProviderClass: gcp-sm-demo
