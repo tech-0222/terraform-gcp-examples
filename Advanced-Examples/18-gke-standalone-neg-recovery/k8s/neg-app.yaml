@@ -1,0 +1,68 @@
+# Applied manually from the bastion (the cluster has no path reachable by
+# Terraform's kubernetes provider).
+#
+# The cloud.google.com/neg annotation is what makes GKE create a standalone
+# zonal NEG named tf-adv-negrec-neg in every zone the cluster spans. That
+# NEG is NOT a Terraform resource -- lb.tf only reads it with a data source.
+# Deleting this Service deletes those NEGs, which is exactly the failure
+# this example reproduces.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: neg-app
+  namespace: default
+  labels:
+    app: neg-app
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: neg-app
+  template:
+    metadata:
+      labels:
+        app: neg-app
+    spec:
+      # Spread Pods across zones so every zonal NEG actually has an endpoint.
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: topology.kubernetes.io/zone
+          whenUnsatisfiable: ScheduleAnyway
+          labelSelector:
+            matchLabels:
+              app: neg-app
+      containers:
+        - name: nginx
+          image: nginx:1.25-alpine
+          ports:
+            - containerPort: 80
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 3
+            periodSeconds: 5
+          resources:
+            requests:
+              memory: "32Mi"
+              cpu: "50m"
+            limits:
+              memory: "64Mi"
+              cpu: "100m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: neg-app-svc
+  namespace: default
+  annotations:
+    cloud.google.com/neg: '{"exposed_ports":{"80":{"name":"tf-adv-negrec-neg"}}}'
+spec:
+  type: ClusterIP
+  selector:
+    app: neg-app
+  ports:
+    - name: http
+      port: 80
+      targetPort: 80
+      protocol: TCP
