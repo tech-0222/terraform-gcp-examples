@@ -90,6 +90,7 @@ terraform.tfvars.example
 | 15 | `15-gke-dual-endpoint` | 11の`enable_private_endpoint`を`false`にし、プライベート（踏み台経由）＋パブリック（IP制限付き）の両エンドポイントで接続可能に | 実装済み |
 | 16 | `16-gke-dataplane-v2-networkpolicy` | 11に`datapath_provider = "ADVANCED_DATAPATH"`（Dataplane V2）を追加し、NetworkPolicyでラベルベースのPod間通信制御を実施 | 実装済み |
 | 17 | `17-gke-routes-based-ip-masq` | 2プロジェクト構成。routes-basedなGKE＋VPC Peering（custom routes無効）でPod→VM通信が失敗することを再現し、宛先側の設定変更なしにip-masq-agentだけで復旧させる | 実装済み |
+| 18 | `18-gke-standalone-neg-recovery` | GKEのスタンドアロンNEGを外部ALBのバックエンドにし、Service削除・クラスタ再作成でLBが壊れる様子と復旧手順を実測 | 実装済み |
 
 ## 候補（未着手）
 
