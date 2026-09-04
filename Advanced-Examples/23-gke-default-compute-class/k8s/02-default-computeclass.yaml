@@ -1,0 +1,18 @@
+# A ComputeClass literally named "default".
+#
+# Turning on default_compute_class_enabled does NOT create this -- GKE ships
+# only the autopilot* classes. The switch makes the autoscaler apply a class
+# with this exact name to workloads that do not select one themselves. So the
+# class has to be created by hand for the switch to have any visible effect.
+apiVersion: cloud.google.com/v1
+kind: ComputeClass
+metadata:
+  name: default
+spec:
+  # n2 instead of the e2 the autoscaler picked on its own, so the effect is
+  # obvious from the machine type of the node that gets created.
+  priorities:
+    - machineFamily: n2
+  nodePoolAutoCreation:
+    enabled: true
+  whenUnsatisfiable: ScaleUpAnyway
