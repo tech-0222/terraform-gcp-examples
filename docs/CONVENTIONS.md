@@ -54,10 +54,45 @@ terraform validate
 terraform plan
 terraform apply
 # GCP側の動作確認
+# Cloud Logging の確認（下記「2-1」）
 terraform destroy
 ```
 
 リソースを作成しないサンプルでは `apply` / `destroy` を省略できます。
+
+### 2-1. Cloud Logging を必ず確認する
+
+**GCPリソースを作成する検証では、毎回 `gcloud logging read` でログを確認します。** `kubectl describe` や `gcloud ... operations` だけで終わらせません。
+
+理由は、それらに出ない情報がログにあるためです。実際にあった例を挙げます。
+
+| 検証 | 表面的な症状 | ログで分かったこと |
+|---|---|---|
+| `23-gke-default-compute-class` | `kubectl describe pod` は `FailedScheduling` のみ | `no.scale.up.nap.pod.zonal.resources.exceeded` — NAPのCPU上限に当たっていた |
+| `20-gke-cmek-node-boot-disk-rotation` | ノードが復旧していた | `compute.instances.repair.recreateInstance` — GKEの自動修復だった |
+
+よく使うクエリを挙げます。
+
+```bash
+# 監査ログ（管理操作）
+gcloud logging read 'protoPayload.serviceName="SERVICE.googleapis.com"' --limit=10 --freshness=2h
+
+# GKEオートスケーラの判断（スケールアップ/ダウンしない理由も出る）
+gcloud logging read 'logName=~"cluster-autoscaler-visibility" AND resource.labels.cluster_name="CLUSTER"' --limit=5 --freshness=2h
+
+# Podのイベント
+gcloud logging read 'resource.type="k8s_pod" AND jsonPayload.reason="REASON"' --limit=10 --freshness=2h
+
+# コンテナのログ
+gcloud logging read 'resource.type="k8s_container" AND resource.labels.pod_name=~"PREFIX"' --limit=10 --freshness=2h
+```
+
+**0件だった場合も結果として記録します。** 「ログに残らない」こと自体が運用上の判断材料になるためです。
+
+- `19-gke-secret-manager-csi`: Secret Manager の `AccessSecretVersion`（値の読み取り）は残らない
+- `20-gke-cmek-node-boot-disk-rotation`: Cloud KMS の `Encrypt` / `Decrypt`（鍵の利用）は残らない
+
+どちらもデータアクセス監査ログが既定で無効なためで、「誰がいつ読んだか」を追跡するには明示的な有効化が要ります。
 
 ## 3. Secretをコミットしない
 
@@ -99,6 +134,7 @@ Terraform Resource名は、サンプル内で役割が分かる簡潔な名前�
 - ファイル構成（実ディレクトリと一致させる。`docs/` と自動生成物を含める）
 - 使用方法
 - 確認方法
+- **Cloud Loggingに残るもの**（0件だった場合も「残らない」と明記する）
 - 削除方法
 - 注意点 / 費用
 
