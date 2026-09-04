@@ -1,0 +1,24 @@
+# Internal passthrough load balancer in front of nginx.
+#
+# A BLUE_GREEN upgrade drains every blue node, so a probe Pod running inside
+# the cluster gets evicted along with the workload it is supposed to be
+# watching. Measuring from the bastion through an internal LB gives a vantage
+# point that survives the whole upgrade -- and matches how an outage would
+# actually be noticed, from outside the cluster.
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-cmek-ilb
+  namespace: default
+  annotations:
+    networking.gke.io/load-balancer-type: "Internal"
+spec:
+  type: LoadBalancer
+  externalTrafficPolicy: Cluster
+  selector:
+    app: nginx-cmek
+  ports:
+    - name: http
+      port: 80
+      targetPort: 80
+      protocol: TCP
