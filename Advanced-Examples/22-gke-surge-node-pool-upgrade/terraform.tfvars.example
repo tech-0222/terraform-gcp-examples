@@ -1,0 +1,33 @@
+project_id = "your-project-id"
+region     = "asia-northeast1"
+zone       = "asia-northeast1-a"
+
+# Must match your ADC / gcloud user so you can IAP SSH to the bastion for verification.
+iap_member = "user:you@example.com"
+
+# Versions age out of a release channel. Check what is available before applying:
+#   gcloud container get-server-config --zone=asia-northeast1-a --format="json(channels)"
+# master_version is set two steps ahead of node_pool_version so the node pool
+# can be upgraded twice -- once per max_surge / max_unavailable combination --
+# without upgrading the control plane in between.
+# release_channel   = "REGULAR"
+# master_version    = "1.36.2-gke.2064000"
+# node_pool_version = "1.35.7-gke.1027000"
+
+# SURGE settings. At least one must be greater than 0.
+#   max_surge = 1, max_unavailable = 0   add a node first, then drain (default)
+#   max_surge = 0, max_unavailable = 1   drain first, no extra node
+# max_surge       = 1
+# max_unavailable = 0
+
+# Optional overrides:
+# network_name           = "tf-adv-gke-surge-vpc"
+# cluster_name           = "tf-adv-gke-surge"
+# node_machine_type      = "e2-medium"
+# node_count             = 2
+# use_spot               = true
+# bastion_machine_type   = "e2-medium"
+#
+# Key rings and crypto keys cannot be deleted. Use fresh names when re-running.
+# kms_key_ring_name   = "tf-adv-gke-surge-ring"
+# kms_crypto_key_name = "tf-adv-gke-surge-boot-disk"
