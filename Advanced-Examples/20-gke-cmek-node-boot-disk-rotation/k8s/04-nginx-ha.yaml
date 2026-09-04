@@ -1,0 +1,71 @@
+# Same nginx, made survivable across a node drain.
+#
+# Three things are needed together:
+#   - replicas: 2            so there is another Pod to serve traffic
+#   - podAntiAffinity        so the two Pods do not land on the same node
+#   - PodDisruptionBudget    so `kubectl drain` waits instead of evicting the
+#                            last remaining Pod
+#
+# With replicas: 1 (k8s/01-nginx.yaml) the drain evicts the only Pod and the
+# Service has no endpoint until the replacement is Ready.
+#
+# maxSurge: 0 is required here. The default (25%, rounded up to 1) makes a
+# rolling update create a third Pod, and with a hard anti-affinity on a
+# two-node cluster there is no host left for it -- the Pod stays Pending with
+# "didn't match pod anti-affinity rules" and the rollout never finishes.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-cmek
+  namespace: default
+spec:
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 0
+      maxUnavailable: 1
+  selector:
+    matchLabels:
+      app: nginx-cmek
+  template:
+    metadata:
+      labels:
+        app: nginx-cmek
+    spec:
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchLabels:
+                  app: nginx-cmek
+              topologyKey: kubernetes.io/hostname
+      containers:
+        - name: nginx
+          image: nginx:1.25.3
+          ports:
+            - containerPort: 80
+          resources:
+            requests:
+              cpu: "10m"
+              memory: "32Mi"
+            limits:
+              cpu: "100m"
+              memory: "64Mi"
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 5
+            periodSeconds: 10
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: nginx-cmek
+  namespace: default
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: nginx-cmek
