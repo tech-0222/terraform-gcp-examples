@@ -1,0 +1,31 @@
+project_id = "your-project-id"
+region     = "asia-northeast1"
+zone       = "asia-northeast1-a"
+
+# Must match your ADC / gcloud user so you can IAP SSH to the bastion for verification.
+iap_member = "user:you@example.com"
+
+# The three phases of the migration are driven by these two flags.
+#   phase 1 (initial)  keep_v1_node_pool = true,  create_v2_node_pool = false
+#   phase 2 (rotated)  keep_v1_node_pool = true,  create_v2_node_pool = true
+#   phase 3 (migrated) keep_v1_node_pool = false, create_v2_node_pool = true
+# keep_v1_node_pool   = true
+# create_v2_node_pool = false
+
+# Optional overrides:
+# network_name           = "tf-adv-gke-cmek-vpc"
+# gke_subnet_cidr        = "10.40.0.0/24"
+# pods_cidr              = "10.41.0.0/16"
+# services_cidr          = "10.42.0.0/20"
+# bastion_subnet_cidr    = "10.43.0.0/24"
+# master_ipv4_cidr_block = "172.16.4.0/28"
+# cluster_name           = "tf-adv-gke-cmek"
+# node_machine_type      = "e2-medium"
+# node_count             = 1
+# use_spot               = true
+# bastion_machine_type   = "e2-medium"
+#
+# Key rings and crypto keys cannot be deleted. Change these when re-running
+# the example in a project that already has them, or import the existing ones.
+# kms_key_ring_name   = "tf-adv-gke-cmek-ring"
+# kms_crypto_key_name = "tf-adv-gke-cmek-boot-disk"

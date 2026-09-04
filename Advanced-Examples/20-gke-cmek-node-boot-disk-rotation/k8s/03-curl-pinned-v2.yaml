@@ -1,0 +1,21 @@
+# Same client Pod, pinned to the v2 pool via the node label set in
+# gke.tf (node_config.labels.pool). Pinning matters during the migration:
+# a client sitting on the v1 node would be evicted by `kubectl drain`
+# together with the workload, so it could not observe the downtime it is
+# supposed to measure.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: curl-client
+  namespace: default
+spec:
+  nodeSelector:
+    pool: v2
+  containers:
+    - name: curl
+      image: curlimages/curl:8.5.0
+      command: ["sleep", "infinity"]
+      resources:
+        requests:
+          cpu: "10m"
+          memory: "16Mi"
