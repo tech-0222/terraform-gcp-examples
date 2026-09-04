@@ -1,0 +1,24 @@
+# Same shape as 01-burst.yaml, different name, so a fresh scale-up happens
+# after the ComputeClass named "default" exists. Still selects nothing.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: burst2
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: burst2
+  template:
+    metadata:
+      labels:
+        app: burst2
+    spec:
+      containers:
+        - name: pause
+          image: registry.k8s.io/pause:3.9
+          resources:
+            requests:
+              cpu: "1500m"
+              memory: "2Gi"

@@ -1,0 +1,26 @@
+# A Pod bigger than the fixed node pool can hold, so the cluster autoscaler
+# has to provision a node for it. Nothing here selects a machine type or a
+# ComputeClass -- that is the point. What the autoscaler picks is the
+# observable effect of default_compute_class_enabled.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: burst
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: burst
+  template:
+    metadata:
+      labels:
+        app: burst
+    spec:
+      containers:
+        - name: pause
+          image: registry.k8s.io/pause:3.9
+          resources:
+            requests:
+              cpu: "1500m"
+              memory: "2Gi"
