@@ -94,6 +94,7 @@ terraform.tfvars.example
 | 19 | `19-gke-secret-manager-csi` | Secret Manager add-onでPodにシークレットをファイルマウント。GSAなしのKSA直接バインド、更新反映・権限剥奪・ログの残り方まで実測 | 実装済み |
 | 20 | `20-gke-cmek-node-boot-disk-rotation` | ノードのブートディスクCMEK。鍵をローテーションしても既存ディスクは旧バージョンのまま。ノードプール入れ替えでの移行と、移行中の断・旧鍵無効化の影響を実測 | 実装済み |
 | 21 | `21-gke-blue-green-node-pool-upgrade` | ノードプールのBlue/Greenアップグレード。移行中の断、soak期間中のロールバック手順、CMEK鍵バージョンの反映タイミングを実測 | 実装済み |
+| 22 | `22-gke-surge-node-pool-upgrade` | ノードプールのSURGEアップグレード。21と同一条件で測り、Blue/Greenとの断・所要時間・追加ノード数・ロールバック可否を直接比較 | 実装済み |
 
 ## 候補（未着手）
 
