@@ -1,0 +1,18 @@
+# Long-lived client Pod for connectivity checks. `kubectl run --rm -it` is
+# unreliable over a non-interactive SSH session to the bastion (it fails with
+# "Unable to use a TTY"), so this runs a sleeping Pod and checks are done
+# with `kubectl exec`.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: curl-client
+  namespace: default
+spec:
+  containers:
+    - name: curl
+      image: curlimages/curl:8.5.0
+      command: ["sleep", "infinity"]
+      resources:
+        requests:
+          cpu: "10m"
+          memory: "16Mi"
