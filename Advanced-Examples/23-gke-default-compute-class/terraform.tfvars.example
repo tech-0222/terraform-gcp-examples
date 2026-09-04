@@ -1,0 +1,22 @@
+project_id = "your-project-id"
+region     = "asia-northeast1"
+zone       = "asia-northeast1-a"
+
+# Must match your ADC / gcloud user so you can IAP SSH to the bastion for verification.
+iap_member = "user:you@example.com"
+
+# The switch under test. Apply with false, look at the cluster, then flip to
+# true and apply again to see what changes.
+# default_compute_class_enabled = false
+
+# Node auto-provisioning. Required for the switch to have anything to act on.
+# enable_node_auto_provisioning = true
+# nap_max_cpu                   = 12
+# nap_max_memory_gb             = 48
+
+# Optional overrides:
+# cluster_name         = "tf-adv-gke-dcc"
+# node_machine_type    = "e2-medium"
+# node_count           = 1
+# use_spot             = true
+# bastion_machine_type = "e2-medium"
