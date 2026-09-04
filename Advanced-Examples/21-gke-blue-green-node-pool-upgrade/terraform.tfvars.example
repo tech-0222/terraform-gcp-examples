@@ -1,0 +1,37 @@
+project_id = "your-project-id"
+region     = "asia-northeast1"
+zone       = "asia-northeast1-a"
+
+# Must match your ADC / gcloud user so you can IAP SSH to the bastion for verification.
+iap_member = "user:you@example.com"
+
+# Versions age out of a release channel. Check what is available before applying:
+#   gcloud container get-server-config --zone=asia-northeast1-a \
+#     --format="json(channels)"
+# master_version must be NEWER than node_pool_version, and both must be valid
+# in release_channel.
+# release_channel   = "REGULAR"
+# master_version    = "1.35.7-gke.1150000"
+# node_pool_version = "1.35.7-gke.1027000"
+
+# Blue/Green settings:
+# node_pool_soak_duration        = "600s"   # rollback window; GKE's default is 3600s
+# blue_green_batch_percentage    = 0.5      # a fraction, not a percent
+# blue_green_batch_soak_duration = "60s"
+
+# Optional overrides:
+# network_name           = "tf-adv-gke-bg-vpc"
+# gke_subnet_cidr        = "10.40.0.0/24"
+# pods_cidr              = "10.41.0.0/16"
+# services_cidr          = "10.42.0.0/20"
+# bastion_subnet_cidr    = "10.43.0.0/24"
+# master_ipv4_cidr_block = "172.16.4.0/28"
+# cluster_name           = "tf-adv-gke-bg"
+# node_machine_type      = "e2-medium"
+# node_count             = 2      # doubles during the upgrade
+# use_spot               = true
+# bastion_machine_type   = "e2-medium"
+#
+# Key rings and crypto keys cannot be deleted. Use fresh names when re-running.
+# kms_key_ring_name   = "tf-adv-gke-bg-ring"
+# kms_crypto_key_name = "tf-adv-gke-bg-boot-disk"
