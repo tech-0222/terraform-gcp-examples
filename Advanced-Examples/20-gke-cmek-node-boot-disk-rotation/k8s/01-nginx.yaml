@@ -1,0 +1,51 @@
+# Workload used to observe the migration between node pools. A ClusterIP
+# Service is enough: reachability is checked from a curl Pod inside the
+# cluster, not from outside.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-cmek
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nginx-cmek
+  template:
+    metadata:
+      labels:
+        app: nginx-cmek
+    spec:
+      containers:
+        - name: nginx
+          image: nginx:1.25.3
+          ports:
+            - containerPort: 80
+          resources:
+            requests:
+              cpu: "10m"
+              memory: "32Mi"
+            limits:
+              cpu: "100m"
+              memory: "64Mi"
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 5
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-cmek
+  namespace: default
+spec:
+  type: ClusterIP
+  selector:
+    app: nginx-cmek
+  ports:
+    - name: http
+      port: 80
+      targetPort: 80
+      protocol: TCP
