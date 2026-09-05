@@ -94,11 +94,20 @@ ERROR: INVALID_ARGUMENT: Service account ... does not exist.
 
 ## Cloud Loggingに残るもの
 
-| ログ | クエリ | 件数 |
-|---|---|---|
-| 予算の作成・更新 | `protoPayload.serviceName="billingbudgets.googleapis.com"` | **0件** |
-| Pub/Sub | `protoPayload.serviceName="pubsub.googleapis.com"` | 5件 |
+| ログ | クエリ | 件数 | 備考 |
+|---|---|---|---|
+| 予算の作成・更新 | `protoPayload.serviceName="billingbudgets.googleapis.com"` | **0件** | プロジェクトスコープ |
+| Pub/Sub | `protoPayload.serviceName="pubsub.googleapis.com"` | 10件 | |
+| API有効化 | `protoPayload.serviceName="serviceusage.googleapis.com"` | 8件 | |
 
-**誰がいつ予算を作ったか・変えたかは追えません。** コストのガードレールを外した記録が残らないため、変更管理はTerraformのコードレビューに寄せます。
+**「残らない」とは断定できません。** 予算は請求アカウント配下のリソースなので、監査ログも請求アカウントのスコープに出ている可能性があります。今回はそこを読む権限（`roles/logging.viewer`など）がなく、確認できませんでした。
+
+データアクセス監査ログはこのプロジェクトで未設定（`auditConfigs`なし）ですが、**予算の作成は書き込み操作なので Admin Activity にあたり、これは無効化できません。** 設定の有無が理由ではありません。
+
+確認できたのは次の1点です。
+
+- **プロジェクトの監査ログを見ても、予算を誰がいつ作ったかは分からない**
+
+追いたい場合は請求アカウントに`roles/logging.viewer`を付け、`--billing-account`スコープで読みます。
 
 未指定（デフォルト）の項目はコンソール/APIのデフォルト値に従う。推測での記載はしない。
