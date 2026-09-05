@@ -96,6 +96,7 @@ terraform.tfvars.example
 | 21 | `21-gke-blue-green-node-pool-upgrade` | ノードプールのBlue/Greenアップグレード。移行中の断、soak期間中のロールバック手順、CMEK鍵バージョンの反映タイミングを実測 | 実装済み |
 | 22 | `22-gke-surge-node-pool-upgrade` | ノードプールのSURGEアップグレード。21と同一条件で測り、Blue/Greenとの断・所要時間・追加ノード数・ロールバック可否を直接比較 | 実装済み |
 | 23 | `23-gke-default-compute-class` | `default_compute_class_enabled`が何を制御するスイッチか。`default` ComputeClassを自作して初めて効くことと、オートスケーラのログでしか分からない失敗理由を実測 | 実装済み |
+| 24 | `24-gke-fluentd-log-format` | GKEのログがCloud Loggingにどう届くか。サイドカーなし／Fluentdサイドカーあり／複数行を同じクラスタで比較し、`fluent.conf`の設定がどのフィールドになるかを実測 | 実装済み |
 
 ## 候補（未着手）
 
