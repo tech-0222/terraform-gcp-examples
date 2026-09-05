@@ -1,0 +1,5 @@
+---
+nginx_port: 80
+nginx_server_name: _
+nginx_marker: "tf-adv-ansible-nginx"
+nginx_body: "reloaded without restart"

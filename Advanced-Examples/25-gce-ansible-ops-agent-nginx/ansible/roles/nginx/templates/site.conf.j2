@@ -1,0 +1,23 @@
+# Managed by Ansible. Local edits are overwritten on the next run.
+server {
+    listen {{ nginx_port }} default_server;
+    server_name {{ nginx_server_name }};
+
+    root /var/www/html;
+    index index.html;
+
+    # A named log format so the Ops Agent has something predictable to parse.
+    access_log /var/log/nginx/access.log combined;
+    error_log  /var/log/nginx/error.log warn;
+
+    location / {
+        try_files $uri $uri/ =404;
+    }
+
+    # Cheap endpoint for curl checks that does not touch the filesystem.
+    location = /healthz {
+        access_log off;
+        return 200 "ok\n";
+        add_header Content-Type text/plain;
+    }
+}

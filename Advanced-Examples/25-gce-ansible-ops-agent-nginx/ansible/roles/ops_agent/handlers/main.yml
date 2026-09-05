@@ -1,0 +1,6 @@
+---
+# The agent re-reads config.yaml only on restart; there is no reload.
+- name: restart ops agent
+  ansible.builtin.systemd:
+    name: google-cloud-ops-agent
+    state: restarted

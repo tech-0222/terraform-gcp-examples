@@ -1,0 +1,61 @@
+---
+# Base OS settings. Nothing here is specific to nginx, but all of it changes
+# how the machine behaves and none of it belongs in Terraform.
+
+- name: Update the apt cache
+  ansible.builtin.apt:
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Install base packages
+  ansible.builtin.apt:
+    name:
+      - curl
+      - ca-certificates
+      - chrony
+    state: present
+
+- name: Set the timezone
+  community.general.timezone:
+    name: "{{ common_timezone }}"
+  # community.general may not be installed; fall back to timedatectl.
+  ignore_errors: true
+  register: tz_module
+
+- name: Set the timezone with timedatectl
+  ansible.builtin.command: timedatectl set-timezone {{ common_timezone }}
+  when: tz_module is failed
+  changed_when: false
+
+# Log timestamps come from the system clock. A drifting clock makes Cloud
+# Logging entries impossible to correlate with anything else.
+- name: Ensure chrony is running
+  ansible.builtin.systemd:
+    name: chrony
+    enabled: true
+    state: started
+
+# Raising these is routine for a web server, and they are a good test of
+# idempotence: sysctl writes are easy to get wrong so they report changed
+# every run.
+- name: Apply kernel parameters
+  ansible.posix.sysctl:
+    name: "{{ item.name }}"
+    value: "{{ item.value }}"
+    sysctl_file: /etc/sysctl.d/99-web.conf
+    reload: true
+    state: present
+  loop: "{{ common_sysctl }}"
+  ignore_errors: true
+  register: sysctl_module
+
+- name: Apply kernel parameters without ansible.posix
+  ansible.builtin.copy:
+    dest: /etc/sysctl.d/99-web.conf
+    mode: "0644"
+    content: |
+      {% for item in common_sysctl %}
+      {{ item.name }} = {{ item.value }}
+      {% endfor %}
+  when: sysctl_module is failed
+  notify: reload sysctl
