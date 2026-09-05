@@ -1,0 +1,19 @@
+project_id = "your-project-id"
+region     = "asia-northeast1"
+
+# The budget belongs to this billing account, not to the project.
+#   gcloud billing accounts list
+#   gcloud billing projects describe YOUR_PROJECT_ID
+billing_account_id = "000000-000000-000000"
+
+# A notification threshold, not a cap. Exceeding it stops nothing.
+# budget_amount_units = 1
+# currency_code       = "JPY"
+
+# Restrict to labelled spend. Empty covers the whole project.
+# budget_labels = { system = "tf-examples" }
+
+# credit_types_treatment:
+#   INCLUDE_ALL_CREDITS  credits subtracted -- free tier lowers apparent spend
+#   EXCLUDE_ALL_CREDITS  list price
+# credit_types_treatment = "INCLUDE_ALL_CREDITS"
