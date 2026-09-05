@@ -1,0 +1,14 @@
+---
+# Everything Terraform does not do: packages, service configuration, files.
+#
+# Ordered so a failure lands somewhere meaningful: base OS settings first,
+# then nginx, then the Ops Agent -- which is last because it reads nginx's
+# access log and needs the path to exist.
+- name: Configure the web VM
+  hosts: web
+  become: true
+
+  roles:
+    - common
+    - nginx
+    - ops_agent

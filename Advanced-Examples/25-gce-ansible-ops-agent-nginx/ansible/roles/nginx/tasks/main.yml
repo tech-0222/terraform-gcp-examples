@@ -1,0 +1,89 @@
+---
+- name: Install nginx
+  ansible.builtin.apt:
+    name: nginx
+    state: present
+
+# The template module's `validate` needs a %s for the temporary file, and it
+# runs against that file alone. A site fragment is not a complete nginx.conf,
+# so it cannot be checked that way -- `nginx -t -c %s` would fail on every
+# valid fragment.
+#
+# Instead: write it with a backup, test the whole configuration, and put the
+# backup back if the test fails. A failed test also stops the play before
+# handlers run, so a broken config is never reloaded.
+- name: Deploy the site configuration
+  ansible.builtin.template:
+    src: site.conf.j2
+    dest: /etc/nginx/sites-available/default
+    owner: root
+    group: root
+    mode: "0644"
+    backup: true
+  register: nginx_site
+  notify: reload nginx
+
+- name: Verify the configuration parses, restoring the backup if it does not
+  block:
+    - name: Test the nginx configuration
+      ansible.builtin.command: nginx -t
+      changed_when: false
+  rescue:
+    - name: Restore the previous configuration
+      ansible.builtin.copy:
+        src: "{{ nginx_site.backup_file }}"
+        dest: /etc/nginx/sites-available/default
+        remote_src: true
+      when: nginx_site.backup_file is defined
+
+    - name: Stop with the configuration error
+      ansible.builtin.fail:
+        msg: "nginx の設定が不正だったため、直前のバックアップに戻した"
+
+- name: Deploy the index page
+  ansible.builtin.template:
+    src: index.html.j2
+    dest: /var/www/html/index.html
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Enable and start nginx
+  ansible.builtin.systemd:
+    name: nginx
+    enabled: true
+    state: started
+
+# The checks below are the "service validity" part. A running process is not
+# the same as a correct service: it also has to be enabled (so it survives a
+# reboot) and its configuration has to parse.
+- name: Verify the nginx configuration parses
+  ansible.builtin.command: nginx -t
+  changed_when: false
+  register: nginx_config_test
+
+- name: Verify nginx is enabled for boot
+  ansible.builtin.command: systemctl is-enabled nginx
+  changed_when: false
+  register: nginx_enabled
+  failed_when: nginx_enabled.stdout != "enabled"
+
+- name: Verify nginx is active
+  ansible.builtin.command: systemctl is-active nginx
+  changed_when: false
+  register: nginx_active
+  failed_when: nginx_active.stdout != "active"
+
+- name: Verify nginx answers on localhost
+  ansible.builtin.uri:
+    url: "http://127.0.0.1:{{ nginx_port }}/"
+    return_content: true
+  register: nginx_local
+  failed_when: nginx_marker not in nginx_local.content
+
+- name: Report the service state
+  ansible.builtin.debug:
+    msg:
+      - "config: {{ nginx_config_test.stderr_lines | join(' / ') }}"
+      - "enabled: {{ nginx_enabled.stdout }}  active: {{ nginx_active.stdout }}"
+      - "http: {{ nginx_local.status }}"

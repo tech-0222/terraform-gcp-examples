@@ -1,0 +1,56 @@
+---
+# The Ops Agent is what makes this VM's logs reach Cloud Logging at all.
+#
+# This is the difference from GKE. There, the cluster's own collector picks up
+# container stdout with no agent of ours. On GCE nothing is collected until
+# this is installed.
+
+- name: Check whether the Ops Agent is already installed
+  ansible.builtin.stat:
+    path: /etc/google-cloud-ops-agent
+  register: ops_agent_dir
+
+- name: Download the Ops Agent installer
+  ansible.builtin.get_url:
+    url: https://dl.google.com/cloudagents/add-google-cloud-ops-agent-repo.sh
+    dest: /tmp/add-google-cloud-ops-agent-repo.sh
+    mode: "0755"
+  when: not ops_agent_dir.stat.exists
+
+# The installer is not idempotent in the Ansible sense, so it is guarded by
+# the stat above. Running it twice would report changed every time.
+- name: Install the Ops Agent
+  ansible.builtin.command: bash /tmp/add-google-cloud-ops-agent-repo.sh --also-install
+  when: not ops_agent_dir.stat.exists
+  register: ops_agent_install
+
+- name: Deploy the Ops Agent configuration
+  ansible.builtin.template:
+    src: config.yaml.j2
+    dest: /etc/google-cloud-ops-agent/config.yaml
+    owner: root
+    group: root
+    mode: "0644"
+  notify: restart ops agent
+
+- name: Enable and start the Ops Agent
+  ansible.builtin.systemd:
+    name: google-cloud-ops-agent
+    enabled: true
+    state: started
+
+- name: Verify the Ops Agent is enabled for boot
+  ansible.builtin.command: systemctl is-enabled google-cloud-ops-agent
+  changed_when: false
+  register: ops_agent_enabled
+  failed_when: ops_agent_enabled.stdout not in ["enabled", "generated"]
+
+- name: Verify the Ops Agent is active
+  ansible.builtin.command: systemctl is-active google-cloud-ops-agent
+  changed_when: false
+  register: ops_agent_active
+  failed_when: ops_agent_active.stdout != "active"
+
+- name: Report the Ops Agent state
+  ansible.builtin.debug:
+    msg: "enabled: {{ ops_agent_enabled.stdout }}  active: {{ ops_agent_active.stdout }}"

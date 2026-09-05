@@ -1,0 +1,28 @@
+# Managed by Ansible.
+#
+# The default configuration already ships syslog. These receivers add nginx's
+# own logs, which is what makes it possible to tell "the VM is up" from
+# "the site is serving".
+# Ref: https://cloud.google.com/logging/docs/agent/ops-agent/configuration
+logging:
+  receivers:
+    nginx_access:
+      type: files
+      include_paths:
+        - {{ ops_agent_nginx_access_log }}
+    nginx_error:
+      type: files
+      include_paths:
+        - {{ ops_agent_nginx_error_log }}
+  service:
+    pipelines:
+      default_pipeline:
+        receivers: [syslog]
+      nginx_pipeline:
+        receivers: [nginx_access, nginx_error]
+
+metrics:
+  service:
+    pipelines:
+      default_pipeline:
+        receivers: [hostmetrics]
