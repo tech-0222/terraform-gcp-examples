@@ -1,0 +1,58 @@
+# The app writes to a file; the Fluentd sidecar tails it and re-emits JSON on
+# its own stdout. The GKE agent then collects the sidecar's stdout.
+#
+# The two containers appear as separate log streams
+# (resource.labels.container_name), which is what makes it possible to see
+# what Fluentd added and what it lost.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fluentd-sidecar
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: fluentd-sidecar
+  template:
+    metadata:
+      labels:
+        app: fluentd-sidecar
+    spec:
+      volumes:
+        - name: applog
+          emptyDir: {}
+        - name: config
+          configMap:
+            name: fluentd-config
+      containers:
+        - name: app
+          image: busybox:1.36
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              mkdir -p /var/log/app
+              while true; do
+                echo "APP ordinary line to file" >> /var/log/app/app.log
+                echo '{"msg":"APP json line to file","order_id":2345}' >> /var/log/app/app.log
+                sleep 20
+              done
+          volumeMounts:
+            - name: applog
+              mountPath: /var/log/app
+          resources:
+            requests:
+              cpu: "10m"
+              memory: "16Mi"
+
+        - name: fluentd
+          image: fluent/fluentd:v1.16-debian-1
+          volumeMounts:
+            - name: applog
+              mountPath: /var/log/app
+            - name: config
+              mountPath: /fluentd/etc
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "128Mi"
