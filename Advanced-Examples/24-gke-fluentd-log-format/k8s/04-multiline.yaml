@@ -1,0 +1,36 @@
+# A Java-style stack trace. One logical event, many lines.
+#
+# Whether Cloud Logging keeps it as one entry or splits it into one entry per
+# line decides whether a stack trace is readable in the console at all.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: multiline
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: multiline
+  template:
+    metadata:
+      labels:
+        app: multiline
+    spec:
+      containers:
+        - name: app
+          image: busybox:1.36
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              while true; do
+                echo "MULTILINE-START java.lang.NullPointerException: order is null"
+                echo "	at com.example.OrderService.process(OrderService.java:42)"
+                echo "	at com.example.OrderController.post(OrderController.java:18)"
+                echo "MULTILINE-END"
+                sleep 30
+              done
+          resources:
+            requests:
+              cpu: "10m"
+              memory: "16Mi"

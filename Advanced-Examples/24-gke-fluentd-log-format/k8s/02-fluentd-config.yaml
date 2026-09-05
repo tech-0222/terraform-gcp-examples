@@ -1,0 +1,44 @@
+# fluent.conf for the sidecar.
+#
+# Each directive below is here to answer one question about Cloud Logging:
+#
+#   tag app.log            -> does the tag appear anywhere in the entry?
+#   record_transformer     -> do added keys become jsonPayload keys?
+#   severity field         -> is it promoted to the entry's severity?
+#   @type stdout / json    -> the sidecar writes to its own stdout, which the
+#                             GKE agent then collects. Two hops, not one.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: fluentd-config
+  namespace: default
+data:
+  fluent.conf: |
+    <source>
+      @type tail
+      path /var/log/app/app.log
+      pos_file /var/log/app/app.log.pos
+      tag app.log
+      read_from_head true
+      <parse>
+        @type none
+      </parse>
+    </source>
+
+    <filter app.log>
+      @type record_transformer
+      enable_ruby true
+      <record>
+        service      order-api
+        env          verification
+        severity     ERROR
+        fluentd_tag  ${tag}
+      </record>
+    </filter>
+
+    <match app.log>
+      @type stdout
+      <format>
+        @type json
+      </format>
+    </match>
