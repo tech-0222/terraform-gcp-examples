@@ -1,0 +1,16 @@
+project_id = "your-project-id"
+region     = "asia-northeast1"
+zone       = "asia-northeast1-a"
+
+# Must match your ADC / gcloud user so you can IAP SSH and open the port 80 tunnel.
+iap_member = "user:you@example.com"
+
+# Optional overrides:
+# network_name  = "tf-adv-gce-ans-vpc"
+# subnet_cidr   = "10.50.0.0/24"
+# instance_name = "tf-adv-gce-ans-web"
+# machine_type  = "e2-small"
+# use_spot      = true
+#
+# Bucket names are globally unique; the project ID is appended to this prefix.
+# bucket_prefix = "tf-adv-gce-ansible"

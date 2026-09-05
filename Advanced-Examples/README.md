@@ -97,6 +97,7 @@ terraform.tfvars.example
 | 22 | `22-gke-surge-node-pool-upgrade` | ノードプールのSURGEアップグレード。21と同一条件で測り、Blue/Greenとの断・所要時間・追加ノード数・ロールバック可否を直接比較 | 実装済み |
 | 23 | `23-gke-default-compute-class` | `default_compute_class_enabled`が何を制御するスイッチか。`default` ComputeClassを自作して初めて効くことと、オートスケーラのログでしか分からない失敗理由を実測 | 実装済み |
 | 24 | `24-gke-fluentd-log-format` | GKEのログがCloud Loggingにどう届くか。サイドカーなし／Fluentdサイドカーあり／複数行を同じクラスタで比較し、`fluent.conf`の設定がどのフィールドになるかを実測 | 実装済み |
+| 25 | `25-gce-ansible-ops-agent-nginx` | TerraformとAnsibleの境界。GCEにOps AgentとNginxを入れ、startup scriptの実行タイミング・Terraformが検知しない失敗・冪等性・サービスの妥当性・curlでの疎通を実測 | 実装済み |
 
 ## 候補（未着手）
 

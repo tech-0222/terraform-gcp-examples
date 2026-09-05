@@ -1,0 +1,8 @@
+---
+common_timezone: Asia/Tokyo
+
+common_sysctl:
+  - name: net.core.somaxconn
+    value: "1024"
+  - name: fs.file-max
+    value: "200000"

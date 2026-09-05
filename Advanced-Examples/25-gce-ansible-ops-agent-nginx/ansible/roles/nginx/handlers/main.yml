@@ -1,0 +1,8 @@
+---
+# reload, not restart. A reload re-reads the configuration without dropping
+# connections; a restart drops them. Whether that actually holds is one of the
+# things this example measures.
+- name: reload nginx
+  ansible.builtin.systemd:
+    name: nginx
+    state: reloaded
