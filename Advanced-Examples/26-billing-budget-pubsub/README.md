@@ -197,28 +197,59 @@ tf-adv-budget-notifications
 
 **予算は通知の仕組みであって、上限ではない。** 止めたいなら、この通知を受けてリソースを停止する処理を自分で書く。Cloud FunctionsやCloud Runへpush配信し、そこで`compute instances stop`や請求の切り離しを行うのが定石。
 
-### 7. 予算の操作は監査ログに残らない
+### 7. 予算の操作はプロジェクトの監査ログに出ない
 
 ```console
-$ gcloud logging read 'protoPayload.serviceName="billingbudgets.googleapis.com"' --limit=5 --freshness=1h
+$ gcloud logging read 'protoPayload.serviceName="billingbudgets.googleapis.com"' --limit=5 --freshness=8h
 （0件）
 ```
 
-Pub/Sub側は残る。
+同じ窓で他のサービスは出ている。ログ機能そのものは動いている。
 
 ```console
-$ gcloud logging read 'protoPayload.serviceName="pubsub.googleapis.com"' --limit=5 --freshness=1h
-（5件）
+$ for S in billingbudgets pubsub serviceusage; do
+    printf "%-16s %s件\n" "$S" "$(gcloud logging read "protoPayload.serviceName=\"$S.googleapis.com\"" \
+      --limit=10 --freshness=8h --format="value(timestamp)" | wc -l)"
+  done
+billingbudgets   0件
+pubsub           10件
+serviceusage     8件
 ```
 
-**誰がいつ予算を作ったか・変えたかは、このプロジェクトのログからは追えない。** コストのガードレールを外した記録が残らないという意味なので、変更管理はTerraformのコードレビューに寄せる。
+**「残らない」とは言い切れない。** 予算は請求アカウント配下のリソースなので、監査ログも
+請求アカウントのスコープに出ている可能性がある。今回はそこを読めなかった。
+
+```console
+$ gcloud billing accounts get-iam-policy BILLING_ACCOUNT_ID --format="value(bindings.role)"
+roles/billing.admin
+roles/billing.costsManager
+roles/billing.user
+```
+
+`roles/logging.viewer`など、ログを読むロールが付いていない。請求アカウントスコープの
+`gcloud logging read --billing-account=...` は何も返さなかったが、これが「空」なのか
+「読めない」のかは区別できない。
+
+なお、データアクセス監査ログはこのプロジェクトで未設定（`auditConfigs`なし）だが、
+**予算の作成は書き込み操作なので Admin Activity にあたり、これは無効化できない。**
+有効・無効の設定が理由ではない。
+
+分かっているのは次の1点だけ。
+
+- **プロジェクトの監査ログを見ても、予算を誰がいつ作ったかは分からない**
+
+請求アカウントのログを追いたい場合は、請求アカウントに対して`roles/logging.viewer`を
+付けたうえで、`--billing-account`スコープで読む。
 
 ## Cloud Loggingに残るもの
 
-| ログ | クエリ | 件数 |
-|---|---|---|
-| 予算の作成・更新 | `protoPayload.serviceName="billingbudgets.googleapis.com"` | **0件** |
-| Pub/Sub | `protoPayload.serviceName="pubsub.googleapis.com"` | 5件 |
+| ログ | クエリ | 件数 | 備考 |
+|---|---|---|---|
+| 予算の作成・更新 | `protoPayload.serviceName="billingbudgets.googleapis.com"` | **0件** | プロジェクトスコープ。請求アカウント側は未確認 |
+| Pub/Sub | `protoPayload.serviceName="pubsub.googleapis.com"` | 10件 | |
+| API有効化 | `protoPayload.serviceName="serviceusage.googleapis.com"` | 8件 | |
+
+上2つが出ているので、ログ機能自体は動いている。予算だけが出ない。
 
 ## 後片付け
 
@@ -242,7 +273,7 @@ $ gcloud billing budgets list --billing-account=BILLING_ACCOUNT_ID --filter="dis
 - **通知は届く。** 今回は作成から約7分。閾値超過の瞬間ではなく、予算が評価されたときに publish される
 - 通知には実支出と上限の両方が入る。超過分の計算にAPI呼び出しは要らない
 - **予算は課金を止めない。** 上限1円に対し110.03円でもリソースは動き続ける。止めるなら通知を受けて自分で止める
-- **予算の操作は監査ログに残らない。** 変更管理はコードレビューに寄せる
+- **予算の操作はプロジェクトの監査ログに出ない。** ただし請求アカウントスコープは今回の権限では読めておらず、「どこにも残らない」とは確認できていない。プロジェクトのログだけでは誰がいつ作ったか分からない
 
 ## 参考資料
 
