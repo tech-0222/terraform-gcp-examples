@@ -46,6 +46,36 @@ terraform destroy
 
 **GKEは最もコストが高い。検証後は速やかに `terraform destroy` する。**
 
+### 検証は4系統すべてで行う
+
+**GCPリソースを作る検証では、次の4つをすべて実行する。** 1つでも欠けたら検証として不十分。
+
+| 系統 | 何を見るか | 例 |
+|---|---|---|
+| 対象サービスのコマンド | 実際に動いているか | `kubectl`、`redis-cli`、`psql`、`curl`、`systemctl` |
+| メトリクス | 取れるか、値がどう動くか | Monitoring API v3 の `timeSeries`、GMP の PromQL |
+| `gcloud logging` | ログに何が残るか（**0件も結果**） | `gcloud logging read` |
+| `gcloud <service>` | 対象サービスの状態 | `gcloud container`、`gcloud certificate-manager` |
+
+読者が運用で使うのはコンソールの**メトリクスエクスプローラとログエクスプローラ**であって、`kubectl get --raw` ではない。片方だけ見て書くと、実運用で使えない記事になる。
+
+`gcloud monitoring` に時系列のサブコマンドは無い（あるのは dashboards と policies）。時系列は Monitoring API v3 を直接呼び出す。
+
+GKE では GMP（`monitoring_config.managed_prometheus`）を有効にし、PromQL で引けるところまで確認する。**クラスタを destroy する前に4つとも取り終える。**
+
+### メトリクスが空だったら、まず一覧を読む
+
+**「取れない」を実測だけで結論づけない。** マネージド収集は集めるメトリクスが公式に列挙されており、載っていなければ取れないのが仕様になる。
+
+| 対象 | 一覧 |
+|---|---|
+| GKE の kube state metrics | [Collect and view kube state metrics](https://cloud.google.com/kubernetes-engine/docs/how-to/kube-state-metrics) |
+| GKE の cAdvisor / kubelet | [cAdvisor and kubelet metrics](https://cloud.google.com/kubernetes-engine/docs/how-to/cadvisor-kubelet-metrics) |
+
+`28-gke-pod-eviction` で、`kube_pod_status_reason` が0件だった理由を「実測から言えるのは組み込みの収集が狭いということ」と書いた。**実際は上の一覧に載っていないだけで、公式に文書化されていた。** 調べれば分かることを未解明として書かない。
+
+自前デプロイ用のエクスポーター設定（`stackdriver/docs/managed-prometheus/exporters/`）と、GKE 組み込みの一覧は**別物**。取り違えると説明が合わなくなる。
+
 ### Cloud Logging を必ず確認する
 
 **GCPリソースを作成する検証では、毎回 `gcloud logging read` でログを確認する。** `kubectl describe` や `gcloud ... operations` だけで終わらせない。
