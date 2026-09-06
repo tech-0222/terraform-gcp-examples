@@ -60,9 +60,16 @@ resource "google_container_cluster" "primary" {
   # 自前で kube-prometheus-stack を立てる代わりに、GKE の managed collection に
   # 集めさせて Cloud Monitoring から PromQL で引く。
   #
-  # POD は kube-state-metrics 由来のメトリクス（kube_pod_status_reason など）。
-  # KUBELET / CADVISOR は GKE 1.29.3-gke.1093000 以降でのみ指定できる。
-  # Ref: https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/container_cluster
+  # POD は kube-state-metrics 由来だが、出るのは4つだけ。
+  #   kube_pod_container_status_ready / kube_pod_container_status_waiting_reason
+  #   kube_pod_status_phase / kube_pod_status_unschedulable
+  # kube_pod_status_reason と kube_node_* は、どのコンポーネントの一覧にも無い。
+  # 退避の検知に使うなら kube-state-metrics を自前で立てて PodMonitoring で拾う。
+  # Ref: https://cloud.google.com/kubernetes-engine/docs/how-to/kube-state-metrics
+  #
+  # KUBELET / CADVISOR は GKE 1.29.3-gke.1093000 以降でのみ指定できる。こちらも
+  # curated set で、kubelet_eviction_stats_age_seconds は含まれない。
+  # Ref: https://cloud.google.com/kubernetes-engine/docs/how-to/cadvisor-kubelet-metrics
   monitoring_config {
     enable_components = [
       "SYSTEM_COMPONENTS",
