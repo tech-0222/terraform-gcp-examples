@@ -121,7 +121,9 @@ kubeReserved:
   has larger consumption of ephemeral-storage.
 ```
 
-メッセージに**しきい値・そのときの空き・そのコンテナの使用量と requests** が入っている。**QoS クラスは書かれていない。** 判断は requests との比較で行われる。
+メッセージに**しきい値・そのときの空き・そのコンテナの使用量と requests** が入っている。**QoS クラスは書かれていない。**
+
+[公式](https://kubernetes.io/docs/concepts/scheduling-eviction/node-pressure-eviction/)の順位付けは ①requests を超えているか ②Pod Priority ③requests に対する超過量 の3つ。**「kubelet は退避順序の決定に QoS クラスを使わない」と明記されている。** ディスク逼迫でも同じ3基準で、測る対象がファイルシステム使用量に変わる。
 
 `requests` が 0 の BestEffort は、**188Ki 使っただけで「超過」になる。**
 
@@ -167,6 +169,8 @@ kubelet_eviction_stats_age_seconds_count{eviction_signal="nodefs.available"} 2
 ```
 
 **名前は `kubelet_evictions` で `_total` は付かない。** kubelet のソースでは `Subsystem: kubelet` / `Name: evictions` の CounterVec として[登録されている](https://github.com/kubernetes/kubernetes/blob/master/pkg/kubelet/metrics/metrics.go)。`_total` が付くのは OpenMetrics 形式のときだけ。**`_total` 付きで grep すると必ず0件になる。**
+
+`kubelet_eviction_stats_age_seconds` は ALPHA の Histogram で、定義は「統計を収集した時点から、その統計に基づいて Pod が退避された時点までの時間」（[Metrics Reference](https://kubernetes.io/docs/reference/instrumentation/metrics/)）。**判定が走った回数ではない。** `_count` は観測数なので、そのシグナルで実際に退避が起きた回数を表す。
 
 **シグナル名は `allocatableMemory.available`。** `evictionHard` に書く `memory.available` とラベル側の綴りが違う。
 
@@ -224,14 +228,14 @@ SYSTEM_COMPONENTS;STORAGE;HPA;POD;DAEMONSET;DEPLOYMENT;STATEFULSET;CADVISOR;KUBE
 
 **1つも増えない。設定の問題ではない。**
 
-#### 実際に入っているのは kube_* が7種類だけ
+#### この環境で入っていた kube_* は7種類
 
 ```console
 $ curl -s -H "Authorization: Bearer $(gcloud auth print-access-token)" \
     "https://monitoring.googleapis.com/v1/projects/${PROJECT}/location/global/prometheus/api/v1/label/__name__/values"
 ```
 
-全体で 18,624 種類。うち `kube_` で始まるものは7つで全部だった。
+全体で 18,624 種類。うち `kube_` で始まるものは、この環境では7つで全部だった。
 
 ```text
 kube_deployment_spec_replicas
@@ -252,7 +256,32 @@ kube_pod_status_unschedulable
 
 この2つの一覧に、退避に関するものは1つも載っていない。**監視の設計は `up` からではなく、この一覧から始める。**
 
-一覧に無いメトリクスが要るなら、kube-state-metrics を自分でデプロイして `PodMonitoring` で拾う。手元で kube-prometheus-stack を立てた環境では `kube_pod_status_reason{reason="Evicted"}` が取れた。
+一覧に無いメトリクスは、収集対象を自分で足せば取れる。取り方は出どころで変わる。
+
+- kube-state-metrics 由来（`kube_pod_status_reason`）→ 自分でデプロイして `PodMonitoring` で拾う。手元の kube-prometheus-stack では取れた
+- kubelet 由来（`kubelet_evictions`）→ ノードの `/metrics` に既に出ているので、[`ClusterNodeMonitoring`](https://cloud.google.com/kubernetes-engine/docs/how-to/collect-specific-prometheus-metrics) で直接取り込む
+
+```yaml
+apiVersion: monitoring.googleapis.com/v1
+kind: ClusterNodeMonitoring
+metadata:
+  name: kubelet-evictions
+spec:
+  selector:
+    matchLabels: {}
+  endpoints:
+  - path: "/metrics"
+    scheme: "https"
+    interval: "30s"
+    tls:
+      insecureSkipVerify: true
+    metricRelabeling:
+    - action: keep
+      sourceLabels: [__name__]
+      regex: kubelet_evictions
+```
+
+`metricRelabeling` で絞らないと119種類が全部入る。**この設定は今回の検証では試していない。**
 
 退避は phase で間接的に見える。
 
@@ -280,7 +309,24 @@ kubernetes.io/node/ephemeral_storage/used_bytes
                              最新 7,931,101,184
 ```
 
-**`evictable` / `non-evictable` に分かれている。** ノード逼迫の監視はこちらで組むのが筋になる。
+**`evictable` は「退避で回収できるメモリ」ではない。** [公式の定義](https://cloud.google.com/monitoring/api/metrics_kubernetes)は「カーネルが容易に回収できるメモリ」で、Pod の退避とは関係しない。実測でも、逼迫の最中に 6.27GB まで上がっていた（allocatable は 6,170,292Ki）。
+
+```text
+時刻   evictable      non-evictable
+09:43    749,879,296  1,444,921,344
+09:44  4,678,520,832  1,430,188,032   ← hog がメモリを掴む
+09:45  6,274,232,320  1,466,175,488   ← MemoryPressure=True
+09:46    666,390,528  1,478,160,384   ← 退避後
+```
+
+kubelet が使う `memory.available` は cgroupfs から取った値から `inactive_file` を除いた別物で、`free -m` とも `evictable` とも一致しない。
+
+**ノード逼迫の監視には `kubernetes.io/node/status_condition` を使う。** `condition` と `status` のラベルを持ち、Pressure の期間がそのまま取れる。
+
+```text
+condition=MemoryPressure  status=True   True の期間 09:40:00 〜 09:45:00
+condition=DiskPressure    status=True   True の期間 09:47:00 〜 09:52:00
+```
 
 ### 8. `gcloud monitoring` に時系列のサブコマンドが無い
 
@@ -292,7 +338,7 @@ Maybe you meant:
   gcloud monitoring policies list
 ```
 
-時系列を引くには Monitoring API v3 を直接叩く。`scripts/collect.sh` はそうしている。
+`gcloud monitoring` にあるのは `dashboards` / `policies` / `snoozes` / `uptime` の4グループで、時系列を引くサブコマンドが無い。Monitoring API v3 を直接呼び出す。`scripts/collect.sh` はそうしている。
 
 ## ローカル（minikube）では再現しきれない
 
@@ -330,5 +376,8 @@ terraform destroy
 - [GKE: kube state metrics を収集して表示する](https://cloud.google.com/kubernetes-engine/docs/how-to/kube-state-metrics)
 - [GKE: cAdvisor / kubelet メトリクス](https://cloud.google.com/kubernetes-engine/docs/how-to/cadvisor-kubelet-metrics)
 - [GKE: Plan node sizes](https://cloud.google.com/kubernetes-engine/docs/concepts/plan-node-sizes)
+- [Kubernetes Metrics Reference](https://kubernetes.io/docs/reference/instrumentation/metrics/)
+- [GKE system metrics（`status_condition` と `memory_type`）](https://cloud.google.com/monitoring/api/metrics_kubernetes)
+- [GKE: 一覧に無い Prometheus メトリクスを収集する](https://cloud.google.com/kubernetes-engine/docs/how-to/collect-specific-prometheus-metrics)
 - [Cloud Monitoring API v3: timeSeries.list](https://cloud.google.com/monitoring/api/ref_v3/rest/v3/projects.timeSeries/list)
 - [google_container_cluster](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/container_cluster)
