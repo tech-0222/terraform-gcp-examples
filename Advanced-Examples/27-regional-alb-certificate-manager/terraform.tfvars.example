@@ -1,0 +1,13 @@
+project_id      = "your-project-id"
+region          = "asia-northeast1"
+zone            = "asia-northeast1-a"
+
+# 親ドメインから委任するサブドメイン
+dns_zone_domain = "gcp.example.com"
+
+# regional.gcp.example.com / global.gcp.example.com になる
+# regional_hostname = "regional"
+# global_hostname   = "global"
+
+# LB 認証の比較が不要なら false
+# enable_global_lb = true
