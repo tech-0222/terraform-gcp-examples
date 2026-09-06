@@ -105,70 +105,79 @@ kubeReserved:
 メモリ逼迫のとき。
 
 ```text
-04:26:48  besteffort
-  The node was low on resource: memory. Threshold quantity: 100Mi, available: 12Ki.
-  Container app was using 192Ki, request is 0, has larger consumption of memory.
+09:38:19  besteffort
+  The node was low on resource: memory. Threshold quantity: 100Mi, available: 17348Ki.
+  Container app was using 188Ki, request is 0, has larger consumption of memory.
 ```
 
 ディスク逼迫のとき。
 
 ```text
-04:33:47  hog
+09:45:23  hog
   The node was low on resource: ephemeral-storage. Threshold quantity: 2722654248,
-  available: 2509916Ki.
-04:34:05  diskfill
-  ... Container fill was using 40Ki, request is 0, has larger consumption of ephemeral-storage.
+  available: 1600496Ki.
+09:45:42  diskfill
+  ... available: 371692Ki. Container fill was using 40Ki, request is 0,
+  has larger consumption of ephemeral-storage.
 ```
 
 メッセージに**しきい値・そのときの空き・そのコンテナの使用量と requests** が入っている。**QoS クラスは書かれていない。** 判断は requests との比較で行われる。
 
-`requests` が 0 の BestEffort は、**192Ki 使っただけで「超過」になる。**
+`requests` が 0 の BestEffort は、**188Ki 使っただけで「超過」になる。**
 
-別の回では順序が変わった。1回目は `besteffort` → `hog`、2回目は `hog` のみ。**1回の観測で退避順を結論づけてはいけない。**
+```console
+$ kubectl -n evict-test get pods \
+    -o custom-columns='NAME:.metadata.name,QOS:.status.qosClass,STATUS:.status.phase,REASON:.status.reason'
+NAME         QOS          STATUS    REASON
+besteffort   BestEffort   Failed    Evicted
+burstable    Burstable    Running   <none>
+diskfill     BestEffort   Failed    Evicted
+guaranteed   Guaranteed   Running   <none>
+hog          Burstable    Failed    Evicted
+```
 
-### 3. DiskPressure は約7分で再現できた
+生き残った2つはどちらも requests を宣言していて、実使用がそれを下回っている。
+
+なお、e2-medium で回した別の日には順序が変わった。1回目は `besteffort` → `hog`、2回目は `hog` のみ。**1回の観測で退避順を結論づけてはいけない。**
+
+### 3. DiskPressure は 208秒で再現できた
 
 `emptyDir` に 20GB 書き込む。`emptyDir` は nodefs 上にあるので、書いた分だけ `nodefs.available` が減る。
 
 ```text
-04:27:00  diskfill 投入
-04:33:53  DiskPressure=True   （413秒）
+09:42:07  diskfill 投入
+09:45:35  DiskPressure=True   （208秒）
 ```
 
-**空きが戻っても `DiskPressure=True` は続く。** `evictionPressureTransitionPeriod` が 5分あるため。
+**空きが戻っても `DiskPressure=True` は続く。** `evictionPressureTransitionPeriod` が 5分あるため。今回は10分後に `False` へ戻り、そのとき `nodefs.available` は 17.95GiB（70.8%）まで回復していた。
 
-### 4. kubelet のメトリクス
+### 4. kubelet は退避をカウントしている
 
 ```console
 $ kubectl get --raw "/api/v1/nodes/<NODE>/proxy/metrics" \
     | grep -E '^# TYPE kubelet_evictions |^kubelet_evictions'
 # TYPE kubelet_evictions counter
-kubelet_evictions{eviction_signal="memory.available"} 1
+kubelet_evictions{eviction_signal="allocatableMemory.available"} 2
+kubelet_evictions{eviction_signal="nodefs.available"} 2
 
-$ ... | grep -c '^kubelet_eviction_stats_age_seconds_count'
-3
-$ ... | grep -oP 'eviction_signal="\K[^"]+' | sort -u
-allocatableMemory.available
-containerfs.available
-nodefs.available
+$ ... | grep '^kubelet_eviction_stats_age_seconds_count'
+kubelet_eviction_stats_age_seconds_count{eviction_signal="allocatableMemory.available"} 2
+kubelet_eviction_stats_age_seconds_count{eviction_signal="containerfs.available"} 2
+kubelet_eviction_stats_age_seconds_count{eviction_signal="nodefs.available"} 2
 ```
 
-**`kubelet_evictions_total` という名前では出ない。`_total` を外すと存在する。**
+**名前は `kubelet_evictions` で `_total` は付かない。** kubelet のソースでは `Subsystem: kubelet` / `Name: evictions` の CounterVec として[登録されている](https://github.com/kubernetes/kubernetes/blob/master/pkg/kubelet/metrics/metrics.go)。`_total` が付くのは OpenMetrics 形式のときだけ。**`_total` 付きで grep すると必ず0件になる。**
 
-kubelet のソースでは `Subsystem: kubelet` / `Name: evictions` の CounterVec として[登録されている](https://github.com/kubernetes/kubernetes/blob/master/pkg/kubelet/metrics/metrics.go)。`_total` が付くのは OpenMetrics 形式のときで、`/metrics` の素の出力には付かない。
-
-最初は `_total` 付きで数えて0件になり、「存在しない」と結論づけた。**出力は合っていて、照合する名前が間違っていた。** 上の出力はローカルの minikube（kubelet v1.37.0）で取り直したもので、**GKE 上に `kubelet_evictions` があったかは確かめられていない**（同じ誤った名前で数えたあと destroy した）。
-
-ただし GMP には来ない。GKE の `KUBELET` は [curated set](https://cloud.google.com/kubernetes-engine/docs/how-to/cadvisor-kubelet-metrics) で、eviction 系を1つも含まないため。
+**シグナル名は `allocatableMemory.available`。** `evictionHard` に書く `memory.available` とラベル側の綴りが違う。
 
 ### 5. Cloud Logging には残る
 
 ```console
 $ gcloud logging read '<query>' --freshness=2h
-  resource.type="k8s_pod" AND jsonPayload.reason="Evicted"        7 件
-  resource.type="k8s_node" AND jsonPayload.reason=~"Evict|Pressure"  9 件
-  resource.type="k8s_node" AND jsonPayload.MESSAGE=~"eviction"     93 件
-  protoPayload.serviceName="container.googleapis.com"              24 件
+  resource.type="k8s_pod" AND jsonPayload.reason="Evicted"           4 件
+  resource.type="k8s_node" AND jsonPayload.reason=~"Evict|Pressure"  8 件
+  resource.type="k8s_node" AND jsonPayload.MESSAGE=~"eviction"      36 件
+  protoPayload.serviceName="container.googleapis.com"                7 件
 ```
 
 Pod 側とノード側の両方に残る。**「いつ何がなぜ退避されたか」を追えるのはログだけ。**
@@ -189,33 +198,71 @@ up{job="kube-state-metrics"}    = 1
 |---|---:|---|---:|
 | `kube_pod_status_phase` | 25 | **`kube_pod_status_reason`** | **0** |
 | `kubelet_running_pods` | 1 | **`kube_node_status_condition`** | **0** |
-| `kubelet_running_containers` | 3 | `kubelet_eviction_stats_age_seconds_count` | 0 |
-| `kubelet_node_name` | 1 | `kube_pod_container_resource_requests` | 0 |
-| `container_memory_working_set_bytes` | 76 | `kube_node_status_allocatable` | 0 |
+| `kubelet_running_containers` | 3 | `kubelet_evictions` | 0 |
+| `container_memory_working_set_bytes` | 76 | `kube_pod_container_resource_requests` | 0 |
 
-**ジョブが `up=1` でも、メトリクスが全部来るわけではない。**
+`kubelet_evictions` はノードの `/metrics` に実在する（上の 4）。**それでも Cloud Monitoring には入らない。**
 
-これは仕様どおりで、GKE のマネージド収集は[コンポーネントごとに出すメトリクスを公開している](https://cloud.google.com/kubernetes-engine/docs/how-to/kube-state-metrics)。今回 kube-state-metrics 系で有効にしたのは `POD` だけで、その一覧は4つで全部だった。
+#### コンポーネントを全部有効にしても増えない
+
+```console
+$ gcloud container clusters update tf-adv-evict --zone asia-northeast1-a \
+    --monitoring=SYSTEM,POD,DAEMONSET,DEPLOYMENT,HPA,STATEFULSET,STORAGE,CADVISOR,KUBELET
+$ gcloud container clusters describe tf-adv-evict --zone asia-northeast1-a \
+    --format="value(monitoringConfig.componentConfig.enableComponents)"
+SYSTEM_COMPONENTS;STORAGE;HPA;POD;DAEMONSET;DEPLOYMENT;STATEFULSET;CADVISOR;KUBELET
+```
+
+| クエリ | 4コンポーネント | 全9コンポーネント |
+|---|---:|---:|
+| `kube_pod_status_phase` | 25 | 25 |
+| `kube_pod_status_reason` | 0 | **0** |
+| `kube_node_status_condition` | 0 | **0** |
+| `kube_pod_container_resource_requests` | 0 | **0** |
+| `kube_node_status_allocatable` | 0 | **0** |
+| `kubelet_evictions` | 0 | **0** |
+
+**1つも増えない。設定の問題ではない。**
+
+#### 実際に入っているのは kube_* が7種類だけ
+
+```console
+$ curl -s -H "Authorization: Bearer $(gcloud auth print-access-token)" \
+    "https://monitoring.googleapis.com/v1/projects/${PROJECT}/location/global/prometheus/api/v1/label/__name__/values"
+```
+
+全体で 18,624 種類。うち `kube_` で始まるものは7つで全部だった。
 
 ```text
+kube_deployment_spec_replicas
+kube_deployment_status_replicas_available
+kube_deployment_status_replicas_updated
 kube_pod_container_status_ready
 kube_pod_container_status_waiting_reason
 kube_pod_status_phase
 kube_pod_status_unschedulable
 ```
 
-`kube_pod_status_reason` は入っていない。`kube_node_` で始まるメトリクスは**どのコンポーネントの一覧にも無い**。kubelet 側も [curated set](https://cloud.google.com/kubernetes-engine/docs/how-to/cadvisor-kubelet-metrics) で、`kubelet_running_pods` はあるが `kubelet_eviction_stats_age_seconds` は無い。上の実測と過不足なく一致する。
+全コンポーネントを有効にして増えたのは `kube_deployment_*` の3つだけ。`kubelet_` で始まるものは11種類で、**同じノードの `/metrics` が出す119種類のうちの一部**にすぎない。
 
-**`enable_components` を足しても取れない。** 残る `DAEMONSET` / `DEPLOYMENT` / `HPA` / `STATEFULSET` / `STORAGE` を全部有効にしても、この2つはどの一覧にも入っていない。
+これは仕様どおりで、GKE のマネージド収集は集めるメトリクスをコンポーネントごとに公開している。
 
-一覧に無いメトリクスが要るなら、kube-state-metrics を自分でデプロイして `PodMonitoring` で拾う。手元で kube-prometheus-stack を立てた環境では `kube_pod_status_reason{reason="Evicted"}` が取れた。**GMP のマネージド収集は、退避の監視には足りない。**
+- [kube state metrics を収集して表示する](https://cloud.google.com/kubernetes-engine/docs/how-to/kube-state-metrics)
+- [cAdvisor / kubelet メトリクス](https://cloud.google.com/kubernetes-engine/docs/how-to/cadvisor-kubelet-metrics)
+
+この2つの一覧に、退避に関するものは1つも載っていない。**監視の設計は `up` からではなく、この一覧から始める。**
+
+一覧に無いメトリクスが要るなら、kube-state-metrics を自分でデプロイして `PodMonitoring` で拾う。手元で kube-prometheus-stack を立てた環境では `kube_pod_status_reason{reason="Evicted"}` が取れた。
 
 退避は phase で間接的に見える。
 
 ```promql
-kube_pod_status_phase{namespace="evict-test",pod=~"hog|diskfill"} == 1
-  pod=diskfill phase=Failed  1
-  pod=hog      phase=Failed  1
+kube_pod_status_phase{namespace="evict-test"} == 1
+  pod=besteffort phase=Failed   1
+  pod=diskfill   phase=Failed   1
+  pod=hog        phase=Failed   1
+  pod=burstable  phase=Running  1
+  pod=guaranteed phase=Running  1
 ```
 
 ただし `phase=Failed` は退避以外でもなる。**理由まで知るには Cloud Logging が要る。**
@@ -224,12 +271,13 @@ kube_pod_status_phase{namespace="evict-test",pod=~"hog|diskfill"} == 1
 
 ```console
 kubernetes.io/node/memory/used_bytes
-  memory_type=evictable      最新 389,881,856
-  memory_type=non-evictable  最新 1,705,693,184
+  memory_type=evictable      最新 685,723,648
+  memory_type=non-evictable  最新 1,502,375,936
 kubernetes.io/node/memory/allocatable_utilization
-  component=pods             最新 0.076
+  component=pods memory_type=evictable      最新 0.0267
+  component=pods memory_type=non-evictable  最新 0.0771
 kubernetes.io/node/ephemeral_storage/used_bytes
-                             最新 7,929,176,064
+                             最新 7,931,101,184
 ```
 
 **`evictable` / `non-evictable` に分かれている。** ノード逼迫の監視はこちらで組むのが筋になる。
