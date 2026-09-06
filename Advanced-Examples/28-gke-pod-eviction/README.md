@@ -14,7 +14,7 @@ kubelet がノードの逼迫を検知して Pod を退避（Eviction）する�
 | `gcloud logging` | ログに何が残るか（0件も結果） |
 | Cloud Monitoring / GMP | メトリクスが取れるか |
 
-採取は `scripts/collect.sh` にまとめてある。**クラスタを destroy する前に実行する。**
+観測データの収集は `scripts/collect.sh` にまとめてある。**クラスタを destroy する前に実行する。** `kubectl` の Event と kubelet の `/metrics` は消すと取れなくなる。Cloud Logging と Cloud Monitoring に入ったデータは保持期間内なら残る。
 
 ## 何を検証するか
 
@@ -123,7 +123,11 @@ kubeReserved:
 
 メッセージに**しきい値・そのときの空き・そのコンテナの使用量と requests** が入っている。**QoS クラスは書かれていない。**
 
-[公式](https://kubernetes.io/docs/concepts/scheduling-eviction/node-pressure-eviction/)の順位付けは ①requests を超えているか ②Pod Priority ③requests に対する超過量 の3つ。**「kubelet は退避順序の決定に QoS クラスを使わない」と明記されている。** ディスク逼迫でも同じ3基準で、測る対象がファイルシステム使用量に変わる。
+[公式](https://kubernetes.io/docs/concepts/scheduling-eviction/node-pressure-eviction/)の順位付けは ①requests を超えているか ②Pod Priority ③requests に対する超過量 の3つ。**「kubelet は退避順序の決定に QoS クラスを使わない」と明記されている。** **ディスク逼迫では順位付けが変わる。** 同じドキュメントに明記されている。
+
+> QoS classification does not apply to EphemeralStorage requests, so the above scenario will not apply if the node is, for example, under DiskPressure.
+
+`imagefs` / `containerfs` を分けているかで、何を見て並べるかが変わる。分けていなければ、ローカルボリューム・ログ・書き込み層を合わせたディスク使用量で並ぶ。
 
 `requests` が 0 の BestEffort は、**188Ki 使っただけで「超過」になる。**
 
@@ -170,7 +174,11 @@ kubelet_eviction_stats_age_seconds_count{eviction_signal="nodefs.available"} 2
 
 **名前は `kubelet_evictions` で `_total` は付かない。** kubelet のソースでは `Subsystem: kubelet` / `Name: evictions` の CounterVec として[登録されている](https://github.com/kubernetes/kubernetes/blob/master/pkg/kubelet/metrics/metrics.go)。`_total` が付くのは OpenMetrics 形式のときだけ。**`_total` 付きで grep すると必ず0件になる。**
 
-`kubelet_eviction_stats_age_seconds` は ALPHA の Histogram で、定義は「統計を収集した時点から、その統計に基づいて Pod が退避された時点までの時間」（[Metrics Reference](https://kubernetes.io/docs/reference/instrumentation/metrics/)）。**判定が走った回数ではない。** `_count` は観測数なので、そのシグナルで実際に退避が起きた回数を表す。
+`kubelet_eviction_stats_age_seconds` は ALPHA の Histogram で、定義は「統計を収集した時点から、その統計に基づいて Pod が退避された時点までの時間」（[Metrics Reference](https://kubernetes.io/docs/reference/instrumentation/metrics/)）。**判定が走った回数ではない。** `_count` は観測数で、**シグナル別の退避回数としては使えない。**
+
+上の実測では `kubelet_evictions` が2シグナル、`kubelet_eviction_stats_age_seconds_count` が3シグナルある。[eviction_manager.go](https://github.com/kubernetes/kubernetes/blob/master/pkg/kubelet/eviction/eviction_manager.go) を見ると、`EvictionStatsAge` はそのとき条件を満たしていた**すべてのしきい値**に `Observe()` され、`Evictions` は退避理由に選ばれた**1つ**にだけ `Inc()` される。
+
+退避の回数を数えるなら `kubelet_evictions` を使う。
 
 **シグナル名は `allocatableMemory.available`。** `evictionHard` に書く `memory.available` とラベル側の綴りが違う。
 
