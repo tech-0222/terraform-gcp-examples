@@ -184,9 +184,22 @@ up{job="kube-state-metrics"}    = 1
 | `kubelet_node_name` | 1 | `kube_pod_container_resource_requests` | 0 |
 | `container_memory_working_set_bytes` | 76 | `kube_node_status_allocatable` | 0 |
 
-**マネージド収集は許可リスト方式で、ジョブが `up=1` でも系列が全部来るわけではない。**
+**ジョブが `up=1` でも、メトリクスが全部来るわけではない。**
 
-自前で kube-prometheus-stack を立てた場合は `kube_pod_status_reason{reason="Evicted"}` が取れる。**GMP を選ぶか自前を立てるかで、監視の組み方が変わる。**
+これは仕様どおりで、GKE のマネージド収集は[コンポーネントごとに出すメトリクスを公開している](https://cloud.google.com/kubernetes-engine/docs/how-to/kube-state-metrics)。今回 kube-state-metrics 系で有効にしたのは `POD` だけで、その一覧は4つで全部だった。
+
+```text
+kube_pod_container_status_ready
+kube_pod_container_status_waiting_reason
+kube_pod_status_phase
+kube_pod_status_unschedulable
+```
+
+`kube_pod_status_reason` は入っていない。`kube_node_` で始まるメトリクスは**どのコンポーネントの一覧にも無い**。kubelet 側も [curated set](https://cloud.google.com/kubernetes-engine/docs/how-to/cadvisor-kubelet-metrics) で、`kubelet_running_pods` はあるが `kubelet_eviction_stats_age_seconds` は無い。上の実測と過不足なく一致する。
+
+**`enable_components` を足しても取れない。** 残る `DAEMONSET` / `DEPLOYMENT` / `HPA` / `STATEFULSET` / `STORAGE` を全部有効にしても、この2つはどの一覧にも入っていない。
+
+一覧に無いメトリクスが要るなら、kube-state-metrics を自分でデプロイして `PodMonitoring` で拾う。手元で kube-prometheus-stack を立てた環境では `kube_pod_status_reason{reason="Evicted"}` が取れた。**GMP のマネージド収集は、退避の監視には足りない。**
 
 退避は phase で間接的に見える。
 
@@ -257,6 +270,8 @@ terraform destroy
 - [Node-pressure eviction](https://kubernetes.io/docs/concepts/scheduling-eviction/node-pressure-eviction/)
 - [Pod Quality of Service Classes](https://kubernetes.io/docs/concepts/workloads/pods/pod-qos/)
 - [GKE: Managed Service for Prometheus](https://cloud.google.com/stackdriver/docs/managed-prometheus)
+- [GKE: kube state metrics を収集して表示する](https://cloud.google.com/kubernetes-engine/docs/how-to/kube-state-metrics)
+- [GKE: cAdvisor / kubelet メトリクス](https://cloud.google.com/kubernetes-engine/docs/how-to/cadvisor-kubelet-metrics)
 - [GKE: Plan node sizes](https://cloud.google.com/kubernetes-engine/docs/concepts/plan-node-sizes)
 - [Cloud Monitoring API v3: timeSeries.list](https://cloud.google.com/monitoring/api/ref_v3/rest/v3/projects.timeSeries/list)
 - [google_container_cluster](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/container_cluster)
