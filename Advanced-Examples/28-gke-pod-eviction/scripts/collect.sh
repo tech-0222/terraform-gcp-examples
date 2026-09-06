@@ -39,7 +39,10 @@ print("  nodefs.available  {:>10,.1f} GiB / {:.1f} GiB ({:.1f}%)".format(fa/2**3
 
 hr "1-c. kubelet: 退避に関するメトリクス（/metrics）"
 RAW="$(kubectl get --raw "/api/v1/nodes/${NODE}/proxy/metrics" 2>/dev/null)"
-echo "  kubelet_evictions_total       : $(grep -c '^kubelet_evictions_total' <<<"$RAW") 行"
+# 名前は kubelet_evictions。_total は OpenMetrics 形式のときだけ付く。
+# _total 付きで数えると必ず0件になり、「存在しない」と誤読する。
+echo "  kubelet_evictions             : $(grep -c '^kubelet_evictions{' <<<"$RAW") 行"
+grep -E '^kubelet_evictions\{' <<<"$RAW" | sed 's/^/    /'
 echo "  kubelet_eviction_stats_age    : $(grep -c '^kubelet_eviction_stats_age_seconds_count' <<<"$RAW") 行"
 echo "  eviction_signal のラベル値:"
 grep -oP 'eviction_signal="\K[^"]+' <<<"$RAW" | sort -u | sed 's/^/    /'
@@ -83,7 +86,7 @@ for Q in \
   'kube_pod_status_reason{reason="Evicted"}' \
   'kube_node_status_condition{condition="MemoryPressure",status="true"}' \
   'kubelet_eviction_stats_age_seconds_count' \
-  'kubelet_evictions_total' ; do
+  'kubelet_evictions' ; do
   echo "  --- $Q"
   gcloud monitoring time-series list \
     --filter="metric.type=starts_with(\"prometheus.googleapis.com/\")" \
