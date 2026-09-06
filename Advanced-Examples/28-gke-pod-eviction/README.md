@@ -140,8 +140,11 @@ kubeReserved:
 ### 4. kubelet のメトリクス
 
 ```console
-$ kubectl get --raw "/api/v1/nodes/<NODE>/proxy/metrics" | grep -c '^kubelet_evictions_total'
-0
+$ kubectl get --raw "/api/v1/nodes/<NODE>/proxy/metrics" \
+    | grep -E '^# TYPE kubelet_evictions |^kubelet_evictions'
+# TYPE kubelet_evictions counter
+kubelet_evictions{eviction_signal="memory.available"} 1
+
 $ ... | grep -c '^kubelet_eviction_stats_age_seconds_count'
 3
 $ ... | grep -oP 'eviction_signal="\K[^"]+' | sort -u
@@ -150,7 +153,13 @@ containerfs.available
 nodefs.available
 ```
 
-**`kubelet_evictions_total` は存在しない。** 多くの記事が引用しているが、GKE 1.35 の kubelet も minikube の 1.37 も出さない。
+**`kubelet_evictions_total` という名前では出ない。`_total` を外すと存在する。**
+
+kubelet のソースでは `Subsystem: kubelet` / `Name: evictions` の CounterVec として[登録されている](https://github.com/kubernetes/kubernetes/blob/master/pkg/kubelet/metrics/metrics.go)。`_total` が付くのは OpenMetrics 形式のときで、`/metrics` の素の出力には付かない。
+
+最初は `_total` 付きで数えて0件になり、「存在しない」と結論づけた。**出力は合っていて、照合する名前が間違っていた。** 上の出力はローカルの minikube（kubelet v1.37.0）で取り直したもので、**GKE 上に `kubelet_evictions` があったかは確かめられていない**（同じ誤った名前で数えたあと destroy した）。
+
+ただし GMP には来ない。GKE の `KUBELET` は [curated set](https://cloud.google.com/kubernetes-engine/docs/how-to/cadvisor-kubelet-metrics) で、eviction 系を1つも含まないため。
 
 ### 5. Cloud Logging には残る
 
