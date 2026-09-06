@@ -43,85 +43,36 @@ READMEに載せる実行結果は、実際に `terraform apply` 等を実行し�
 ## 検証フロー
 
 ```bash
-terraform init
-terraform fmt -check
-terraform validate
-terraform plan
+terraform init && terraform fmt -check && terraform validate && terraform plan
 terraform apply
-# GCP側の動作確認（下記「検証は4系統すべてで行う」）
+# GCP側の動作確認（4系統すべて）
 # READMEと記事を書く
-# 事実確認（一次ソース）
-# 食い違いを実機で再確認 ← ここまで環境を残す
+# 事実確認（一次ソース）→ 食い違いを実機で再確認  ← ここまで環境を残す
 terraform destroy
 ```
 
-**destroy は事実確認が終わってから。** 先に消すと、書いた内容に誤りが見つかっても測り直せない。
-
-実際にそうなった。`28-gke-pod-eviction` で「`kubelet_evictions_total` は存在しない」と書いたが、正しい名前は `kubelet_evictions` だった。`_total` 付きで `grep` して0件になり、名前ではなく存在を疑った。**気づいたのは destroy のあとで、GKE 上に実在したかは今も確かめられない。**
-
-**GKEは最もコストが高い。** ただし、測り直せない不便のほうが大きい。事実確認まで一気に終わらせてから消す。
+**destroy は事実確認が終わってから。** 先に消すと、書いた内容に誤りが見つかっても測り直せない。GKEはコストが高いが、**測り直せない不便のほうが大きい。**
 
 ### 検証は4系統すべてで行う
 
-**GCPリソースを作る検証では、次の4つをすべて実行する。** 1つでも欠けたら検証として不十分。
+**1つでも欠けたら検証として不十分。**
 
-| 系統 | 何を見るか | 例 |
-|---|---|---|
-| 対象サービスのコマンド | 実際に動いているか | `kubectl`、`redis-cli`、`psql`、`curl`、`systemctl` |
-| メトリクス | 取れるか、値がどう動くか | Monitoring API v3 の `timeSeries`、GMP の PromQL |
-| `gcloud logging` | ログに何が残るか（**0件も結果**） | `gcloud logging read` |
-| `gcloud <service>` | 対象サービスの状態 | `gcloud container`、`gcloud certificate-manager` |
-
-読者が運用で使うのはコンソールの**メトリクスエクスプローラとログエクスプローラ**であって、`kubectl get --raw` ではない。片方だけ見て書くと、実運用で使えない記事になる。
-
-`gcloud monitoring` に時系列のサブコマンドは無い（あるのは dashboards と policies）。時系列は Monitoring API v3 を直接呼び出す。
-
-GKE では GMP（`monitoring_config.managed_prometheus`）を有効にし、PromQL で引けるところまで確認する。**クラスタを destroy する前に4つとも取り終える。**
-
-### メトリクスが空だったら、まず一覧を読む
-
-**「取れない」を実測だけで結論づけない。** マネージド収集は集めるメトリクスが公式に列挙されており、載っていなければ取れないのが仕様になる。
-
-| 対象 | 一覧 |
+| 系統 | 何を見るか |
 |---|---|
-| GKE の kube state metrics | [Collect and view kube state metrics](https://cloud.google.com/kubernetes-engine/docs/how-to/kube-state-metrics) |
-| GKE の cAdvisor / kubelet | [cAdvisor and kubelet metrics](https://cloud.google.com/kubernetes-engine/docs/how-to/cadvisor-kubelet-metrics) |
+| 対象サービスのコマンド | 実際に動いているか（`kubectl`、`redis-cli`、`psql`、`curl`） |
+| メトリクス | 取れるか、値がどう動くか（Monitoring API v3、GMP の PromQL） |
+| `gcloud logging` | ログに何が残るか（**0件も結果**） |
+| `gcloud <service>` | 対象サービスの状態 |
 
-`28-gke-pod-eviction` で、`kube_pod_status_reason` が0件だった理由を「実測から言えるのは組み込みの収集が狭いということ」と書いた。**実際は上の一覧に載っていないだけで、公式に文書化されていた。** 調べれば分かることを未解明として書かない。
+読者が運用で使うのはコンソールの**メトリクスエクスプローラとログエクスプローラ**で、`kubectl get --raw` ではない。片方だけ見て書くと実運用で使えない記事になる。**クラスタを destroy する前に4つとも取り終える。**
 
-自前デプロイ用のエクスポーター設定（`stackdriver/docs/managed-prometheus/exporters/`）と、GKE 組み込みの一覧は**別物**。取り違えると説明が合わなくなる。
+### 「取れない」と書く前に
 
-### Cloud Logging を必ず確認する
+- **メトリクスが空** → まず公式の収集一覧を読む。載っていなければ取れないのが仕様
+- **grep が0件** → 名前と綴りを疑う。`kubelet_evictions_total` は `kubelet_evictions` だった
+- **ログが0件** → 「残らない」こと自体が結果。比較対象と併せて記録する
 
-**GCPリソースを作成する検証では、毎回 `gcloud logging read` でログを確認する。** `kubectl describe` や `gcloud ... operations` だけで終わらせない。
-
-それらに出ない情報がログにある。実際にあった例を挙げる。
-
-| サンプル | 表面的な症状 | ログで分かったこと |
-|---|---|---|
-| `23-gke-default-compute-class` | `kubectl describe pod` は `FailedScheduling` のみ | `no.scale.up.nap.pod.zonal.resources.exceeded` — NAPのCPU上限に当たっていた |
-| `20-gke-cmek-node-boot-disk-rotation` | ノードが復旧していた | `compute.instances.repair.recreateInstance` — GKEの自動修復だった |
-
-```bash
-# 監査ログ（管理操作）
-gcloud logging read 'protoPayload.serviceName="SERVICE.googleapis.com"' --limit=10 --freshness=2h
-
-# GKEオートスケーラの判断（スケールしない理由も出る）
-gcloud logging read 'logName=~"cluster-autoscaler-visibility" AND resource.labels.cluster_name="CLUSTER"' --limit=5 --freshness=2h
-
-# Podのイベント
-gcloud logging read 'resource.type="k8s_pod" AND jsonPayload.reason="REASON"' --limit=10 --freshness=2h
-
-# コンテナのログ
-gcloud logging read 'resource.type="k8s_container" AND resource.labels.pod_name=~"PREFIX"' --limit=10 --freshness=2h
-```
-
-**0件だった場合も結果として記録する。** 「ログに残らない」こと自体が運用上の判断材料になる。
-
-- `19-gke-secret-manager-csi`: Secret Manager の `AccessSecretVersion`（値の読み取り）は残らない
-- `20-gke-cmek-node-boot-disk-rotation`: Cloud KMS の `Encrypt` / `Decrypt`（鍵の利用）は残らない
-
-どちらもデータアクセス監査ログが既定で無効なためで、「誰がいつ読んだか」を追跡するには明示的な有効化が要る。
+引くべき一覧、実際にログでしか分からなかった例、よく使うクエリは [docs/VERIFICATION.md](docs/VERIFICATION.md)。
 
 ### 作業ログ
 
