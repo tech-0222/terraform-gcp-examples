@@ -1,0 +1,37 @@
+apiVersion: v1
+kind: Namespace
+metadata: {name: evict-test}
+---
+# BestEffort: requests も limits も無い
+apiVersion: v1
+kind: Pod
+metadata: {name: besteffort, namespace: evict-test}
+spec:
+  terminationGracePeriodSeconds: 5
+  containers:
+  - {name: app, image: registry.k8s.io/pause:3.10}
+---
+# Burstable: requests のみ。実使用が requests を超える
+apiVersion: v1
+kind: Pod
+metadata: {name: burstable, namespace: evict-test}
+spec:
+  terminationGracePeriodSeconds: 5
+  containers:
+  - name: app
+    image: registry.k8s.io/pause:3.10
+    resources:
+      requests: {memory: 64Mi, cpu: 10m}
+---
+# Guaranteed: requests == limits
+apiVersion: v1
+kind: Pod
+metadata: {name: guaranteed, namespace: evict-test}
+spec:
+  terminationGracePeriodSeconds: 5
+  containers:
+  - name: app
+    image: registry.k8s.io/pause:3.10
+    resources:
+      requests: {memory: 128Mi, cpu: 50m}
+      limits:   {memory: 128Mi, cpu: 50m}

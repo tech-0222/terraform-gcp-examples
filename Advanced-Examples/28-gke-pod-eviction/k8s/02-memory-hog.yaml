@@ -1,0 +1,14 @@
+# allocatable 約6.4GB に対して 6.0GB を掴む。
+# requests は 64Mi なので、requests 超過量が大きく退避候補の上位に来る。
+apiVersion: v1
+kind: Pod
+metadata: {name: hog, namespace: evict-test}
+spec:
+  terminationGracePeriodSeconds: 5
+  containers:
+  - name: hog
+    image: polinux/stress
+    command: ["stress"]
+    args: ["--vm", "1", "--vm-bytes", "6000M", "--vm-hang", "0"]
+    resources:
+      requests: {memory: 64Mi, cpu: 100m}
