@@ -1,0 +1,8 @@
+project_id = "your-project-id"
+zone       = "asia-northeast1-a"
+
+# 実行元のグローバル IP を /32 で指定する
+authorized_ipv4_cidr = "203.0.113.10/32"
+
+# node_machine_type = "e2-medium"
+# use_spot          = true
