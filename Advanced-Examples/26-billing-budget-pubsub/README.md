@@ -3,10 +3,12 @@
 Cloud Billingの予算（Budget）は、コスト管理の入口としてよく紹介される。ところが実際に設定しようとすると、いくつも引っかかる。
 
 - 予算はプロジェクトに属さない。請求アカウント配下にあり、`gcloud projects`では見えない
-- APIがクォータを課す先を持たないので、プロバイダに明示が要る
-- Pub/Sub通知のためにサービスエージェントへ権限を付けろ、という説明が出てくるが、**そのアカウントが存在しない**
+- User ADC では API リクエストのクォータプロジェクトをプロバイダに明示する必要がある
+- Pub/Sub通知のためにサービスエージェントへ権限を付けろ、という説明が出てくるが、**よく挙がるアドレスは存在しない**
 
-そして最も重要な点。**予算は課金を止めない。** 上限に達しても通知が飛ぶだけで、リソースは動き続ける。
+そして最も重要な点。**この検証で作る通知だけの予算（alerts-only budget）は課金を止めない。** 上限に達しても通知が飛ぶだけで、リソースは動き続ける。
+
+2026年7月27日に [Spend Cap Budget](https://cloud.google.com/billing/docs/how-to/budgets-spend-caps) が Preview で出ており、対象サービス（Gemini API / Gemini Enterprise Agent Platform / Cloud Run / Cloud Run functions）なら自動停止できる。`google_billing_budget` には対応する引数がまだ無い。
 
 元にしたPoCは通知を請求アカウントの既定メールに任せ、Pub/Subを定義していなかった。届くかどうかを確かめていない。この例ではPub/Subに送り、**メッセージを実際に読む。**
 
@@ -20,9 +22,11 @@ Cloud Billingの予算（Budget）は、コスト管理の入口としてよく�
 
 VMもクラスタも作らない。Pub/Subのトピックとサブスクリプションだけなので、ほぼ無料。
 
-## provider に user_project_override が要る
+## User ADC では provider に user_project_override が要る
 
-`billingbudgets.googleapis.com`はuser-project-override APIで、**クォータを課す先のプロジェクトを指名する必要がある。** 予算はプロジェクトを持たないので、指名しないと課金先がない。
+User ADC で Budget API を呼ぶなら、**API のクォータプロジェクトを明示する必要がある。** [Terraform の公式資料](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/billing_budget)も、User ADC では `user_project_override = true` と `billing_project` の両方を求めている。
+
+`billing_project` はクォータの請求先であって、予算が属する請求アカウントや、予算が集計する費用の対象とは別。
 
 ```hcl
 provider "google" {
@@ -64,6 +68,9 @@ resource "google_billing_budget" "main" {
 
 - Terraform 1.10以上、`hashicorp/google` 7.x
 - 請求アカウントに対する`roles/billing.admin`または`roles/billing.costsManager`
+- 通知先トピックの`pubsub.topics.setIamPolicy`（Budget API が Publisher ロールを付けるのに要る）
+- Pub/Sub のトピックとサブスクリプションを作成・削除・受信する権限
+- User ADC を使う場合、`billing_project` に指定するプロジェクトの`serviceusage.services.use`
 - 有効化するAPI: `billingbudgets` / `cloudbilling` / `pubsub`
 
 `billingbudgets.googleapis.com`が無効だと、`gcloud billing budgets list`すら通らない。
@@ -140,7 +147,11 @@ $ gcloud pubsub topics add-iam-policy-binding tf-adv-budget-notifications \
 ERROR: INVALID_ARGUMENT: Service account billing-budgets@system.gserviceaccount.com does not exist.
 ```
 
-同じく`billing-budgets-pubsub@` と `cloud-billing-budgets@` も存在しない。[公式ドキュメント](https://cloud.google.com/billing/docs/how-to/budgets-programmatic-notifications)にも具体的なアドレスの記載はなく、「Pub/Sub Publisherロールを付与する権限が必要」とだけある。
+同じく`billing-budgets-pubsub@` と `cloud-billing-budgets@` も存在しない。
+
+正しいプリンシパルは `billing-budget-alert@system.gserviceaccount.com`。[ドメイン制限共有の除外設定](https://cloud.google.com/organization-policy/restrict-domains)のページに、Pub/Sub で予算アラートを受け取る際のプリンシパルとして載っている。
+
+**手で付けなくても通知は届いた。** 設定する側に `pubsub.topics.setIamPolicy` があれば Publisher ロールは自動で付く。
 
 そこで**バインディングを一切付けずに**作成した。次項のとおり通知は届いた。Cloud Billing側が公開権限を自分で用意している。
 
@@ -154,7 +165,9 @@ ERROR: INVALID_ARGUMENT: Service account billing-budgets@system.gserviceaccount.
 02:37:39  受信: 1件
 ```
 
-閾値を超えたその瞬間ではなく、**予算が評価されたタイミング**で publish される。
+[Pub/Sub 通知が送られるのは](https://cloud.google.com/billing/docs/how-to/budgets-programmatic-notifications)閾値を超えた瞬間ではなく、**現在の予算の状態が1日に複数回**送られる。公式には初回まで数時間かかることがあるとされており、今回7分で届いたのは早いほう。
+
+配信は at-least-once。同じ内容が複数回届くことも、順序が入れ替わることもある。**通知を受けて処理を書くなら、何度実行しても同じ結果になるようにする。**
 
 ### 5. 通知の中身
 
@@ -182,11 +195,11 @@ $ gcloud pubsub subscriptions pull tf-adv-budget-notifications-sub --auto-ack --
 
 `attributes`に`budgetId`があるので、複数の予算を1つのトピックに集約しても振り分けられる。
 
-`data`は実支出と上限の両方を持つ。**超過分を計算するのに追加のAPI呼び出しは要らない。**
+`data`は[累積コスト](https://cloud.google.com/billing/docs/how-to/budgets-programmatic-notifications)（`costAmount`）と予算額（`budgetAmount`）の両方を持つ。**超過分を計算するのに追加のAPI呼び出しは要らない。** `costAmount` は確定した請求額ではなく、使用量からコストへの反映には遅れがある。
 
 ### 6. 上限を超えても課金は止まらない
 
-上限1円に対して実支出110.03円。`alertThresholdExceeded: 1.0`が立っている。
+予算額1円に対して `costAmount` は110.03円。`alertThresholdExceeded: 1.0`が立っている。
 
 ```console
 $ gcloud pubsub topics list --format="value(name.basename())"
@@ -243,7 +256,7 @@ logging.privateLogEntries.list
 ロール名だけで、実行者への付与状況までは分からない。**0件の原因は特定できていない。**
 
 なお、データアクセス監査ログはこのプロジェクトで未設定（`auditConfigs`なし）だが、
-**予算の作成は書き込み操作なので Admin Activity にあたり、これは無効化できない。**
+**そもそも Budget API は監査ログを出さない可能性が高い。** [監査ログに対応するサービスの一覧](https://cloud.google.com/logging/docs/audit/services)に `cloudbilling.googleapis.com` はあるが、`billingbudgets.googleapis.com` は無い。[Cloud Billing の監査ログ](https://cloud.google.com/billing/docs/audit-logging)にも予算の操作は対象メソッドとして挙がっていない。
 有効・無効の設定が理由ではない。
 
 分かっているのは次の1点だけ。
@@ -278,13 +291,13 @@ $ gcloud billing budgets list --billing-account=BILLING_ACCOUNT_ID --filter="dis
 ## まとめ
 
 - **予算はプロジェクトに属さない。** 請求アカウント配下にあり、プロジェクトを消しても残る
-- `provider`に`user_project_override`と`billing_project`が要る。予算にはクォータを課す先がない
+- **User ADC では**`provider`に`user_project_override`と`billing_project`が要る。API リクエストのクォータプロジェクトを指定する
 - `budget_filter.projects`はproject **番号**を要求する
-- **サービスエージェントへのIAM付与は不要だった。** 説明に出てくる3つのアドレスはいずれも存在しない
-- **通知は届く。** 今回は作成から約7分。閾値超過の瞬間ではなく、予算が評価されたときに publish される
-- 通知には実支出と上限の両方が入る。超過分の計算にAPI呼び出しは要らない
-- **予算は課金を止めない。** 上限1円に対し110.03円でもリソースは動き続ける。止めるなら通知を受けて自分で止める
-- **予算の操作はプロジェクトの監査ログに出ない。** ただし請求アカウントスコープは今回の権限では読めておらず、「どこにも残らない」とは確認できていない。プロジェクトのログだけでは誰がいつ作ったか分からない
+- **Publisher ロールの手動付与は不要だった。** よく挙がる3つのアドレスは存在せず、実際は `billing-budget-alert@system.gserviceaccount.com` が使われる
+- **通知は届く。** 今回は作成から約7分。ただし公式には初回まで数時間かかることがある。閾値超過の瞬間ではなく現在の状態が1日に複数回送られ、配信は at-least-once
+- 通知には累積コストと予算額の両方が入る。超過分の計算にAPI呼び出しは要らない
+- **通知だけの予算は課金を止めない。** 上限1円に対し110.03円でもリソースは動き続ける。止めるなら通知を受けて自分で止めるか、Spend Cap Budget（Preview）を使う
+- **予算の操作は監査ログで追えなかった。** `billingbudgets.googleapis.com` は監査ログ対応サービスの一覧に無く、少なくとも2026年9月の時点では追跡できると確認できない
 
 ## 参考資料
 
