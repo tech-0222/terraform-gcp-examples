@@ -125,11 +125,13 @@ kubeReserved:
 
 [公式](https://kubernetes.io/docs/concepts/scheduling-eviction/node-pressure-eviction/)の**メモリ逼迫時の**順位付けは ①requests を超えているか ②Pod Priority ③requests に対する超過量 の3つ。**「kubelet は退避順序の決定に QoS クラスを使わない」と明記されている。**
 
-**ディスク逼迫では順位付けが変わる。** 同じドキュメントに明記されている。
+**ディスク逼迫でも3段階の形は同じ。** [`rankDiskPressureFunc`](https://github.com/kubernetes/kubernetes/blob/master/pkg/kubelet/eviction/helpers.go) は `orderedBy(exceedDiskRequests, priority, disk)` で並べる。変わるのは何を使用量として数えるか（`fsStatsToMeasure`）で、`imagefs` / `containerfs` を分けていなければローカルボリューム・ログ・書き込み層の合計になる。
+
+ただし QoS クラスによる説明は当てはまらない。
 
 > QoS classification does not apply to EphemeralStorage requests, so the above scenario will not apply if the node is, for example, under DiskPressure.
 
-`imagefs` / `containerfs` を分けているかで、何を見て並べるかが変わる。分けていなければ、ローカルボリューム・ログ・書き込み層を合わせたディスク使用量で並ぶ。
+QoS クラスは CPU とメモリの requests / limits から決まるので、`ephemeral-storage` の超過とは対応しない。
 
 `requests` が 0 の BestEffort は、**188Ki 使っただけで「超過」になる。**
 
@@ -236,7 +238,7 @@ SYSTEM_COMPONENTS;STORAGE;HPA;POD;DAEMONSET;DEPLOYMENT;STATEFULSET;CADVISOR;KUBE
 | `kube_node_status_allocatable` | 0 | **0** |
 | `kubelet_evictions` | 0 | **0** |
 
-**1つも増えない。設定の問題ではない。**
+**1つも増えない。** 少なくとも `enable_components` の不足が原因ではない（`--monitoring` は15値あり、残る API_SERVER / CONTROLLER_MANAGER / SCHEDULER / DCGM / JOBSET / WORKLOAD は制御プレーンなどで、退避のメトリクスを持たない）。
 
 #### この環境で入っていた kube_* は7種類
 
@@ -332,6 +334,8 @@ kubernetes.io/node/ephemeral_storage/used_bytes
 kubelet が使う `memory.available` は cgroupfs から取った値から `inactive_file` を除いた別物で、`free -m` とも `evictable` とも一致しない。
 
 **ノード逼迫の監視には `kubernetes.io/node/status_condition` を使う。** `condition` と `status` のラベルを持ち、Pressure の期間がそのまま取れる。
+
+ただし**前兆として使えるとは限らない。** 今回は退避 09:38:19 に対し MemoryPressure=True の最初の点が 09:40:00 で、メトリクスのほうが後だった。60秒間隔のサンプリングと反映の遅れがあるため。
 
 ```text
 condition=MemoryPressure  status=True   True の期間 09:40:00 〜 09:45:00
