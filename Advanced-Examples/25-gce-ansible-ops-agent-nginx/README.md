@@ -29,7 +29,7 @@ GCEにOps AgentとNginxを入れる最小構成で、この境界を実測する
 
 ## サービスアカウントは新規に作る
 
-既定のCompute Engine SAは権限が広い。専用のSAを作り、最小権限を与える。
+既定のCompute Engine SAは使わない。権限は[組織ポリシーと付与済みのロールで変わる](https://cloud.google.com/compute/docs/access/service-accounts)が、用途ごとに分けるため専用のSAを作る。
 
 ```hcl
 resource "google_service_account" "vm" {
@@ -131,7 +131,7 @@ roles_path = ./roles
 
 `terraform state list`は35件のまま、`terraform plan`も差分なし。**Terraformから見て、この失敗は存在しない。**
 
-startup scriptの終了コードはVMの状態に影響しない。設定が終わったかどうかは、VMの中を見るしかない。
+startup scriptの終了コードはVMの状態に影響しない。設定が終わったかどうかは、VM内のログやシリアルポート出力で別途確認する。
 
 ### 3. template の validate には %s が要る
 
@@ -145,7 +145,9 @@ validate: nginx -t -c /etc/nginx/nginx.conf   # これは動かない
 fatal: [localhost]: FAILED! => {"msg": "validate must contain %s: nginx -t -c ..."}
 ```
 
-`%s`に一時ファイルのパスが入る。ただし**サイトのフラグメントには使えない。** `nginx -t -c %s`は完全な`nginx.conf`を期待するので、`server { ... }`だけのファイルでは必ず失敗する。
+`%s`に一時ファイルのパスが入る。ただし`nginx -t -c %s`に**フラグメントをそのまま渡すことはできない。** `nginx -t -c`は完全な`nginx.conf`を期待するので、`server { ... }`だけのファイルでは失敗する。
+
+[`validate`には任意のコマンドを指定できる](https://docs.ansible.com/ansible/latest/collections/ansible/builtin/template_module.html)ので、フラグメントを`http`コンテキストに組み込む検証スクリプトを呼べば検査自体は可能。今回はそこまでせず、配備後に検査して失敗したら戻す方式にした。
 
 書いてから検査し、失敗したら戻す形にした。
 
@@ -197,7 +199,9 @@ nginx: enabled=enabled active=active
 google-cloud-ops-agent: enabled=enabled active=active
 ```
 
-`is-enabled`が`enabled`でないと、再起動後に上がらない。playbookの中でも同じ検査をして、満たさなければ失敗するようにしてある。
+nginx と Ops Agent は明示的に自動起動させる設計なので、`is-enabled`が`enabled`であることも検査する。playbookの中でも同じ検査をして、満たさなければ失敗するようにしてある。
+
+ただし`systemd`には`static`のように明示的な有効化を要さないユニットもあり、この条件をすべてのサービスに当てはめることはできない。
 
 ### 6. curl で疎通を確かめる
 
@@ -247,9 +251,9 @@ $ curl -s -w " healthz(%{http_code})\n" http://127.0.0.1/healthz
 ok healthz(200)
 ```
 
-### 8. 設定変更は reload で反映され、プロセスは落ちない
+### 8. HTMLの変更は再起動なしで反映される
 
-`nginx_body`を変えて再実行する。
+`nginx_body`を変えて再実行する。**この変数は`index.html.j2`だけが参照しており、`notify: reload nginx`が付いているのはサイト設定の配備タスクのほうなので、この変更ではハンドラは走らない。**
 
 ```console
 localhost : ok=22  changed=1  ...
@@ -260,7 +264,9 @@ $ curl -s http://127.0.0.1/ | grep -o "reloaded without restart"
 reloaded without restart
 ```
 
-`MainPID`が変わっていない。`systemd`の`reloaded`はプロセスを落とさずに設定を読み直す。接続中のリクエストは切れない。
+`MainPID`が変わっていない。**この回で確認できたのは、HTMLの差し替えにプロセスの再起動が要らないことまで。**
+
+サイト設定を変えた場合は`reload`ハンドラが走る。[nginxの`reload`](https://nginx.org/en/docs/control.html)はmasterプロセスを残して新しいworkerを起動し、古いworkerは処理中のリクエストを終えてから終了する。**その挙動はこの検証では切り分けていない。**
 
 ハンドラを`restart`にするとPIDが変わる。**`reload`で足りるものを`restart`にしない。**
 
@@ -268,7 +274,9 @@ reloaded without restart
 
 ### Ops Agent を入れるまで何も来ない
 
-これがGKEとの最大の違い。GKEは収集エージェントがコンテナの標準出力を自動で拾うが、**GCEはOps Agentを入れるまでVMのログは1件も届かない。**
+これがGKEとの最大の違い。GKEは収集エージェントがコンテナの標準出力を自動で拾うが、**今回の構成ではOps Agentを入れるまでVMのログが1件も届かなかった。**
+
+ただしOps Agentが唯一の経路ではない。[シリアルポート出力をCloud Loggingへ送る機能](https://cloud.google.com/compute/docs/troubleshooting/viewing-serial-port-output)もある（既定は無効。`serial-port-logging-enable`メタデータで有効化）。
 
 導入後。
 
@@ -299,7 +307,7 @@ logging:
 
 `files`レシーバが読んだ行は`jsonPayload.message`に入る。`textPayload`ではない。
 
-### startup script のログは Cloud Logging に来ない
+### startupscript を含む logName ではログを確認できなかった
 
 ```console
 $ gcloud logging read 'resource.type="gce_instance" AND logName=~"startupscript"' --limit=5
@@ -315,18 +323,18 @@ $ terraform destroy
 Destroy complete! Resources: 35 destroyed.
 ```
 
-バケットは`force_destroy = true`にしてある。startup scriptが書き込んだあとでも消せる。
+バケットは`force_destroy = true`にしてある。資材のアップロードはTerraformが行い、startup scriptはGCSから読むだけ。
 
 ## まとめ
 
 - **startup scriptは毎回のbootで実行される。** 「初回のみ」ではない。playbookを更新してVMを再起動すれば反映される
 - **Terraformの「成功」は中の設定を保証しない。** Ansibleが失敗しても`terraform plan`は差分なしのまま
-- Ansibleのrole探索はplaybookのディレクトリ基準。`roles_path`が要る
-- **`template`の`validate`は`%s`が必須で、設定フラグメントには使えない。** `backup` → `nginx -t` → 失敗時に`rescue`で復元
+- Ansibleのrole探索は[playbookと同じ階層の`roles/`が既定](https://docs.ansible.com/projects/ansible-core/devel/playbook_guide/playbooks_reuse_roles.html)。今回の配置では`roles_path`の追加が要った
+- **`template`の`validate`は`%s`が必須。** フラグメントを`nginx -t -c %s`へ直接は渡せない。今回は `backup` → `nginx -t` → 失敗時に`rescue`で復元
 - **動いていることと正しいことは別。** `is-active`だけでなく`is-enabled`と構文検査も見る
 - **curlは200だけでなく中身も見る。** 外部IPなしならIAPトンネルで外からも確かめられる
-- **`reload`ならプロセスは落ちない。** `MainPID`が変わらないことで確認できる
-- **GCEはOps Agentを入れるまでログが1件も来ない。** GKEとは前提が違う
+- **HTMLの差し替えにプロセスの再起動は要らない。** `MainPID`が変わらないことで確認できる。`reload`そのものの挙動は切り分けていない
+- **GCEは、今回の構成ではOps Agentを入れるまでログが1件も来なかった。** GKEとは前提が違う。シリアルポート出力を送る経路は別にある
 
 ## 参考資料
 
