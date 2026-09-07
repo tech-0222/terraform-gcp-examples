@@ -8,7 +8,17 @@ Cloud Billingの予算（Budget）は、コスト管理の入口としてよく�
 
 そして最も重要な点。**この検証で作る通知だけの予算（alerts-only budget）は課金を止めない。** 上限に達しても通知が飛ぶだけで、リソースは動き続ける。
 
-2026年7月27日に [Spend Cap Budget](https://cloud.google.com/billing/docs/how-to/budgets-spend-caps) が Preview で出ており、対象サービス（Gemini API / Gemini Enterprise Agent Platform / Cloud Run / Cloud Run functions）なら自動停止できる。`google_billing_budget` には対応する引数がまだ無い。
+2026年7月27日に [Spend Cap Budget](https://cloud.google.com/billing/docs/how-to/budgets-spend-caps) が Preview で出ており、対象サービス（Gemini API / Gemini Enterprise Agent Platform / Cloud Run / Cloud Run functions）なら自動停止できる。**ただしこのサンプルの方法では作れない。**
+
+```console
+$ gcloud billing budgets create --help | grep -icE "spend.?cap|enforce"
+0        # alpha / beta も同じ。create に指定できるのは
+         # --billing-project / --display-name / --threshold-rule のみ
+```
+
+Budget API v1 のリソース項目は `name` / `displayName` / `budgetFilter` / `amount` / `thresholdRules` / `notificationsRule` / `etag` / `ownershipScope` で、`spendCap` にあたるものが無い。`google_billing_budget` の引数も同様。公式の手順も Console だけを案内している。**API に無いので Terraform 対応が入りようがない。**
+
+制約も強い。単一プロジェクト × 単一サービス、期間は Monthly 固定、Folder / Organization / ラベル / 複数プロジェクトは対象外。停止も即時ではなく、超過分は普通に課金される。解除は Console で「Lift spend cap」を選び、復帰に最大1時間かかる。
 
 元にしたPoCは通知を請求アカウントの既定メールに任せ、Pub/Subを定義していなかった。届くかどうかを確かめていない。この例ではPub/Subに送り、**メッセージを実際に読む。**
 
@@ -314,7 +324,8 @@ $ gcloud billing budgets list --billing-account=BILLING_ACCOUNT_ID --filter="dis
 - **Publisher ロールの手動付与は不要だった。** よく挙がる3つのアドレスは存在せず、実際は `billing-budget-alert@system.gserviceaccount.com` が使われる
 - **通知は届く。** 今回は作成から約7分。ただし公式には初回まで数時間かかることがある。閾値超過の瞬間ではなく現在の状態が1日に複数回送られ、配信は at-least-once
 - 通知には累積コストと予算額の両方が入る。超過分の計算にAPI呼び出しは要らない
-- **通知だけの予算は課金を止めない。** 上限1円に対し110.03円でもトピックは残る。測ったのは「消されない」ところまで。止めるなら通知を受けて自分で止めるか、Spend Cap Budget（Preview）を使う
+- **通知だけの予算は課金を止めない。** 上限1円に対し110.03円でもトピックは残る。測ったのは「消されない」ところまで
+- **Spend Cap Budget は Terraform では作れない。** gcloud・Budget API v1・provider のどれにも該当する引数が無い
 - **予算の操作は監査ログで追えなかった。** `billingbudgets.googleapis.com` は監査ログ対応サービスの一覧に無く、少なくとも2026年9月の時点では追跡できると確認できない
 
 ## 参考資料
