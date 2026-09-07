@@ -123,7 +123,9 @@ kubeReserved:
 
 メッセージに**しきい値・そのときの空き・そのコンテナの使用量と requests** が入っている。**QoS クラスは書かれていない。**
 
-[公式](https://kubernetes.io/docs/concepts/scheduling-eviction/node-pressure-eviction/)の順位付けは ①requests を超えているか ②Pod Priority ③requests に対する超過量 の3つ。**「kubelet は退避順序の決定に QoS クラスを使わない」と明記されている。** **ディスク逼迫では順位付けが変わる。** 同じドキュメントに明記されている。
+[公式](https://kubernetes.io/docs/concepts/scheduling-eviction/node-pressure-eviction/)の**メモリ逼迫時の**順位付けは ①requests を超えているか ②Pod Priority ③requests に対する超過量 の3つ。**「kubelet は退避順序の決定に QoS クラスを使わない」と明記されている。**
+
+**ディスク逼迫では順位付けが変わる。** 同じドキュメントに明記されている。
 
 > QoS classification does not apply to EphemeralStorage requests, so the above scenario will not apply if the node is, for example, under DiskPressure.
 
