@@ -99,7 +99,7 @@ $ gcloud billing budgets list --billing-account=BILLING_ACCOUNT_ID \
 billingAccounts/BILLING_ACCOUNT_ID/budgets/3198661d-c1c0-4446-862b-a89a93f6754f	tf-adv-budget-pubsub
 ```
 
-リソース名が`billingAccounts/`で始まる。**プロジェクトを削除しても予算は残る。** 逆に、プロジェクト単位の権限では予算を触れない。
+リソース名が`billingAccounts/`で始まる。**プロジェクトを削除しても予算は残る。** なお、[単一プロジェクトを対象にする予算](https://cloud.google.com/billing/docs/how-to/budget-api-access-control)なら、プロジェクト側の権限（`resourcemanager.projects.get` / `billing.resourcebudgets.read` / `billing.resourcebudgets.write`）でも作成できる。
 
 ### 2. 設定はそのまま格納される
 
@@ -226,9 +226,21 @@ roles/billing.costsManager
 roles/billing.user
 ```
 
-`roles/logging.viewer`など、ログを読むロールが付いていない。請求アカウントスコープの
-`gcloud logging read --billing-account=...` は何も返さなかったが、これが「空」なのか
-「読めない」のかは区別できない。
+請求アカウントスコープの `gcloud logging read --billing-account=...` は何も返さなかった。
+**ただしこれを権限不足とは判断できない。**
+
+```console
+$ gcloud iam roles describe roles/billing.admin --format='value(includedPermissions)' \
+    | tr ';' '\n' | grep logging
+logging.logEntries.list
+logging.logServiceIndexes.list
+logging.logServices.list
+logging.logs.list
+logging.privateLogEntries.list
+```
+
+`roles/billing.admin` にログ閲覧の権限が含まれている。また上のコマンドが出すのは
+ロール名だけで、実行者への付与状況までは分からない。**0件の原因は特定できていない。**
 
 なお、データアクセス監査ログはこのプロジェクトで未設定（`auditConfigs`なし）だが、
 **予算の作成は書き込み操作なので Admin Activity にあたり、これは無効化できない。**
@@ -238,8 +250,7 @@ roles/billing.user
 
 - **プロジェクトの監査ログを見ても、予算を誰がいつ作ったかは分からない**
 
-請求アカウントのログを追いたい場合は、請求アカウントに対して`roles/logging.viewer`を
-付けたうえで、`--billing-account`スコープで読む。
+請求アカウントのログを追う場合は、`--billing-account`スコープで読む。
 
 ## Cloud Loggingに残るもの
 

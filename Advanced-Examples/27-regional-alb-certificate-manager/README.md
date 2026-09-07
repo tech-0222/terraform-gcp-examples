@@ -37,7 +37,7 @@ C. DNS 認証 + リージョン証明書 -> どこにも繋がない     (nolb.<
 - **親ドメインから、このサブドメインを Cloud DNS へ委任できること**
 - 検証時のバージョン：Terraform 1.14.3、google 7.x
 
-委任しないと DNS 認証の CNAME が引けず、証明書は PENDING のまま進まない。
+委任しないと DNS 認証の CNAME が公開 DNS で解決できず、認証が完了しない。証明書の状態は [`managed.state`](https://cloud.google.com/certificate-manager/docs/reference/certificate-manager/rest/v1/projects.locations.certificates)（`PROVISIONING` / `FAILED` / `ACTIVE`）、認証試行の状態は `managed.authorizationAttemptInfo[].state` で見る。
 
 ## 使い方
 
@@ -200,14 +200,16 @@ CreateCertificate       projects/.../certificates/tf-adv-cm27-cert-nolb
 → 18 件
 ```
 
-**発行の状態遷移は残らない。**
+**今回の検索では、発行の状態遷移が見つからなかった。**
 
 ```console
 $ gcloud logging read 'textPayload=~"ACTIVE|AUTHORIZ|PROVISION"' --freshness=3h
 → 0 件
 ```
 
-`AUTHORIZING` → `FAILED` → `AUTHORIZED` → `ACTIVE` の遷移に対応するログは無い。**「なぜ止まっているか」はログからは追えない。** `describe` を繰り返し、`authorizationAttemptInfo` を見るしかない。
+この条件は `textPayload` しか見ていない。[`jsonPayload` や `protoPayload` は別のフィールド](https://cloud.google.com/logging/docs/view/logging-query-language)なので、**この結果だけでは経過ログが無いとは言えない。**
+
+今回は `describe` を繰り返し、`authorizationAttemptInfo` を見て追った。
 
 ## 削除方法
 

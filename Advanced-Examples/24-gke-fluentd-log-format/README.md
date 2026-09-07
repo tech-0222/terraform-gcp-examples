@@ -128,11 +128,11 @@ $ gcloud logging read '...' --format="value(logName)" | sort -u
 projects/PROJECT_ID/logs/stdout
 ```
 
-`logName`は`stdout`のまま。Fluentdの`tag app.log`はどこにも出ない。
+`logName`は`stdout`のまま。今回の`<format> @type json`では、Fluentdの`tag app.log`が出力に現れない。[既定のstdoutフォーマッタ](https://docs.fluentd.org/output/stdout)は時刻とtagも出す。
 
 上の出力に`fluentd_tag=app.log`があるのは、`record_transformer`で`fluentd_tag ${tag}`と**明示的に入れたから**。入れなければtagは失われる。
 
-### 6. サイドカーを挟むと構造が1段深くなる
+### 6. この設定ではアプリのJSONが文字列になる
 
 これが一番効く。
 
@@ -145,7 +145,7 @@ projects/PROJECT_ID/logs/stdout
 }
 ```
 
-アプリが書いたJSONが、**文字列のまま`message`に入っている。** `order_id`で検索することはできない。
+アプリが書いたJSONが、**文字列のまま`message`に入っている。** `jsonPayload.order_id=2345`という構造化フィールドの検索はできない。[文字列の部分一致](https://cloud.google.com/logging/docs/view/logging-query-language#comparison_operators)（`jsonPayload.message:"order_id"`）なら引ける。
 
 原因は`fluent.conf`の`<parse> @type none`。Fluentdは行を解釈せず、生のテキストとして`message`に詰める。
 
@@ -158,7 +158,9 @@ projects/PROJECT_ID/logs/stdout
 </source>
 ```
 
-**サイドカーは何もしなければ構造を失わせる。** アプリがすでにJSONを出しているなら、`@type json`にするか、そもそもサイドカーを挟まないほうが良い。
+**原因はサイドカーではなく[パーサの指定](https://docs.fluentd.org/parser/none)。** `@type none`は行をそのまま単一フィールドに入れる。
+
+ただし`@type json`に変えるだけでは足りない。このマニフェストは通常のテキスト行とJSON行を同じファイルに書いており、[`in_tail`の`emit_unmatched_lines`は既定でfalse](https://docs.fluentd.org/input/tail#emit_unmatched_lines)なので、**JSONでない行が転送されなくなる。** 入力を1行1JSONに揃えるか、不一致行を保持する設定が要る。
 
 ### 7. 複数行は1行ずつ別エントリになる
 
@@ -200,7 +202,7 @@ GKE・踏み台VM・Cloud NATは利用中に料金が発生する。Cloud Loggin
 - **構造化ログを出すだけならFluentdサイドカーは要らない**
 - Fluentdが`record_transformer`で足したキーは`jsonPayload`のキーになる。`severity`も昇格する
 - **tagは自動では現れない。** `${tag}`をレコードに入れて初めて見える
-- **サイドカーは何もしなければ構造を失わせる。** `@type none`だとアプリのJSONが文字列として`message`に入る
+- **原因はサイドカーではなく`@type none`。** 行がそのまま単一フィールドに入るので、アプリのJSONが文字列として`message`に入る。`@type json`なら解析される
 - **複数行は1行ずつ別エントリになる。** スタックトレースはまとまらない
 
 ## 参考資料
