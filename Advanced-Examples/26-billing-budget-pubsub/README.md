@@ -151,7 +151,23 @@ ERROR: INVALID_ARGUMENT: Service account billing-budgets@system.gserviceaccount.
 
 正しいプリンシパルは `billing-budget-alert@system.gserviceaccount.com`。[ドメイン制限共有の除外設定](https://cloud.google.com/organization-policy/restrict-domains)のページに、Pub/Sub で予算アラートを受け取る際のプリンシパルとして載っている。
 
-**手で付けなくても通知は届いた。** 設定する側に `pubsub.topics.setIamPolicy` があれば Publisher ロールは自動で付く。
+**手で付けなくても通知は届いた。** 作成後にトピックの IAM Policy を見ると、Budget API が自分で付けている。
+
+```console
+$ gcloud pubsub topics get-iam-policy tf-adv-budget-notifications --format=json
+{
+  "bindings": [
+    {
+      "members": [
+        "serviceAccount:billing-budget-alert@system.gserviceaccount.com"
+      ],
+      "role": "roles/pubsub.publisher"
+    }
+  ]
+}
+```
+
+`budget.tf` には IAM バインディングを1つも書いていない。設定する側に `pubsub.topics.setIamPolicy` があれば足りる。
 
 そこで**バインディングを一切付けずに**作成した。次項のとおり通知は届いた。Cloud Billing側が公開権限を自分で用意している。
 
@@ -197,7 +213,7 @@ $ gcloud pubsub subscriptions pull tf-adv-budget-notifications-sub --auto-ack --
 
 `data`は[累積コスト](https://cloud.google.com/billing/docs/how-to/budgets-programmatic-notifications)（`costAmount`）と予算額（`budgetAmount`）の両方を持つ。**超過分を計算するのに追加のAPI呼び出しは要らない。** `costAmount` は確定した請求額ではなく、使用量からコストへの反映には遅れがある。
 
-### 6. 上限を超えても課金は止まらない
+### 6. 上限を超えてもリソースは止まらなかった
 
 予算額1円に対して `costAmount` は110.03円。`alertThresholdExceeded: 1.0`が立っている。
 
@@ -206,11 +222,13 @@ $ gcloud pubsub topics list --format="value(name.basename())"
 tf-adv-budget-notifications
 ```
 
-リソースは削除されず動き続けている。
+トピックは残っている。超過を理由に削除も停止もされていない。
 
-**予算は通知の仕組みであって、上限ではない。** 止めたいなら、この通知を受けてリソースを停止する処理を自分で書く。Cloud FunctionsやCloud Runへpush配信し、そこで`compute instances stop`や請求の切り離しを行うのが定石。
+ただしこの検証で作るのは Pub/Sub のトピックとサブスクリプションだけ。**言えるのは「超過してもリソースが自動で消されない」ところまでで、その後も課金が増え続けたことは測っていない。** 通知だけの予算が spending cap でないことは[公式の仕様](https://cloud.google.com/billing/docs/how-to/budgets)であり、実測はそれと矛盾しない。
 
-### 7. 予算の操作はプロジェクトの監査ログに出ない
+止めたいなら、この通知を受けてリソースを停止する処理を自分で書く。Cloud FunctionsやCloud Runへpush配信し、そこで`compute instances stop`を行う形。請求の無効化も[公式に案内がある](https://cloud.google.com/billing/docs/how-to/budgets)が、サービスが止まりデータに影響が出ることがある。
+
+### 7. 予算の操作は監査ログで追えなかった
 
 ```console
 $ gcloud logging read 'protoPayload.serviceName="billingbudgets.googleapis.com"' --limit=5 --freshness=8h
@@ -296,7 +314,7 @@ $ gcloud billing budgets list --billing-account=BILLING_ACCOUNT_ID --filter="dis
 - **Publisher ロールの手動付与は不要だった。** よく挙がる3つのアドレスは存在せず、実際は `billing-budget-alert@system.gserviceaccount.com` が使われる
 - **通知は届く。** 今回は作成から約7分。ただし公式には初回まで数時間かかることがある。閾値超過の瞬間ではなく現在の状態が1日に複数回送られ、配信は at-least-once
 - 通知には累積コストと予算額の両方が入る。超過分の計算にAPI呼び出しは要らない
-- **通知だけの予算は課金を止めない。** 上限1円に対し110.03円でもリソースは動き続ける。止めるなら通知を受けて自分で止めるか、Spend Cap Budget（Preview）を使う
+- **通知だけの予算は課金を止めない。** 上限1円に対し110.03円でもトピックは残る。測ったのは「消されない」ところまで。止めるなら通知を受けて自分で止めるか、Spend Cap Budget（Preview）を使う
 - **予算の操作は監査ログで追えなかった。** `billingbudgets.googleapis.com` は監査ログ対応サービスの一覧に無く、少なくとも2026年9月の時点では追跡できると確認できない
 
 ## 参考資料
