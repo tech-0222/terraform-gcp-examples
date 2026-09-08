@@ -1,22 +1,44 @@
-# 17 - GKE routes-based + VPC Peering + ip-masq-agent
+# 17 - GKE + VPC Peering + ip-masq-agent（SNAT）
 
-VPC Peering越しの通信が、GKEのネットワーキングモード（routes-based / VPC-native）によって成否が変わることを検証する応用サンプルです。**2つのGCP Project**を使います。
+VPC Peering越しの Pod→VM 通信が失敗する構成を作り、ip-masq-agent の SNAT で復旧させる応用サンプル。**2つのGCP Project**を使う。
+
+**当初は「routes-based クラスタでルートが交換されないため失敗する」と説明していた。再検証で覆った。**
+
+| 当初の説明 | 実測 |
+|---|---|
+| routes-based クラスタ | `useIpAliases: true` で **VPC-native** |
+| Pod CIDR 宛のルートは交換されない | `peering-route-...` として**交換されていた** |
+| 失敗の原因はルートの非交換 | **宛先側のファイアウォール** |
 
 | プロジェクト | 役割 |
 |---|---|
-| Project A | routes-based GKEクラスタ + 踏み台を配置 |
+| Project A | GKEクラスタ（VPC-native）+ 踏み台を配置 |
 | Project B | 宛先VM（nginx）を配置。**本サンプルではルーティング設定を一切変更しない** |
 
 ## 検証すること
 
-1. **再現（失敗）**: Peeringのカスタムルート交換を無効にした状態で、PodからProject Bの宛先VMへcurlすると失敗する
+1. **再現（失敗）**: 宛先側が Pod CIDR を許可していない状態で、PodからProject Bの宛先VMへcurlすると失敗する
 2. **解決（成功）**: 宛先VM側の設定は一切変更せず、GKE側にip-masq-agentのConfigMapを適用するだけで、同じcurlが成功するようになる
 
 ## なぜ失敗するのか
 
-routes-basedクラスタでは、PodのIP到達性はVPCの**カスタムルート**として表現されます（VPC-nativeクラスタの場合はSubnetのセカンダリレンジになり、挙動が異なります）。VPC PeeringではSubnetルートは常に交換されますが、カスタムルートは`export_custom_routes`/`import_custom_routes`を有効にしない限り交換されません。
+このクラスタは VPC-native で、Pod IP はサブネットのセカンダリレンジから出る。**サブネットのルートは Peering で常に交換される。** 実測でも Project B に `peering-route-...` が入っていた。
 
-本サンプルは常に`peering_custom_routes = false`です。Project Bは`pod_cidr`（Pod宛のカスタムルート）を一切知らないため、Pod IPを送信元にしたパケットの戻り経路が成立しません。
+本サンプルは常に`peering_custom_routes = false`だが、**それが失敗の原因ではない。**
+
+宛先側のファイアウォールが `gke_subnet_cidr`（`10.10.0.0/28`）だけを許可し、`pod_cidr`（`172.16.0.0/16`）を許可していないため、Pod IP を送信元にしたパケットが落ちる。
+
+対照実験（ConfigMap 未適用＝SNATなし、ルート変更なし）:
+
+```text
+source_ranges                        curl http://10.20.0.10/
+------------------------------------------------------------
+10.10.0.0/28                         exit 28（タイムアウト）
+10.10.0.0/28,172.16.0.0/16           http_code=200 ×3
+10.10.0.0/28（戻す）                  exit 28 ×2
+```
+
+ip-masq-agent が「直す」のは、SNAT で送信元が Node IP になり、既存の許可条件を満たすようになるため。
 
 ## なぜip-masq-agentで直るのか
 
@@ -46,7 +68,7 @@ GKEのノードには、ip-masq-agentのDaemonSetが**既定でインストー�
 ├── network.tf            # VPC A/B、Subnet、Cloud NAT、Firewall、VPC Peering
 ├── bastion.tf             # 踏み台（Project A）: SA / IAM / VM
 ├── target_vm.tf           # 宛先VM（Project B）: nginx、IAM
-├── gke.tf                 # GKE: routes-basedクラスタ（ip_allocation_policyにCIDRを直接指定）
+├── gke.tf                 # GKE: VPC-nativeクラスタ（ip_allocation_policy にCIDRを直接指定）
 ├── outputs.tf
 ├── terraform.tfvars.example
 └── k8s/
