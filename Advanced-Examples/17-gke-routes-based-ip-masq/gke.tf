@@ -1,9 +1,10 @@
-# GKE Standard, routes-based (networking_mode = "ROUTES", the implicit
-# default when ip_allocation_policy carries plain CIDR blocks instead of
-# secondary range names). Kept deliberately minimal -- Dataplane V2 and
+# GKE Standard, VPC-native. Kept deliberately minimal -- Dataplane V2 and
 # other hardening flags are out of scope here; see
-# 16-gke-dataplane-v2-networkpolicy for those. The only thing this
-# example needs is routes-based Pod IP allocation.
+# 16-gke-dataplane-v2-networkpolicy for those.
+#
+# This example was originally written believing the cluster was
+# routes-based. It is not. See the comment on ip_allocation_policy below
+# and the README for the measurement.
 
 resource "google_service_account" "gke_node" {
   account_id   = "${var.cluster_name}-node"
@@ -41,11 +42,12 @@ resource "google_container_cluster" "primary" {
 
   deletion_protection = false
 
-  # Supplying plain CIDR blocks here (instead of
-  # cluster/services_secondary_range_name) makes this a routes-based
-  # cluster: Pod IP reachability becomes a VPC custom route, not a subnet
-  # secondary range. Ref:
-  # https://cloud.google.com/kubernetes-engine/docs/how-to/routes-based-cluster
+  # Defining ip_allocation_policy at all makes the cluster VPC-native --
+  # plain CIDR blocks here just ask GKE to create the secondary ranges for
+  # you. Measured: useIpAliases=true, clusterSecondaryRangeName set.
+  #
+  # A routes-based cluster is what you get by NOT defining this block.
+  # Ref: https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/container_cluster
   ip_allocation_policy {
     cluster_ipv4_cidr_block  = var.pod_cidr
     services_ipv4_cidr_block = var.services_cidr
