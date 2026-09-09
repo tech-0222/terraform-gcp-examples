@@ -54,6 +54,14 @@
     enabled: true
     state: started
 
+# Run the reload here rather than at the end of the play. Handlers default to
+# running after every task, which would put them *after* the checks below --
+# so a site configuration change was verified against the configuration nginx
+# was still serving. Changing nginx_port made it worse: the check hit the new
+# port before the reload, failed, and a failed host runs no handlers at all.
+- name: Apply any pending reload before verifying
+  ansible.builtin.meta: flush_handlers
+
 # The checks below are the "service validity" part. A running process is not
 # the same as a correct service: it also has to be enabled (so it survives a
 # reboot) and its configuration has to parse.
@@ -79,7 +87,13 @@
     url: "http://127.0.0.1:{{ nginx_port }}/"
     return_content: true
   register: nginx_local
-  failed_when: nginx_marker not in nginx_local.content
+  # Both halves are needed. failed_when replaces the module's own status check,
+  # so without the first clause an error page carrying the marker passes; and
+  # content is undefined when the request never completes, which would make the
+  # second clause raise instead of fail.
+  failed_when: >-
+    nginx_local.status != 200
+    or nginx_marker not in (nginx_local.content | default(''))
 
 - name: Report the service state
   ansible.builtin.debug:

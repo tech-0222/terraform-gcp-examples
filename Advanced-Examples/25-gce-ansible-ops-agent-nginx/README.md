@@ -204,7 +204,15 @@ nginx: enabled=enabled active=active
 google-cloud-ops-agent: enabled=enabled active=active
 ```
 
-手動では HTTP 200 と本文の両方を見たが、**playbook の `failed_when` は本文だけで判定している**（`nginx_marker not in nginx_local.content`）。マーカーを含む本文を 500 で返す場合は素通りする。
+HTTP検査は**ステータスと本文の両方**を見る。
+
+```yaml
+failed_when: >-
+  nginx_local.status != 200
+  or nginx_marker not in (nginx_local.content | default(''))
+```
+
+`failed_when`はモジュール自身のステータス判定を**置き換える**ので、前半が無いとマーカーを含むエラーページが素通りする。後半の`default('')`は、接続できず`content`が未定義のときに式ごと落ちるのを防ぐため。
 
 nginx と Ops Agent は明示的に自動起動させる設計なので、`is-enabled`も検査する。playbookでも同じことを見て、満たさなければ失敗する。**ただし許可する出力は揃えていない。** nginxは`enabled`のみ、Ops Agentは`enabled`と`generated`を許容している。
 
@@ -277,7 +285,12 @@ reloaded without restart
 
 サイト設定を変えた場合は`reload`ハンドラに通知される。[nginxの`reload`](https://nginx.org/en/docs/control.html)はmasterプロセスを残して新しいworkerを起動し、古いworkerは処理中のリクエストを終えてから終了する。**その挙動はこの検証では切り分けていない。**
 
-**さらに、このplaybookは変更後の設定を検査できていない。** ハンドラは[既定でrole/tasksの実行後にまとめて走る](https://docs.ansible.com/ansible/latest/playbook_guide/playbooks_handlers.html)ので、`roles/nginx/tasks/main.yml`のHTTP検査は`reload`より前に実行される。`nginx_port`を変えると、新しいポートへの検査が`reload`前に失敗し、[失敗したホストではハンドラも走らない](https://docs.ansible.com/ansible/latest/playbook_guide/playbooks_error_handling.html)。検査を効かせるなら、サービス起動の後・HTTP検査の前に`ansible.builtin.meta: flush_handlers`を置く。
+**検査の前にハンドラを流している。** ハンドラは[既定でrole/tasksの実行後にまとめて走る](https://docs.ansible.com/ansible/latest/playbook_guide/playbooks_handlers.html)ので、そのままではHTTP検査が`reload`より前に実行され、**変更前の設定を検査してしまう。** `nginx_port`を変えるとさらに悪く、新しいポートへの検査が`reload`前に失敗し、[失敗したホストではハンドラも走らない](https://docs.ansible.com/ansible/latest/playbook_guide/playbooks_error_handling.html)。
+
+```yaml
+- name: Apply any pending reload before verifying
+  ansible.builtin.meta: flush_handlers
+```
 
 ハンドラを`restart`にするとPIDが変わる。**`reload`で足りるものを`restart`にしない。**
 
