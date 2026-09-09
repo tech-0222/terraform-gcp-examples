@@ -1,4 +1,4 @@
-# 27-regional-alb-certificate-manager
+# 27. Certificate Manager の DNS 認証と LB 認証を比べる（リージョン ALB）
 
 Certificate Manager の **DNS 認証** と **LB 認証** を並べて実測する。
 
@@ -6,7 +6,7 @@ Certificate Manager の **DNS 認証** と **LB 認証** を並べて実測す�
 
 > Compute Engine Google-managed SSL certificates aren't supported for regional external Application Load Balancers, regional internal Application Load Balancers, or cross-region internal Application Load Balancers.
 
-つまりリージョン ALB で Google 発行の証明書を使うなら、Certificate Manager が唯一の選択肢になる。
+つまりリージョン ALB で **Google-managed 証明書**（Google Cloud が発行・更新を管理するもの）を使うなら、Certificate Manager が唯一の選択肢になる。自己管理の証明書や、[Public CA から ACME で取得した証明書](https://docs.cloud.google.com/certificate-manager/docs/public-ca-tutorial)を持ち込む道は別にある。
 
 ## 何を検証するか
 
@@ -42,7 +42,7 @@ C. DNS 認証 + リージョン証明書 -> どこにも繋がない     (nolb.<
 ## 使い方
 
 ```bash
-cp terraform.tfvars.example terraform.tfvars   # dns_zone_domain を埋める
+cp terraform.tfvars.example terraform.tfvars   # project_id と dns_zone_domain を埋める
 terraform init
 terraform apply
 terraform output name_servers                  # 親ドメインの NS に設定する
@@ -55,7 +55,7 @@ Certificate Manager API has not been used in project ... before or it is disable
 "reason": "SERVICE_DISABLED"
 ```
 
-`google_project_service` は有効化の API 呼び出しが成功した時点で完了する。実際に使えるようになるまでには伝播の時間が要る。**もう一度 `apply` すれば通る。**
+`google_project_service` は Service Usage の有効化オペレーションの完了まで待つが、**それは各 API がすぐ使えることまでは保証しない。** 今回は有効化直後の Certificate Manager 呼び出しが `SERVICE_DISABLED` になり、もう一度 `apply` すると通った。再実行しても失敗するなら、エラーに出ているプロジェクトと API の有効化状態を確かめる。
 
 ## 実測結果
 
@@ -68,7 +68,9 @@ Certificate Manager API has not been used in project ... before or it is disable
 
 同じプロジェクト、同じゾーン、同じ手順で **9倍以上の差**が出た。違いは委任してからの経過時間だけ。
 
-「最大24時間」といった記述は Google の発行処理ではなく、**DNS の伝播を含めた上限**と読むのが実態に合う。
+**計測の起点と取得間隔は記録していない。** 掲載値はこの回の観測でしかない。測り直すなら、所要時間を「証明書の`createTime`から[`managed.state=ACTIVE`](https://docs.cloud.google.com/certificate-manager/docs/reference/certificate-manager/rest/v1/projects.locations.certificates)を初めて確認するまで」と定義し、NS 設定時刻・DNS の解決確認時刻・取得間隔も併せて残す。
+
+**この測定では DNS の伝播と Certificate Manager・CA 側の処理を切り分けていない。** どちらがどれだけ効いたかは言えないので、発行処理単体の所要時間や上限についてはここでは結論を出さない。
 
 ### 2. 途中で FAILED になり、そこから復帰する
 
@@ -94,7 +96,7 @@ Certificate Manager API has not been used in project ... before or it is disable
 
 **4分12秒で ACTIVE。** DNS 認証は配信経路と無関係に発行できる。
 
-LB 認証では原理的にできない。認証の条件が「そのホスト名の A レコードがロードバランサを指していること」だから。**既存サイトを LB に載せ替えるとき、DNS 認証なら切り替え前に証明書を用意できる。**
+LB 認証では原理的にできない。[認証の条件](https://docs.cloud.google.com/certificate-manager/docs/domain-authorization#load_balancer_authorization)は、証明書を関連付けたロードバランサの構成が済んでいて、そのホスト名の **A / AAAA が返すすべての IP でポート 443 からその証明書を使えること**だから。AAAA の取り違え、証明書の未関連付け、443 の未開放はいずれも[失敗の原因になる](https://docs.cloud.google.com/certificate-manager/docs/troubleshooting)。**既存サイトを LB に載せ替えるとき、DNS 認証なら配信経路を切り替える前に証明書を用意できる。**
 
 ### 4. リージョンでは PER_PROJECT_RECORD しか選べない
 
@@ -144,7 +146,7 @@ projects/.../locations/asia-northeast1/dnsAuthorizations/...   PER_PROJECT_RECOR
 
 > For regional Google-managed certificates, you must create a regional DNS authorization in the same region as the certificate. You can't use global DNS authorizations with regional certificates.
 
-### 6. Compute Engine のマネージド証明書はリージョンに存在できない
+### 6. アタッチ試行でリージョンパスの NOT_FOUND が出る
 
 ```
 ERROR: Could not fetch resource:
@@ -153,9 +155,11 @@ ERROR: Could not fetch resource:
 
 作成自体はできる（グローバル資源）。リージョンのターゲットプロキシに付けようとすると、`regions/<region>/sslCertificates/` を探しに行って見つからない。
 
-**「非対応」ではなく「見つからない」と出る。** 原因に気づきにくい。
+**この出力が直接示すのは「そのリージョンパスに資源が無い」ことだけ。** リージョン SSL 証明書が Google-managed に非対応であること自体は[仕様](https://docs.cloud.google.com/load-balancing/docs/ssl-certificates#google-managed_ssl_certificates)で確認する。観測と仕様は分けて読む。
 
-### 7. TLS は張れるが、証明書が ACTIVE になった時点ではまだ張れない
+**「非対応」ではなく「見つからない」と出る。** 原因に気づきにくい。グローバル側に在ることは `gcloud compute ssl-certificates describe <名前> --global --format='yaml(name,type,managed)'` で確かめられる。
+
+### 7. TLS 接続を確認した。グローバル側は ACTIVE の後にも待ちがあった
 
 リージョン側。
 
@@ -175,7 +179,7 @@ notAfter=Dec  5 00:48:52 2026 GMT
 curl: (35) error:0A000126:SSL routines::unexpected eof while reading
 ```
 
-**さらに121秒かかった。** 公式に「証明書とドメインが active になってから、ロードバランサが使い始めるまで最大30分」とある箇所。
+**さらに121秒かかった。** これはこの回の観測値で、必ず生じる待ち時間でも製品の上限でもない。「最大30分」という記述は[Compute Engine の Google-managed 証明書の手順](https://docs.cloud.google.com/load-balancing/docs/ssl-certificates/google-managed-certs#step_5_test_with_openssl)にあるもので、[Certificate Manager の手順](https://docs.cloud.google.com/certificate-manager/docs/deploy-google-managed-lb-auth)は証明書とマップエントリの状態を別々に確認させており、今回の構成に当てはめる根拠は無い。
 
 ### 8. アタッチ方法がリージョンとグローバルで違う
 
@@ -184,9 +188,11 @@ curl: (35) error:0A000126:SSL routines::unexpected eof while reading
 | リージョン | ターゲットプロキシに **直接**（`certificate_manager_certificates`） |
 | グローバル | **証明書マップ**経由（`certificate_map`） |
 
-`ssl_certificates` とは併用できない。
+**併用の可否は上下で違う。** リージョン側の `certificate_manager_certificates` は `ssl_certificates` と同時に指定できない。
 
 > sslCertificates and certificateManagerCertificates can't be defined together.
+
+グローバル側の `certificate_map` は `ssl_certificates` と同時に設定できる。[その場合はマップが優先され、Compute Engine の証明書は無視される](https://docs.cloud.google.com/load-balancing/docs/ssl-certificates#configuration_method_rules)。
 
 ## Cloud Logging に残るもの
 
