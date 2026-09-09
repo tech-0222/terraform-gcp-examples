@@ -4,7 +4,7 @@ GKEのPodが標準出力に書いた行は、そのままCloud Loggingに入る�
 
 - 素のテキストなのかJSONなのかで、入るフィールドが変わる
 - JSONの中に`severity`があると、エントリの`severity`に昇格する
-- 複数行のスタックトレースは1エントリにまとまらない
+- 複数行のスタックトレースがどう入るかは、保存した結果からは判別できなかった
 
 Fluentdをサイドカーに置く構成もよく使われるが、**何が増えて何が失われるのか**は測ってみないと分からない。この例では、サイドカーなしとありを同じクラスタに並べて比べる。
 
@@ -13,7 +13,7 @@ Fluentdをサイドカーに置く構成もよく使われるが、**何が増�
 | リソース | 用途 |
 |---|---|
 | VPC + サブネット2つ + Cloud NAT | GKEノードと踏み台。外部IPなし |
-| 踏み台VM | GKEのプライベートエンドポイントへ`kubectl`を通す。`master_authorized_networks`は踏み台サブネットだけを許可 |
+| 踏み台VM | GKEのプライベートエンドポイントへ`kubectl`を通す。承認済みネットワークに踏み台サブネットを登録しているが、**内部エンドポイントへの適用は有効化していない**（`enable-authorized-networks-on-private-endpoint`相当。[ネットワーク分離](https://docs.cloud.google.com/kubernetes-engine/docs/how-to/latest/network-isolation)） |
 | GKEクラスタ（Standard、ゾーナル、プライベート） | `logging_config`で`WORKLOADS`を明示 |
 
 ```hcl
@@ -191,9 +191,9 @@ MULTILINE-END
 
 この出力からエントリの境界は読み取れない。`value(textPayload)`はエントリを改行で繋ぐだけなので、4行が1件でも4件でも同じ見た目になる。
 
-むしろ順序は結合を示唆する。`04-multiline.yaml`は`START`→`at`→`at`→`END`の4行を30秒ごとに出しており、`gcloud logging read`は新しい順に返すため、4行が別々なら`END`→`at`→`at`→`START`と逆順に並ぶはず。実際は`START`の後に`at`が続いている。
+表示順から推し量ることもできない。降順は`timestamp`に基づき、同一時刻のエントリは[`insertId`順](https://docs.cloud.google.com/logging/docs/reference/v2/rest/v2/entries/list)になるので、アプリの出力順との対応がそもそも取れない。
 
-**どちらかは確かめていない。** `--format=json`で`insertId`を比べれば分かるが、環境を削除した後に気づいたため測り直せていない。次に立てたときに確認する。
+**確かめていない。** 環境を削除した後に気づいたため測り直せていない。次に立てたときは、対象Podと時間範囲を絞って`--format=json`で取得し、各オブジェクトの`timestamp`・`insertId`・`textPayload`を見て、`START`とスタックトレースが同じ`textPayload`に入るかを判定する。
 
 1件にまとめたい場合は、アプリ側でスタックトレースを文字列フィールドに入れ、改行を`\n`にエスケープした1行JSONを標準出力へ出す。Fluentdで結合するなら、対象ログを共有ファイルに出して`in_tail`で読み、[`multiline`パーサ](https://docs.fluentd.org/parser/multiline)を設定する（今回のmultiline PodはFluentdを通っていないので、そのままでは適用できない）。
 
@@ -217,9 +217,9 @@ GKE・踏み台VM・Cloud NATは利用中に料金が発生する。Cloud Loggin
 
 ## まとめ
 
-- **素のテキストは`textPayload`、JSONは`jsonPayload`。** 収集エージェントが判別する。ただし特別扱いのフィールドを移したあと[`message`だけが残り`detect_json`が無効なら`textPayload`](https://docs.cloud.google.com/logging/docs/structured-logging#special-payload-fields)
+- **今回の入力では、素のテキストは`textPayload`、`msg`と`order_id`を含むJSONは`jsonPayload`に入った。** [ドキュメント](https://docs.cloud.google.com/logging/docs/structured-logging#special-payload-fields)は、特別扱いのフィールドを移したあと`message`だけが残り`detect_json`が無効なら`textPayload`になるとしている。`detect_json`はGKEのようなマネージド環境には適用されないので、GKEはこの条件に当たる。ただし今回の入力に`message`だけのJSONは無く、未検証
 - **JSON内の`severity`はエントリに昇格し、`jsonPayload`からは消える**
-- **標準出力に1行JSONを書くならFluentdサイドカーは要らない。** ファイルに書く場合は別で、標準出力へ運ぶ何かが要る
+- **標準出力に1行JSONを書くなら、構造化のためのFluentdサイドカーは要らない。** ファイル出力を今回と同じGKE標準エージェントの経路に載せるなら標準出力への転送が要る。ファイルを読んでCloud LoggingへAPIで直接送る構成も選べる
 - Fluentdが`record_transformer`で足したキーは`jsonPayload`のキーになる。`severity`も昇格する
 - **今回の`<format> @type json`ではtagが付かない。** `record_transformer`で`fluentd_tag ${tag}`を足して保持した。既定のstdoutフォーマッタなら時刻とtagも出る
 - **原因はサイドカーではなく`@type none`。** 行がそのまま単一フィールドに入るので、アプリのJSONが文字列として`message`に入る。`@type json`に変えるだけでは足りず、通常テキスト行が混ざると`emit_unmatched_lines`の既定falseで落ちる
