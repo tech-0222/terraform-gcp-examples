@@ -13,7 +13,7 @@ Fluentdをサイドカーに置く構成もよく使われるが、**何が増�
 | リソース | 用途 |
 |---|---|
 | VPC + サブネット2つ + Cloud NAT | GKEノードと踏み台。外部IPなし |
-| 踏み台VM | プライベートエンドポイントのGKEへ到達する唯一の経路 |
+| 踏み台VM | GKEのプライベートエンドポイントへ`kubectl`を通す。`master_authorized_networks`は踏み台サブネットだけを許可 |
 | GKEクラスタ（Standard、ゾーナル、プライベート） | `logging_config`で`WORKLOADS`を明示 |
 
 ```hcl
@@ -41,13 +41,15 @@ severity ERROR       → エントリの severity に昇格するか
 @type stdout / json  → サイドカー自身の標準出力を、さらにエージェントが拾う
 ```
 
-アプリとFluentdは`resource.labels.container_name`で分かれるので、突き合わせられる。
+アプリとFluentdは`resource.labels.container_name`で分かれる。ただし`03-fluentd-sidecar.yaml`のアプリは両方の行を`/var/log/app/app.log`に落としており標準出力に何も出さないので、Cloud Loggingに出るのは`fluentd`だけ。加工前を見るなら`kubectl exec deployment/fluentd-sidecar -c app -- cat /var/log/app/app.log`。
 
 ## 前提
 
 - Terraform 1.10以上、`hashicorp/google` 7.x
-- `gcloud`認証済み、対象プロジェクトで課金が有効
-- 有効化するAPI: `compute.googleapis.com`、`container.googleapis.com`
+- 対象プロジェクトで課金が有効
+- 有効化するAPI: `compute.googleapis.com`、`container.googleapis.com`、`iap.googleapis.com`
+- `provider.tf`は認証情報を指定していないのでADCを使う。ローカルで実行するなら`gcloud auth application-default login`（Cloud Shellでは不要）
+- `iap_member`に指定するユーザーは、踏み台のサービスアカウントに対する`roles/iam.serviceAccountUser`が要る。[サービスアカウントの付いたVMへ接続する全ユーザーに必要](https://docs.cloud.google.com/compute/docs/oslogin/set-up-oslogin)で、**このTerraformでは付与しない**
 
 ## 実行
 
@@ -56,8 +58,22 @@ cp terraform.tfvars.example terraform.tfvars
 # project_id と iap_member を自分の値に書き換える
 terraform init
 terraform apply
+```
 
-# 踏み台から
+踏み台の起動スクリプトはパッケージを入れるだけで、マニフェストもkubeconfigも用意しない。転送してから接続する。
+
+```bash
+gcloud compute scp --recurse k8s \
+  "$(terraform output -raw bastion_name):~/k8s" \
+  --zone="$(terraform output -raw zone)" \
+  --project="$(terraform output -raw project_id)" --tunnel-through-iap
+
+terraform output -raw get_credentials_example   # 控えておく
+eval "$(terraform output -raw ssh_bastion_example)"
+```
+
+```bash
+# 踏み台で。控えた get-credentials を実行してから
 kubectl apply -f k8s/01-plain-stdout.yaml -f k8s/02-fluentd-config.yaml \
               -f k8s/03-fluentd-sidecar.yaml -f k8s/04-multiline.yaml
 ```
@@ -134,7 +150,7 @@ projects/PROJECT_ID/logs/stdout
 
 ### 6. この設定ではアプリのJSONが文字列になる
 
-これが一番効く。
+この設定次第で、アプリのJSON内の値を構造化フィールドとして検索できるかが決まる。
 
 ```json
 {
@@ -162,7 +178,7 @@ projects/PROJECT_ID/logs/stdout
 
 ただし`@type json`に変えるだけでは足りない。このマニフェストは通常のテキスト行とJSON行を同じファイルに書いており、[`in_tail`の`emit_unmatched_lines`は既定でfalse](https://docs.fluentd.org/input/tail#emit_unmatched_lines)なので、**JSONでない行が転送されなくなる。** 入力を1行1JSONに揃えるか、不一致行を保持する設定が要る。
 
-### 7. 複数行は1行ずつ別エントリになる
+### 7. 複数行がどう入るかは確かめきれなかった
 
 ```console
 $ gcloud logging read '... AND labels."k8s-pod/app"="multiline"' --format="value(textPayload)"
@@ -173,9 +189,13 @@ MULTILINE-START java.lang.NullPointerException: order is null
 MULTILINE-END
 ```
 
-スタックトレースが行ごとに分かれている。コンソールで見ると、他のPodのログに挟まれてバラバラに並ぶ。
+この出力からエントリの境界は読み取れない。`value(textPayload)`はエントリを改行で繋ぐだけなので、4行が1件でも4件でも同じ見た目になる。
 
-まとめたい場合は、アプリ側でJSON 1行にするか、Fluentdに`multiline`パーサを入れる。
+むしろ順序は結合を示唆する。`04-multiline.yaml`は`START`→`at`→`at`→`END`の4行を30秒ごとに出しており、`gcloud logging read`は新しい順に返すため、4行が別々なら`END`→`at`→`at`→`START`と逆順に並ぶはず。実際は`START`の後に`at`が続いている。
+
+**どちらかは確かめていない。** `--format=json`で`insertId`を比べれば分かるが、環境を削除した後に気づいたため測り直せていない。次に立てたときに確認する。
+
+1件にまとめたい場合は、アプリ側でスタックトレースを文字列フィールドに入れ、改行を`\n`にエスケープした1行JSONを標準出力へ出す。Fluentdで結合するなら、対象ログを共有ファイルに出して`in_tail`で読み、[`multiline`パーサ](https://docs.fluentd.org/parser/multiline)を設定する（今回のmultiline PodはFluentdを通っていないので、そのままでは適用できない）。
 
 ## Cloud Loggingに残るもの
 
@@ -197,13 +217,13 @@ GKE・踏み台VM・Cloud NATは利用中に料金が発生する。Cloud Loggin
 
 ## まとめ
 
-- **素のテキストは`textPayload`、JSONは`jsonPayload`。** 収集エージェントが判別する
+- **素のテキストは`textPayload`、JSONは`jsonPayload`。** 収集エージェントが判別する。ただし特別扱いのフィールドを移したあと[`message`だけが残り`detect_json`が無効なら`textPayload`](https://docs.cloud.google.com/logging/docs/structured-logging#special-payload-fields)
 - **JSON内の`severity`はエントリに昇格し、`jsonPayload`からは消える**
-- **構造化ログを出すだけならFluentdサイドカーは要らない**
+- **標準出力に1行JSONを書くならFluentdサイドカーは要らない。** ファイルに書く場合は別で、標準出力へ運ぶ何かが要る
 - Fluentdが`record_transformer`で足したキーは`jsonPayload`のキーになる。`severity`も昇格する
-- **tagは自動では現れない。** `${tag}`をレコードに入れて初めて見える
-- **原因はサイドカーではなく`@type none`。** 行がそのまま単一フィールドに入るので、アプリのJSONが文字列として`message`に入る。`@type json`なら解析される
-- **複数行は1行ずつ別エントリになる。** スタックトレースはまとまらない
+- **今回の`<format> @type json`ではtagが付かない。** `record_transformer`で`fluentd_tag ${tag}`を足して保持した。既定のstdoutフォーマッタなら時刻とtagも出る
+- **原因はサイドカーではなく`@type none`。** 行がそのまま単一フィールドに入るので、アプリのJSONが文字列として`message`に入る。`@type json`に変えるだけでは足りず、通常テキスト行が混ざると`emit_unmatched_lines`の既定falseで落ちる
+- **複数行の扱いは未確認。** `value(textPayload)`はエントリを改行で繋ぐだけで境界を示さない。降順表示で`START`の後に`at`が続くのはむしろ結合の示唆。`--format=json`の`insertId`で確かめること
 
 ## 参考資料
 
