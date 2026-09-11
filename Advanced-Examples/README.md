@@ -99,10 +99,14 @@ terraform.tfvars.example
 | 24 | `24-gke-fluentd-log-format` | GKEのログがCloud Loggingにどう届くか。サイドカーなし／Fluentdサイドカーあり／複数行を同じクラスタで比較し、`fluent.conf`の設定がどのフィールドになるかを実測 | 実装済み |
 | 25 | `25-gce-ansible-ops-agent-nginx` | TerraformとAnsibleの境界。GCEにOps AgentとNginxを入れ、startup scriptの実行タイミング・Terraformが検知しない失敗・冪等性・サービスの妥当性・curlでの疎通を実測 | 実装済み |
 | 26 | `26-billing-budget-pubsub` | Cloud Billingの予算アラート。Pub/Sub通知が実際に届くかとメッセージの中身、上限を超えても課金が止まらないこと、監査ログに残らないことを実測 | 実装済み |
+| 27 | `27-regional-alb-certificate-manager` | Certificate ManagerのDNS認証とLB認証を並べて比較。リージョンALBでGoogle-managed証明書を使う唯一の経路。発行までの時間、ロードバランサ無しでの発行、ACTIVE後のTLS接続を実測 | 実装済み |
+| 28 | `28-gke-pod-eviction` | kubeletによるPod退避（Eviction）を実際に起こして観察。MemoryPressureとDiskPressureを、kubectl / Cloud Monitoring / Cloud Logging / gcloud の4系統で追う | 実装済み |
 
-## 候補（未着手）
+## 追加するとき
 
-GKEプライベートクラスタ＋踏み台（11）を土台に拡張する予定のシナリオ。詳細はhugo-blog側`docs/HANDOVER.md`の「次の作業」を参照。
+11〜28 はGKEプライベートクラスタ＋踏み台（11）を土台に広げてきた。当時の分割の判断は hugo-blog 側 `docs/HANDOVER.md` の「完了: GKE踏み台+プライベートクラスタ構成のAdvanced Examples化」に残してある。
+
+**この表は手で書いている。** ディレクトリを足したら行も足す。
 
 ## 注意
 
