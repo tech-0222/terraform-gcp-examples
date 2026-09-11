@@ -103,7 +103,7 @@ resource "google_compute_network_endpoint_group" "neg_b" {
 resource "google_compute_network_endpoint" "ep_a" {
   network_endpoint_group = google_compute_network_endpoint_group.neg_a.name
   zone                   = var.zone_a
-  instance               = google_compute_instance.be["a"].self_link
+  instance               = google_compute_instance.be["a"].name
   ip_address             = google_compute_address.be["a"].address
   port                   = 8080
 }
@@ -111,7 +111,7 @@ resource "google_compute_network_endpoint" "ep_a" {
 resource "google_compute_network_endpoint" "ep_a2" {
   network_endpoint_group = google_compute_network_endpoint_group.neg_a.name
   zone                   = var.zone_a
-  instance               = google_compute_instance.be["a2"].self_link
+  instance               = google_compute_instance.be["a2"].name
   ip_address             = google_compute_address.be["a2"].address
   port                   = 8080
 }
@@ -119,7 +119,7 @@ resource "google_compute_network_endpoint" "ep_a2" {
 resource "google_compute_network_endpoint" "ep_b" {
   network_endpoint_group = google_compute_network_endpoint_group.neg_b.name
   zone                   = var.zone_c
-  instance               = google_compute_instance.be["b"].self_link
+  instance               = google_compute_instance.be["b"].name
   ip_address             = google_compute_address.be["b"].address
   port                   = 8080
 }
