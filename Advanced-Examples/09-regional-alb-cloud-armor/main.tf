@@ -62,7 +62,7 @@ resource "google_compute_network_endpoint_group" "neg" {
 resource "google_compute_network_endpoint" "ep" {
   network_endpoint_group = google_compute_network_endpoint_group.neg.name
   zone                   = var.zone
-  instance               = google_compute_instance.be.self_link
+  instance               = google_compute_instance.be.name
   ip_address             = google_compute_address.be.address
   port                   = 8080
 }
@@ -83,6 +83,10 @@ resource "google_compute_region_security_policy" "armor" {
   name        = "tf-adv-elb09-armor"
   region      = var.region
   description = "Allow listed source IPs only."
+
+  # 明示しないと毎回 null にしようとして置き換えになる。置き換わる間は
+  # バックエンドサービスへの紐付けが確定せず、ポリシーが効かない。
+  type = "CLOUD_ARMOR"
 
   lifecycle {
     create_before_destroy = true
