@@ -37,6 +37,7 @@
 - ADC 認証済み
 - 課金有効な検証用 Project
 - インターネットから VIP:81 / :83 へ到達できること
+- `iap_member` に IAP SSH と OS Login を許可する相手（`user:you@example.com` 等）
 
 ## ファイル構成
 
@@ -53,6 +54,7 @@
 ├── variables.tf
 ├── network.tf
 ├── main.tf
+├── iam.tf                        # IAP SSH / OS Login の IAM
 ├── outputs.tf
 ├── scripts/
 │   └── startup-cookie.sh.tftpl
@@ -80,6 +82,26 @@ terraform apply
 terraform output -raw curl_generated_cookie
 terraform output -raw curl_http_cookie
 ```
+
+## SSH（OS Login）
+
+VM は `enable-oslogin = "TRUE"` で作ります。IAP 経由で入ります。
+
+```bash
+gcloud compute ssh <インスタンス名> --zone=<ゾーン> --tunnel-through-iap
+```
+
+OS Login にしている理由は、**プロジェクトのメタデータに SSH 公開鍵が残らない**ためです。OS Login を使わない場合、`gcloud compute ssh` の初回に公開鍵が `ssh-keys` メタデータへ自動登録され、組織の機密アクション通知（`add_ssh_key`）が飛びます。`terraform destroy` はメタデータに触らないので、鍵はそのまま残ります。
+
+実測（`gcloud compute project-info describe` のメタデータを ssh の前後で比較）。
+
+| 項目 | 結果 |
+|---|---|
+| メタデータの `ssh-keys` | ssh 前後で **sha256 が変わらない** |
+| VM 上のユーザー名 | `you_example_com` 形式（ホームも同名。`/home/<ローカル名>` を決め打ちしたスクリプトは壊れる） |
+| `~/.ssh/authorized_keys` | 存在しない（[OS Login 有効時は削除される](https://docs.cloud.google.com/compute/docs/oslogin/set-up-oslogin)） |
+
+付与しているのは `roles/compute.osAdminLogin` です。`roles/compute.osLogin` は「standard (non-administrator) user」で **`sudo` が通りません**。確認手順に `sudo` があるため管理者側を付けています。プロジェクトのオーナーは `compute.instances.osAdminLogin` を含むので、オーナーで試すとこの違いに気づけません。
 
 ## 削除方法
 

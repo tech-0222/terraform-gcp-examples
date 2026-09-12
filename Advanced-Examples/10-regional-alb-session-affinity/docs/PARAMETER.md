@@ -41,12 +41,15 @@
 | [google_compute_router_nat.nat](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_router_nat) | resource |
 | [google_compute_subnetwork.proxy_only](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_subnetwork) | resource |
 | [google_compute_subnetwork.workload](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_subnetwork) | resource |
+| [google_project_iam_member.iap_tunnel](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/project_iam_member) | resource |
+| [google_project_iam_member.os_admin_login](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/project_iam_member) | resource |
 | [google_project_service.required](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/project_service) | resource |
 
 ## Inputs
 
 | Name | Description | Type | Default | Required |
 | ---- | ----------- | ---- | ------- | :------: |
+| iap\_member | IAM member granted IAP tunnel and OS Login (for example, user:you@example.com). | `string` | n/a | yes |
 | project\_id | Google Cloud Project ID. | `string` | n/a | yes |
 | affinity\_cookie\_ttl\_sec | Cookie TTL in seconds for GENERATED\_COOKIE and HTTP\_COOKIE. | `number` | `3600` | no |
 | machine\_type | Backend VM machine type. | `string` | `"e2-micro"` | no |

@@ -36,6 +36,7 @@ C. DNS 認証 + リージョン証明書 -> どこにも繋がない     (nolb.<
 - Billing が有効な検証用プロジェクト
 - **親ドメインから、このサブドメインを Cloud DNS へ委任できること**
 - 検証時のバージョン：Terraform 1.14.3、google 7.x
+- `iap_member` に IAP SSH と OS Login を許可する相手（`user:you@example.com` 等）
 
 委任しないと DNS 認証の CNAME が公開 DNS で解決できず、認証が完了しない。証明書の状態は [`managed.state`](https://cloud.google.com/certificate-manager/docs/reference/certificate-manager/rest/v1/projects.locations.certificates)（`PROVISIONING` / `FAILED` / `ACTIVE`）、認証試行の状態は `managed.authorizationAttemptInfo[].state` で見る。
 
@@ -240,3 +241,23 @@ DNS ゾーンごと消える。親ドメイン側の NS レコードも忘れず
 - [Google-managed SSL certificates (Compute Engine)](https://cloud.google.com/load-balancing/docs/ssl-certificates/google-managed-certs)
 - [google_certificate_manager_certificate](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/certificate_manager_certificate)
 - [google_compute_region_target_https_proxy](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_region_target_https_proxy)
+
+## SSH（OS Login）
+
+VM は `enable-oslogin = "TRUE"` で作ります。IAP 経由で入ります。
+
+```bash
+gcloud compute ssh <インスタンス名> --zone=<ゾーン> --tunnel-through-iap
+```
+
+OS Login にしている理由は、**プロジェクトのメタデータに SSH 公開鍵が残らない**ためです。OS Login を使わない場合、`gcloud compute ssh` の初回に公開鍵が `ssh-keys` メタデータへ自動登録され、組織の機密アクション通知（`add_ssh_key`）が飛びます。`terraform destroy` はメタデータに触らないので、鍵はそのまま残ります。
+
+実測（`gcloud compute project-info describe` のメタデータを ssh の前後で比較）。
+
+| 項目 | 結果 |
+|---|---|
+| メタデータの `ssh-keys` | ssh 前後で **sha256 が変わらない** |
+| VM 上のユーザー名 | `you_example_com` 形式（ホームも同名。`/home/<ローカル名>` を決め打ちしたスクリプトは壊れる） |
+| `~/.ssh/authorized_keys` | 存在しない（[OS Login 有効時は削除される](https://docs.cloud.google.com/compute/docs/oslogin/set-up-oslogin)） |
+
+付与しているのは `roles/compute.osAdminLogin` です。`roles/compute.osLogin` は「standard (non-administrator) user」で **`sudo` が通りません**。確認手順に `sudo` があるため管理者側を付けています。プロジェクトのオーナーは `compute.instances.osAdminLogin` を含むので、オーナーで試すとこの違いに気づけません。

@@ -1,1 +1,5 @@
 project_id = "your-project-id"
+
+# IAP SSH と OS Login を許可する相手。sudo を使う確認手順があるため
+# osAdminLogin を与える。
+iap_member = "user:you@example.com"

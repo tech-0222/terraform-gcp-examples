@@ -5,3 +5,7 @@ allowed_src_ips = ["203.0.113.10/32"]
 
 # Optional: VM that is not on the allowlist (expect HTTP 403 from that VM).
 # create_deny_client = true
+
+# IAP SSH と OS Login を許可する相手。sudo を使う確認手順があるため
+# osAdminLogin を与える。
+iap_member = "user:you@example.com"
