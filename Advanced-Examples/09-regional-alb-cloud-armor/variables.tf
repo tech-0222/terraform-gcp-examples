@@ -66,3 +66,13 @@ variable "create_deny_client" {
   type        = bool
   default     = false
 }
+
+variable "iap_member" {
+  description = "IAM member granted IAP tunnel and OS Login (for example, user:you@example.com)."
+  type        = string
+
+  validation {
+    condition     = can(regex("^(user|serviceAccount|group):.+", var.iap_member))
+    error_message = "iap_member must look like user:email, serviceAccount:email, or group:email."
+  }
+}

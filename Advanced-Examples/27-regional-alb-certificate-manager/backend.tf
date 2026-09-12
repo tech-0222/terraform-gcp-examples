@@ -36,6 +36,10 @@ resource "google_compute_instance" "backend" {
     scopes = ["cloud-platform"]
   }
 
+  metadata = {
+    enable-oslogin = "TRUE"
+  }
+
   # どちらの LB から来たか分かるように、ホスト名を返す。
   metadata_startup_script = <<-EOT
     #!/bin/bash

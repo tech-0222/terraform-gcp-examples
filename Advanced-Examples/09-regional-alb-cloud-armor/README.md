@@ -29,6 +29,7 @@
 - ADC 認証済み
 - 課金有効な検証用 Project
 - `allowed_src_ips` に自分のグローバル IPv4 を `/32` で入れる（空のまま apply しない）
+- `iap_member` に IAP SSH と OS Login を許可する相手（`user:you@example.com` 等）
 
 ## ファイル構成
 
@@ -45,6 +46,7 @@
 ├── variables.tf
 ├── network.tf
 ├── main.tf
+├── iam.tf                        # IAP SSH / OS Login の IAM
 ├── outputs.tf
 ├── scripts/
 │   └── startup-a.sh
@@ -69,10 +71,54 @@ terraform fmt -check
 terraform validate
 terraform plan
 terraform apply
+terraform apply   # 2回目。下記のとおり1回目ではポリシーが紐付かない
 curl -si "http://$(terraform output -raw vip)/"
 ```
 
 任意で `create_deny_client = true` にすると、エフェメラル外部 IP の VM から VIP を叩いて 403 を確認できます。
+
+### apply は2回必要
+
+**1回目の apply では、セキュリティポリシーがバックエンドサービスに紐付きません。** プロバイダが作成時に `setSecurityPolicy` を呼ばないためです（監査ログで確認）。
+
+```console
+# 1回だけ apply した直後
+$ gcloud compute backend-services describe tf-adv-elb09-bs --region=asia-northeast1 \
+    --format="value(securityPolicy)"
+（空）
+
+$ terraform plan -detailed-exitcode
+  # google_compute_region_backend_service.bs will be updated in-place
+      + security_policy = ".../securityPolicies/tf-adv-elb09-armor"
+
+$ gcloud logging read 'protoPayload.resourceName=~"tf-adv-elb09-bs"' \
+    --format="value(protoPayload.methodName)"
+v1.compute.regionBackendServices.insert     # insert だけ。setSecurityPolicy が無い
+```
+
+2回目の apply で `setSecurityPolicy` が呼ばれ、以後 `terraform plan` は `No changes.` になります。**紐付いていないとポリシーは一切効かず、許可リスト外からも 200 が返ります。** apply のあとは必ず上の describe か plan で確認してください。
+
+ルールの書き方（インライン / 別リソース）とは無関係です。両方で同じ挙動を確認しています。
+
+## SSH（OS Login）
+
+VM は `enable-oslogin = "TRUE"` で作ります。IAP 経由で入ります。
+
+```bash
+gcloud compute ssh <インスタンス名> --zone=<ゾーン> --tunnel-through-iap
+```
+
+OS Login にしている理由は、**プロジェクトのメタデータに SSH 公開鍵が残らない**ためです。OS Login を使わない場合、`gcloud compute ssh` の初回に公開鍵が `ssh-keys` メタデータへ自動登録され、組織の機密アクション通知（`add_ssh_key`）が飛びます。`terraform destroy` はメタデータに触らないので、鍵はそのまま残ります。
+
+実測（`gcloud compute project-info describe` のメタデータを ssh の前後で比較）。
+
+| 項目 | 結果 |
+|---|---|
+| メタデータの `ssh-keys` | ssh 前後で **sha256 が変わらない** |
+| VM 上のユーザー名 | `you_example_com` 形式（ホームも同名。`/home/<ローカル名>` を決め打ちしたスクリプトは壊れる） |
+| `~/.ssh/authorized_keys` | 存在しない（[OS Login 有効時は削除される](https://docs.cloud.google.com/compute/docs/oslogin/set-up-oslogin)） |
+
+付与しているのは `roles/compute.osAdminLogin` です。`roles/compute.osLogin` は「standard (non-administrator) user」で **`sudo` が通りません**。確認手順に `sudo` があるため管理者側を付けています。プロジェクトのオーナーは `compute.instances.osAdminLogin` を含むので、オーナーで試すとこの違いに気づけません。
 
 ## 削除方法
 
