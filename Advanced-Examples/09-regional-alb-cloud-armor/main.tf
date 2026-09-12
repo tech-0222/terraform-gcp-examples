@@ -30,6 +30,7 @@ resource "google_compute_instance" "be" {
   }
 
   metadata = {
+    enable-oslogin = "TRUE"
     startup-script = file("${path.module}/scripts/startup-a.sh")
   }
 
@@ -78,48 +79,49 @@ resource "google_compute_region_health_check" "hc" {
 }
 
 # Regional policy for regional ALB. Evaluate client source IP before backend.
+# ルールはこのリソースの中に書く。別リソースの
+# google_compute_region_security_policy_rule でも作れるが、既定ルールが
+# 離れた場所になり、書き忘れに気づきにくい。
 # Ref: https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_region_security_policy
 resource "google_compute_region_security_policy" "armor" {
   name        = "tf-adv-elb09-armor"
   region      = var.region
   description = "Allow listed source IPs only."
 
-  # 明示しないと毎回 null にしようとして置き換えになる。置き換わる間は
-  # バックエンドサービスへの紐付けが確定せず、ポリシーが効かない。
+  # 明示しないと毎回 null にしようとして置き換えになる。
   type = "CLOUD_ARMOR"
 
+  rules {
+    action      = "allow"
+    priority    = 1000
+    description = "Allow listed client IPs."
+
+    match {
+      versioned_expr = "SRC_IPS_V1"
+      config {
+        src_ip_ranges = var.allowed_src_ips
+      }
+    }
+  }
+
+  # 既定ルール（優先度 2147483647）。与えないと action = "allow" で
+  # 自動的に作られる。拒否を既定にするなら、明示が要る。
+  rules {
+    action      = "deny(403)"
+    priority    = 2147483647
+    description = "Default deny."
+
+    match {
+      versioned_expr = "SRC_IPS_V1"
+      config {
+        src_ip_ranges = ["*"]
+      }
+    }
+  }
+
+  # バックエンドサービスが参照したままだと削除に失敗することがある。
   lifecycle {
     create_before_destroy = true
-  }
-}
-
-resource "google_compute_region_security_policy_rule" "allowlist" {
-  region          = var.region
-  security_policy = google_compute_region_security_policy.armor.name
-  priority        = 1000
-  action          = "allow"
-  description     = "Allow listed client IPs."
-
-  match {
-    versioned_expr = "SRC_IPS_V1"
-    config {
-      src_ip_ranges = var.allowed_src_ips
-    }
-  }
-}
-
-resource "google_compute_region_security_policy_rule" "default_deny" {
-  region          = var.region
-  security_policy = google_compute_region_security_policy.armor.name
-  priority        = 2147483647
-  action          = "deny(403)"
-  description     = "Default deny."
-
-  match {
-    versioned_expr = "SRC_IPS_V1"
-    config {
-      src_ip_ranges = ["*"]
-    }
   }
 }
 
@@ -129,7 +131,11 @@ resource "google_compute_region_backend_service" "bs" {
   load_balancing_scheme = "EXTERNAL_MANAGED"
   protocol              = "HTTP"
   health_checks         = [google_compute_region_health_check.hc.id]
-  security_policy       = google_compute_region_security_policy.armor.self_link
+
+  # プロバイダは作成時にこれを送らない（監査ログに setSecurityPolicy が
+  # 出ない）。**1回目の apply では紐付かず、2回目で付く。**
+  # apply のあと terraform plan が No changes になるまで確認すること。
+  security_policy = google_compute_region_security_policy.armor.self_link
 
   backend {
     group                 = google_compute_network_endpoint_group.neg.id
@@ -197,6 +203,10 @@ resource "google_compute_instance" "deny_client" {
   network_interface {
     subnetwork = google_compute_subnetwork.workload.id
     access_config {}
+  }
+
+  metadata = {
+    enable-oslogin = "TRUE"
   }
 
   labels = {

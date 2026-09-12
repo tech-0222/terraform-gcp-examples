@@ -33,14 +33,14 @@
 | [google_compute_region_backend_service.bs](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_region_backend_service) | resource |
 | [google_compute_region_health_check.hc](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_region_health_check) | resource |
 | [google_compute_region_security_policy.armor](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_region_security_policy) | resource |
-| [google_compute_region_security_policy_rule.allowlist](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_region_security_policy_rule) | resource |
-| [google_compute_region_security_policy_rule.default_deny](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_region_security_policy_rule) | resource |
 | [google_compute_region_target_http_proxy.proxy](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_region_target_http_proxy) | resource |
 | [google_compute_region_url_map.urlmap](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_region_url_map) | resource |
 | [google_compute_router.router](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_router) | resource |
 | [google_compute_router_nat.nat](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_router_nat) | resource |
 | [google_compute_subnetwork.proxy_only](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_subnetwork) | resource |
 | [google_compute_subnetwork.workload](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_subnetwork) | resource |
+| [google_project_iam_member.iap_tunnel](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/project_iam_member) | resource |
+| [google_project_iam_member.os_admin_login](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/project_iam_member) | resource |
 | [google_project_service.required](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/project_service) | resource |
 
 ## Inputs
@@ -48,6 +48,7 @@
 | Name | Description | Type | Default | Required |
 | ---- | ----------- | ---- | ------- | :------: |
 | allowed\_src\_ips | Source IP CIDRs allowed by Cloud Armor (e.g. your public IP /32). All other clients get HTTP 403. | `list(string)` | n/a | yes |
+| iap\_member | IAM member granted IAP tunnel and OS Login (for example, user:you@example.com). | `string` | n/a | yes |
 | project\_id | Google Cloud Project ID. | `string` | n/a | yes |
 | create\_deny\_client | If true, create a VM with an ephemeral external IP that is not allowlisted (expect 403 from that VM). | `bool` | `false` | no |
 | machine\_type | Backend VM machine type. | `string` | `"e2-micro"` | no |

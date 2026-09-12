@@ -54,6 +54,8 @@
 | [google_dns_record_set.acme_challenge_regional](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/dns_record_set) | resource |
 | [google_dns_record_set.global_a](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/dns_record_set) | resource |
 | [google_dns_record_set.regional_a](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/dns_record_set) | resource |
+| [google_project_iam_member.iap_tunnel](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/project_iam_member) | resource |
+| [google_project_iam_member.os_admin_login](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/project_iam_member) | resource |
 | [google_project_service.required](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/project_service) | resource |
 | [google_service_account.vm](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/service_account) | resource |
 
@@ -62,6 +64,7 @@
 | Name | Description | Type | Default | Required |
 | ---- | ----------- | ---- | ------- | :------: |
 | dns\_zone\_domain | Cloud DNS で管理するドメイン（末尾のドットは付けない）。<br/><br/>親ドメイン側から、このサブドメインを Cloud DNS のネームサーバへ委任して<br/>おくこと。委任しないと DNS 認証の CNAME が引けず、証明書は PENDING の<br/>まま進まない。 | `string` | n/a | yes |
+| iap\_member | IAM member granted IAP tunnel and OS Login (for example, user:you@example.com). | `string` | n/a | yes |
 | project\_id | 検証に使う Google Cloud プロジェクト ID | `string` | n/a | yes |
 | enable\_global\_lb | グローバル外部 ALB と、LB 認証の証明書を作るか。<br/><br/>LB 認証はグローバル限定で、リージョン外部 ALB では使えない。<br/>比較のためだけに要るので、リージョン側だけ見たいときは false にする。 | `bool` | `true` | no |
 | global\_hostname | LB 認証で証明書を発行し、グローバル外部 ALB で配信するホスト名（相対名） | `string` | `"global"` | no |

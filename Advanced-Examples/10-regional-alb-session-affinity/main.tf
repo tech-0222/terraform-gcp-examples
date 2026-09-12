@@ -39,6 +39,7 @@ resource "google_compute_instance" "be" {
   }
 
   metadata = {
+    enable-oslogin = "TRUE"
     startup-script = templatefile("${path.module}/scripts/startup-cookie.sh.tftpl", {
       identity = each.value.identity
     })

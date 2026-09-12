@@ -59,6 +59,7 @@ resource "google_compute_instance" "be" {
   }
 
   metadata = {
+    enable-oslogin = "TRUE"
     startup-script = file("${path.module}/${each.value.script}")
   }
 

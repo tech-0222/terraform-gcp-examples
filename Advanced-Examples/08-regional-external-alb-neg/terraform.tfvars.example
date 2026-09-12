@@ -5,3 +5,7 @@ project_id = "your-project-id"
 # zone_a       = "asia-northeast1-a"
 # zone_c       = "asia-northeast1-c"
 # machine_type = "e2-micro"
+
+# IAP SSH と OS Login を許可する相手。sudo を使う確認手順があるため
+# osAdminLogin を与える。
+iap_member = "user:you@example.com"
