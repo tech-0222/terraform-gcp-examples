@@ -42,11 +42,24 @@ Cloud NATはVMがnginxをInstallするためのOutbound経路です。IAPからV
 - Cloud Router / Cloud NAT
 - IAP SSH用Firewall
 - VM用Service Account
-- 外部IPなしのSpot VM
+- 外部IPなしのSpot VM（Ops Agent を startup script で導入）
 - Project IAM Member
-  - `roles/iap.tunnelResourceAccessor`
-  - `roles/compute.osLogin`
+  - `roles/iap.tunnelResourceAccessor`（`iap_member`）
+  - `roles/compute.osLogin`（`iap_member`）
+  - `roles/logging.logWriter`（**VMのService Account**。Ops Agent の送信に要る）
+- Service Account IAM Member
+  - `roles/iam.serviceAccountUser`（`iap_member` に、VMのService Accountに対して）
 - Instance単位のIAP Tunnel IAM Member
+
+### `roles/iam.serviceAccountUser` が要る理由
+
+VM にService Accountが付いている場合、接続する側にこのロールが要ります（[公式](https://docs.cloud.google.com/compute/docs/oslogin/set-up-oslogin)：*"All users, if the VM has a service account"*）。
+
+無いと OS Login のプロファイルは作られるのに `Permission denied (publickey)` で弾かれます。**プロジェクトのオーナーはこの権限を含むため、オーナーで試すと気づけません。**
+
+### `roles/logging.logWriter` が要る理由
+
+`scopes = ["logging.write"]` だけでは書けません。無いと Ops Agent は `active` のまま403で1件も送れず、**自分のエラーログも出ない**ため外から気づけません。
 
 ## 前提条件
 
@@ -112,12 +125,16 @@ gcloud compute instances get-serial-port-output \
 eval "$(terraform output -raw iap_ssh_command)"
 ```
 
-VM内でnginxを確認できます。
+VM内でnginxを確認できます。**`sudo` は使いません。**
 
 ```bash
-sudo systemctl status nginx --no-pager
+systemctl is-active nginx
 curl --fail --show-error http://127.0.0.1/
 ```
+
+`iap_member` に与えているのは `roles/compute.osLogin`（standard / non-administrator）です。このロールでは `sudo` が `a password is required` で止まります。OS Login のアカウントにパスワードは無いため、そこで詰みます。
+
+管理作業が必要なら `roles/compute.osAdminLogin` に上げます。ただしこのサンプルの主題は最小権限での接続なので、確認手順の側を `sudo` 不要にしています。
 
 ## HTTP Port Forwarding
 

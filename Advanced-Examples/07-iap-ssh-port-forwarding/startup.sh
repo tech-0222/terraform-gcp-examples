@@ -20,3 +20,23 @@ cat >/var/www/html/index.html <<'HTML'
 HTML
 
 systemctl enable --now nginx
+
+# Ops Agent。GCE では入っているのが普通で、入れないと VM 内の記録が
+# Cloud Logging に一切出ない。roles/logging.logWriter とセットで効く。
+curl -sSO https://dl.google.com/cloudagents/add-google-cloud-ops-agent-repo.sh
+bash add-google-cloud-ops-agent-repo.sh --also-install
+
+# 既定の収集対象は syslog で、Debian は auth,authpriv を syslog から外す。
+# sshd と sudo の記録は auth.log にあるため、明示的に足す。
+cat >/etc/google-cloud-ops-agent/config.yaml <<'YAML'
+logging:
+  receivers:
+    auth:
+      type: files
+      include_paths: [/var/log/auth.log]
+  service:
+    pipelines:
+      auth_pipeline:
+        receivers: [auth]
+YAML
+systemctl restart google-cloud-ops-agent

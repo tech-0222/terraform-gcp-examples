@@ -36,6 +36,9 @@ resource "google_compute_instance" "vm" {
     provisioning_model = "SPOT"
     preemptible        = true
     automatic_restart  = false
+
+    # 既定値だが、書かないと apply のたびに STOP -> null の差分が出る。
+    instance_termination_action = "STOP"
   }
 
   metadata = {
