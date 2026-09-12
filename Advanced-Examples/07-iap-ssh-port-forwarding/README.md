@@ -44,7 +44,6 @@ Cloud NATはVMがnginxをInstallするためのOutbound経路です。IAPからV
 - VM用Service Account
 - 外部IPなしのSpot VM（Ops Agent を startup script で導入）
 - Project IAM Member
-  - `roles/iap.tunnelResourceAccessor`（`iap_member`）
   - `roles/compute.osLogin`（`iap_member`）
   - `roles/logging.logWriter`（**VMのService Account**。Ops Agent の送信に要る）
 - Service Account IAM Member
@@ -56,6 +55,12 @@ Cloud NATはVMがnginxをInstallするためのOutbound経路です。IAPからV
 VM にService Accountが付いている場合、接続する側にこのロールが要ります（[公式](https://docs.cloud.google.com/compute/docs/oslogin/set-up-oslogin)：*"All users, if the VM has a service account"*）。
 
 無いと OS Login のプロファイルは作られるのに `Permission denied (publickey)` で弾かれます。**プロジェクトのオーナーはこの権限を含むため、オーナーで試すと気づけません。**
+
+### IAP のトンネル権限はインスタンス単位だけにしている
+
+`roles/iap.tunnelResourceAccessor` はプロジェクトにも付けられますが、それだと**全VMへ接続できます**。この例の主題は最小権限なので、インスタンス単位（`google_iap_tunnel_instance_iam_member`）だけにしています。
+
+権限を絞ったサービスアカウントで、インスタンス単位のみでも接続できることを実測しました。あわせて `roles/compute.viewer` も不要でした。`roles/compute.osLogin` に `compute.instances.get` などが含まれるためです。
 
 ### `roles/logging.logWriter` が要る理由
 
