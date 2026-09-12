@@ -1,6 +1,6 @@
 # 21. ノードプールのBlue/Greenアップグレードとsoak期間
 
-ノードプールのアップグレードには2つの戦略がある。既定のSURGEは既存ノードを順番に置き換える。BLUE_GREENは新しいノード群（green）を丸ごと作ってからワークロードを移し、しばらく旧ノード群（blue）を残す。
+ノードプールのアップグレードには[3つの戦略がある](https://docs.cloud.google.com/kubernetes-engine/docs/concepts/node-pool-upgrade-strategies)。既定のSURGEは既存ノードを順番に置き換える。3つ目のAutoscaled blue-greenはPreviewで、ここでは扱わない。BLUE_GREENは新しいノード群（green）を丸ごと作ってからワークロードを移し、しばらく旧ノード群（blue）を残す。
 
 この「しばらく残す」時間が`node_pool_soak_duration`で、**ロールバックできる猶予**にあたる。満了するとblueは削除され、後戻りできなくなる。
 
@@ -58,7 +58,7 @@ lifecycle {
 
 アップグレードは`gcloud`で打つので、`ignore_changes`がないと次のapplyでバージョンが巻き戻る。
 
-**バージョンはチャンネルから外れていく。** applyの前に確認する。
+**バージョンはチャンネルから外れていく。** 開始バージョン 1.35.7-gke.1027000 はすでに提供が終わっている可能性が高い。applyの前に確認する。
 
 ```bash
 gcloud container get-server-config --zone=asia-northeast1-a --format="json(channels)"
@@ -81,14 +81,14 @@ terraform init
 terraform apply
 ```
 
-Cloud KMSのキーリングと鍵は削除できず、`terraform destroy`は鍵バージョンの破棄をスケジュールする。再実行するときは`kms_key_ring_name` / `kms_crypto_key_name`に別名を指定する。
+`terraform destroy`はCloud KMSのキーリングと鍵を消さず、鍵バージョンの破棄だけをスケジュールする（[削除機能そのものはGA済み](https://docs.cloud.google.com/kms/docs/release-notes)）。再実行するときは`kms_key_ring_name` / `kms_crypto_key_name`に別名を指定する。
 
 ## 検証環境
 
 ```
 Terraform v1.14.5
 provider registry.terraform.io/hashicorp/google v7.46.0
-GKE 1.35.7-gke.1027000 → 1.35.7-gke.1150000 → 1.36.2-gke.2064000（REGULARチャンネル）
+GKE 1.35.7-gke.1027000 → 1.35.7-gke.1150000（REGULARチャンネル）。ノードが到達したのはここまで。1.36.2-gke.2064000 はコントロールプレーンの `master_version` で、2回目の移行先は記録していない
 ```
 
 ## 検証結果
@@ -156,7 +156,7 @@ gke-...-41052e12-0zr5   v1.35.7-gke.1150000   <none>
 gke-...-41052e12-z46k   v1.35.7-gke.1150000   <none>
 ```
 
-### 4. 進行段階は UPGRADE_STAGE で読む
+### 4. 進行段階は UPGRADE_STAGE で読める
 
 `kubectl get nodes`だけでは、いまblueをdrainしているのか、soak期間に入ったのかが分からない。operationのメトリクスに出る。
 
@@ -192,16 +192,18 @@ DONE    2026-09-04T11:41:41.337259145Z  2026-09-04T11:58:44.228254785Z
 
 | 移行方法 | 断 | 所要時間 |
 |---|---|---|
-| 手動drain（replicas 1） | 21秒の完全断 | 約2分 |
-| 手動drain（2レプリカ + PDB） | 約6秒の窓で5回失敗 | 約2分 |
+| 手動drain（replicas 1、Service名） | 21回連続で失敗 | 約2分 |
+| 手動drain（2レプリカ + PDB、ClusterIP） | 30回中5回失敗 | 約2分 |
 | 手動drain（+ `preStop`） | 0回 | 約2分 |
-| **Blue/Green** | **0回** | **17分3秒** |
+| **Blue/Green（踏み台→内部LB）** | **900回中0回** | **17分3秒** |
 
-止まらないが、**桁違いに遅い**。緊急のパッチ適用には向かない。
+計測先が3種類あり計測区間も揃っていないので、この表から比は出せない。
+
+止まらないが、**この設定では桁違いに遅い**。17分3秒のうち`node_pool_soak_duration`の600秒とバッチ待機が占める。[`complete-upgrade`でsoakを途中終了できる](https://docs.cloud.google.com/kubernetes-engine/docs/how-to/upgrading-a-cluster)ので、所要時間は固定ではない。
 
 ### 6. ロールバックは「キャンセルしてから」
 
-soak期間中に`rollback`を打つと拒否される。
+実行中のoperationがあるあいだに`rollback`を打つと拒否される。試したのは`DRAINING_BLUE_POOL`と`NODE_POOL_SOAKING`の2段階。
 
 ```console
 $ gcloud container node-pools rollback tf-adv-gke-bg-np --cluster=tf-adv-gke-bg \
@@ -258,7 +260,7 @@ gke-tf-adv-gke-bg-tf-adv-gke-bg-np-41052e12-0zr5   v1.35.7-gke.1150000   True   
 gke-tf-adv-gke-bg-tf-adv-gke-bg-np-41052e12-z46k   v1.35.7-gke.1150000   True    <none>
 ```
 
-greenは削除され、blueはuncordonされてPodも戻った。
+greenは削除され、blueはuncordonされてPodも戻った。上のタイムラインの 12:20:01 から 12:23:11 にあたる。
 
 タイムライン。
 
@@ -274,7 +276,7 @@ greenは削除され、blueはuncordonされてPodも戻った。
 12:23:11  完了
 ```
 
-この一連（アップグレード → キャンセル → ロールバック）の全期間でも断はなかった。
+この一連（アップグレード → キャンセル → ロールバック）の全期間でも、サンプルに失敗は出なかった。観測できるのはサンプルの時点だけで、無停止の保証ではない。
 
 ```console
 $ tr ' ' '\n' < /tmp/rb-probe.txt | grep -v '^$' | sort | uniq -c
@@ -295,9 +297,9 @@ Changes to Outputs:
 
 ノードプールには差分が出ない。`lifecycle.ignore_changes = [version]`が効いている。`master_version`は読み取り専用の属性で、出力値が変わるだけでインフラは変更されない。
 
-`min_master_version`は作成時のみ有効なので、コントロールプレーンを`gcloud`で上げても引き戻されない。
+`min_master_version`は「これ以上」を指す下限で、作成時にしか効かない属性ではない。[provider は現在のバージョンと比べ、指定値のほうが新しいときだけ更新する](https://github.com/hashicorp/terraform-provider-google/blob/main/google/services/container/resource_container_cluster.go)。差分が出なかったのは、`gcloud`で上げた結果が変数の値より新しいため。
 
-### 8. CMEK鍵バージョンは「ローテーション直後」だと反映されない
+### 8. ローテーション直後のアップグレードでは、旧鍵バージョンで作られた
 
 アップグレードの直前に鍵をローテーションした。ところがgreenノードのブートディスクは**旧バージョン**だった。
 

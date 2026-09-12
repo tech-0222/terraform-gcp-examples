@@ -170,12 +170,18 @@ fatal: [localhost]: FAILED! => {"msg": "validate must contain %s: nginx -t -c ..
         remote_src: true
       when: nginx_site.backup_file is defined
     - ansible.builtin.fail:
-        msg: "nginx の設定が不正だったため、直前のバックアップに戻した"
+        msg: >-
+          nginx の設定が不正だった。
+          {{ '直前のバックアップに戻した。'
+             if nginx_site.backup_file is defined
+             else 'バックアップが無く、自動では戻していない。' }}
 ```
 
 `when` を落とさないこと。[`backup_file` が返るのは実際にバックアップを取ったときだけ](https://docs.ansible.com/ansible/latest/collections/ansible/builtin/copy_module.html#return-values)で、構文検査は無変更の回も走る。**バックアップが無い回に失敗すると、復元タスクが未定義変数で落ちる。**
 
-タスクが失敗するとハンドラは走らない。**壊れた設定がreloadされることはない。**
+復元をスキップした回も「戻した」と報告すると、直っていない設定を直ったと読ませる。メッセージも `backup_file` の有無で分ける。
+
+タスクが失敗すると、既定では**そのホストの**ハンドラは走らない。**壊れた設定がreloadされることはない。** ただし[`force_handlers`](https://docs.ansible.com/ansible/latest/playbook_guide/playbooks_error_handling.html)を有効にすると失敗後も走るので、これを唯一の防御にはできない。
 
 ### 4. 冪等性
 
@@ -215,6 +221,9 @@ failed_when: >-
 `failed_when`はモジュール自身のステータス判定を**置き換える**ので、前半が無いとマーカーを含むエラーページが素通りする。後半の`default('')`は、接続できず`content`が未定義のときに式ごと落ちるのを防ぐため。
 
 nginx と Ops Agent は明示的に自動起動させる設計なので、`is-enabled`も検査する。playbookでも同じことを見て、満たさなければ失敗する。**ただし許可する出力は揃えていない。** nginxは`enabled`のみ、Ops Agentは`enabled`と`generated`を許容している。
+<!-- paired-ok: 記事側は段落を割っただけで、内容は同じ。直後に Ops Agent の親ユニットの注記も足してある -->
+
+`google-cloud-ops-agent`は親ユニット。`active`でも、実際に収集する`google-cloud-ops-agent-fluent-bit`や`-opentelemetry-collector`が動いているかは別に見る。再起動後の確認も親ユニットしか見ておらず、収集の再開までは確かめていない。
 
 ただし`systemd`には`static`のように明示的な有効化を要さないユニットもあり、この条件をすべてのサービスに当てはめることはできない。
 
@@ -250,7 +259,7 @@ $ curl -s http://localhost:18080/ | grep -o "configured by Ansible"
 configured by Ansible
 ```
 
-ファイアウォールとネットワーク経路まで通っていることが分かる。インターネットには一切出していない。
+ファイアウォールとネットワーク経路まで通っていることが分かる。**nginx をインターネットへ公開していない**という意味で、外向きの通信が無いわけではない。パッケージの取得は Cloud NAT を通る。
 
 ### 7. 再起動後もサービスが上がる
 
@@ -281,7 +290,7 @@ $ curl -s http://127.0.0.1/ | grep -o "reloaded without restart"
 reloaded without restart
 ```
 
-`MainPID`が変わっていない。**この回で確認できたのは、HTMLの差し替えにプロセスの再起動が要らないことまで。**
+`MainPID`が変わっていない。**この回で確認できたのは、masterプロセスが入れ替わらなかったことだけ。** workerの入れ替わりも`reload`の有無も、この値からは判定できない。
 
 サイト設定を変えた場合は`reload`ハンドラに通知される。[nginxの`reload`](https://nginx.org/en/docs/control.html)はmasterプロセスを残して新しいworkerを起動し、古いworkerは処理中のリクエストを終えてから終了する。**その挙動はこの検証では切り分けていない。**
 
@@ -342,7 +351,7 @@ $ gcloud logging read 'resource.type="gce_instance" AND logName=~"startupscript"
 
 **この検索で分かったのは、`logName`に`startupscript`を含むログが0件だったことまで。** 原因は特定していない。今回の`config.yaml`は`/var/log/startup-ansible.log`を収集していないので、収集していないのか実行時期の問題なのかを切り分けていない。切り分けるなら`logName`の条件を外し、instance_idと時間帯で絞って`startup-ansible: BEGIN`を探す。
 
-いずれにせよ、**構築の失敗がいちばん起きやすいのはこの区間**なので、シリアルコンソールかVM内の`/var/log/startup-ansible.log`を見る。
+いずれにせよ、**今回の失敗はこの区間で起きた。** Terraformにも返らずCloud Loggingにも出ないので、シリアルコンソールかVM内の`/var/log/startup-ansible.log`を見る。
 
 ## 後片付け
 
@@ -361,8 +370,8 @@ Destroy complete! Resources: 35 destroyed.
 - **`template`の`validate`は`%s`が必須。** フラグメントを`nginx -t -c %s`へ直接は渡せない。今回は `backup` → `nginx -t` → 失敗時に`rescue`で復元
 - **動いていることと正しいことは別。** `is-active`だけでなく`is-enabled`と構文検査も見る
 - **curlは200だけでなく中身も見る。** 外部IPなしならIAPトンネルで外からも確かめられる
-- **HTMLの差し替えにプロセスの再起動は要らない。** `MainPID`が変わらないことで確認できる。`reload`そのものの挙動は切り分けていない
-- **GCEは、今回の構成ではOps Agentを入れるまでログが1件も来なかった。** GKEとは前提が違う。シリアルポート出力を送る経路は別にある
+- **HTMLの差し替えでmasterプロセスは入れ替わらなかった。** `MainPID`が一致しただけで、workerの入れ替わりや`reload`の有無までは判定していない
+- **GCEは、今回の構成ではOps Agentを入れるまでゲストOSとnginxのログを確認できなかった。** VMの管理操作を記録する監査ログはこれとは別で、Ops Agent が無くても残る。シリアルポート出力と Guest Agent にも送信経路がある
 
 ## 参考資料
 

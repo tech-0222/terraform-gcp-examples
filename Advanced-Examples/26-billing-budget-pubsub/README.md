@@ -12,13 +12,14 @@ Cloud Billingの予算（Budget）は、コスト管理の入口としてよく�
 
 ```console
 $ gcloud billing budgets create --help | grep -icE "spend.?cap|enforce"
-0        # alpha / beta も同じ。create に指定できるのは
-         # --billing-project / --display-name / --threshold-rule のみ
+0        # alpha / beta も同じ。--billing-account / --budget-amount /
+         # --filter-projects / --notifications-rule-pubsub-topic などはあるが、
+         # 上限を強制する引数は無い
 ```
 
-Budget API v1 のリソース項目は `name` / `displayName` / `budgetFilter` / `amount` / `thresholdRules` / `notificationsRule` / `etag` / `ownershipScope` で、`spendCap` にあたるものが無い。`google_billing_budget` の引数も同様。公式の手順も Console だけを案内している。**API に無いので Terraform 対応が入りようがない。**
+Budget API v1 のリソース項目は `name` / `displayName` / `budgetFilter` / `amount` / `thresholdRules` / `notificationsRule` / `etag` / `ownershipScope` で、`spendCap` にあたるものが無い。`google_billing_budget` の引数も同様。公式の手順も Console だけを案内している。**確かめた範囲では手段が無い。** 公開 API に出れば provider が追える性質のもので、将来もできないという話ではない。
 
-制約も強い。単一プロジェクト × 単一サービス、期間は Monthly 固定、Folder / Organization / ラベル / 複数プロジェクトは対象外。停止も即時ではなく、超過分は普通に課金される。解除は Console で「Lift spend cap」を選び、復帰に最大1時間かかる。
+制約も強い。単一プロジェクト × 単一サービス、期間は Monthly 固定、Folder / Organization / ラベル / 複数プロジェクトは対象外。止まるのは新規の利用だけ。処理中のリクエストは完了まで進んで課金され、Compute や Storage のような永続リソースの固定費は止まらない。コスト反映の遅れによる超過分も通常どおり課金される。解除は Console で「Lift spend cap」を選び、復帰に最大1時間かかる。
 
 元にしたPoCは通知を請求アカウントの既定メールに任せ、Pub/Subを定義していなかった。届くかどうかを確かめていない。この例ではPub/Subに送り、**メッセージを実際に読む。**
 
@@ -232,7 +233,7 @@ $ gcloud pubsub topics list --format="value(name.basename())"
 tf-adv-budget-notifications
 ```
 
-トピックは残っている。超過を理由に削除も停止もされていない。
+トピックは一覧に残っている。ただし一覧に出るかどうかを見ただけで、送受信が続くかは確かめていない。言えるのは「超過しても、このトピックが自動で消えることはなかった」ところまで。
 
 ただしこの検証で作るのは Pub/Sub のトピックとサブスクリプションだけ。**言えるのは「超過してもリソースが自動で消されない」ところまでで、その後も課金が増え続けたことは測っていない。** 通知だけの予算が spending cap でないことは[公式の仕様](https://cloud.google.com/billing/docs/how-to/budgets)であり、実測はそれと矛盾しない。
 
@@ -258,7 +259,7 @@ serviceusage     8件
 ```
 
 **「残らない」とは言い切れない。** 予算は請求アカウント配下のリソースなので、監査ログも
-請求アカウントのスコープに出ている可能性がある。今回はそこを読めなかった。
+請求アカウントのスコープに出ている可能性がある。今回はそのスコープで検索して0件だった。読めなかったのではない。
 
 ```console
 $ gcloud billing accounts get-iam-policy BILLING_ACCOUNT_ID --format="value(bindings.role)"
@@ -325,7 +326,7 @@ $ gcloud billing budgets list --billing-account=BILLING_ACCOUNT_ID --filter="dis
 - **通知は届く。** 今回は作成から約7分。ただし公式には初回まで数時間かかることがある。閾値超過の瞬間ではなく現在の状態が1日に複数回送られ、配信は at-least-once
 - 通知には累積コストと予算額の両方が入る。超過分の計算にAPI呼び出しは要らない
 - **通知だけの予算は課金を止めない。** 上限1円に対し110.03円でもトピックは残る。測ったのは「消されない」ところまで
-- **Spend Cap Budget は Terraform では作れない。** gcloud・Budget API v1・provider のどれにも該当する引数が無い
+- **Spend Cap Budget は、確かめた範囲では Terraform から作れなかった。** gcloud 562.0.0・Budget API v1・provider 7.46.0 のどれにも該当する引数が無い。公開 API に出れば provider が追える
 - **予算の操作は監査ログで追えなかった。** `billingbudgets.googleapis.com` は監査ログ対応サービスの一覧に無く、少なくとも2026年9月の時点では追跡できると確認できない
 
 ## 参考資料
