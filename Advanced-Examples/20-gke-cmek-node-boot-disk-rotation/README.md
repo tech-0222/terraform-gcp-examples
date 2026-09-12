@@ -47,7 +47,9 @@ terraform apply
 
 ## 2回目以降の実行に注意
 
-**Cloud KMSのキーリングと鍵はGoogle Cloudで削除できない。** `terraform destroy`はstateから外すだけで、実体はプロジェクトに残る。同じ名前で再度applyすると409エラーになるので、次のどちらかを選ぶ。
+**`terraform destroy`はCloud KMSのキーリングと鍵を消さない。** stateから外すだけで、実体はプロジェクトに残る。同じ名前で再度applyすると409エラーになるので、次のどちらかを選ぶ。
+
+（[鍵と鍵バージョンの削除は2026-03-02、キーリングの削除は2026-08-24に一般提供されている](https://docs.cloud.google.com/kms/docs/release-notes)。消せないのではなく、Terraformが消さない。ここでは削除は試していない。）
 
 ```bash
 # A. 既存のものをimportして使う
@@ -59,7 +61,7 @@ terraform import google_kms_crypto_key.boot_disk \
 # B. 別名を使う（terraform.tfvars に kms_key_ring_name / kms_crypto_key_name を指定）
 ```
 
-**実際にはBを推奨する。** `terraform destroy`は鍵バージョンの破棄をスケジュールするため、importして再利用しようとしても鍵バージョンが`DESTROY_SCHEDULED`のままで暗号化に使えない（後片付けの節を参照）。
+**実際にはBを推奨する。** `terraform destroy`は鍵バージョンの破棄をスケジュールするため、importしてもその鍵バージョンは`DESTROY_SCHEDULED`のままで暗号化に使えない。ただし[破棄予定の鍵バージョンはその期間なら復元できる](https://docs.cloud.google.com/kms/docs/destroy-restore)ので、restoreしてenableすれば使える。手間を避けるならBが早い（後片付けの節を参照）。
 
 ## 検証環境
 
@@ -154,7 +156,7 @@ gke-tf-adv-gke-cmek-tf-adv-gke-cmek-n-dcf2a6c2-hlmr  2026-09-03T17:06:31.786-07:
 
 ### 6. 移行中の断: replicas=1では21秒止まる
 
-`kubectl drain`を実行しながら、Service名に対して毎秒1回HTTPリクエストを送った（`000`はcurlが接続できなかったことを示す）。
+`kubectl drain`を実行しながら、Service名に対して毎秒1回HTTPリクエストを送った。`000`は[curlがHTTPの応答コードを受け取らなかった](https://curl.se/libcurl/c/CURLINFO_RESPONSE_CODE.html)ことを示す。接続失敗に限らず、名前解決の失敗や応答が途中で切れた場合も同じ値になる。計測用Podは移行先（v2）に固定している（`k8s/03-curl-pinned-v2.yaml`）。固定しないと計測用Pod自体がdrainで退避される。
 
 ```console
 $ kubectl drain NODE --ignore-daemonsets --delete-emptydir-data --force --timeout=300s
@@ -191,11 +193,13 @@ nginx-cmek   1               1
      25 200
 ```
 
-完全断はなくなったが、drain直後の約6秒間で5回失敗した。退避されたPodはSIGTERMで即座に終了する一方、他ノードのkube-proxyがエンドポイントを外し終えるまで少し遅れる。その間、すでに落ちたPodにリクエストが振られる。
+完全断はなくなったが、30サンプル中5回失敗した。失敗は1・2・3・5・8番目で、最初と最後は7サンプル離れている。時刻を記録していないので継続時間は確定できない。
+
+退避されたPodには停止シグナルが送られる。[どのシグナルかはイメージの`STOPSIGNAL`次第](https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#termination-of-pods)で、nginxでは`TERM`が即時終了、`QUIT`が正常終了。一方、他ノードのkube-proxyがエンドポイントを外し終えるまでには遅れがある。すでに落ちたPodにリクエストが振られたという説明は筋が通るが、この計測では因果まで確かめていない。
 
 PDBは「同時に何個まで止めてよいか」を制御するもので、エンドポイント伝播の遅れは面倒を見ない。
 
-### 8. preStopを足すと断がなくなる
+### 8. preStopを足すと失敗が0になった
 
 `05-nginx-graceful.yaml`で`preStop: sleep 20`と`terminationGracePeriodSeconds: 40`を追加する。
 
@@ -205,13 +209,13 @@ PDBは「同時に何個まで止めてよいか」を制御するもので、�
      33 200
 ```
 
-**失敗0回。** コンテナは終了要求を受けてもすぐには止まらず、エンドポイントが外れ切るまで応答を返し続ける。
+33回すべて200だった。コンテナは終了要求を受けてもすぐには止まらず、エンドポイントが外れ切るまで応答を返し続ける。観測した範囲で失敗が無かった、というところまで。
 
 | 構成 | 結果 |
 |---|---|
 | replicas 1 | 21秒の完全断 |
-| replicas 2 + anti-affinity + PDB | 約6秒の窓で5回失敗 |
-| ＋ preStop sleep 20 | 失敗0回 |
+| replicas 2 + anti-affinity + PDB（ClusterIP） | 30回中5回失敗 |
+| ＋ preStop sleep 20（ClusterIP） | 33回中0回失敗 |
 
 ### 9. ノードプールを作り直さなくても新しい鍵バージョンになる
 
@@ -233,7 +237,7 @@ gke-tf-adv-gke-cmek-tf-adv-gke-cmek-n-dcf2a6c2-hlmr  2026-09-03T17:06:31.786-07:
 
 「ブートディスクのCMEKは既存ノードプールで変更できないので新しいノードプールを作る」というのは、**どの鍵を使うか**を変える話。鍵の**バージョン**を進めるだけなら、ノードが作り直されればよく、ノードプールを分ける必要はない。
 
-裏を返せば、自動アップグレード・自動修復・オートスケールでノードが入れ替わるたびに、鍵バージョンは個別に進む。クラスタ内で複数の鍵バージョンが混在するのが通常の状態になる。
+裏を返せば、ノードが入れ替わるたびにそのときのprimaryが使われる。**ローテーションを挟んだあとは、クラスタ内に複数の鍵バージョンが混ざりえる。** primaryが変わっていなければ、作り直しても同じバージョンのまま。
 
 ### 10. 異常系: 旧ノードが残っているまま旧鍵バージョンを無効化する
 
@@ -252,7 +256,9 @@ $ kubectl exec curl-client -- curl -s -o /dev/null -w "HTTP %{http_code}\n" http
 HTTP 200
 ```
 
-**稼働中は何も起きない。** ディスクはすでに復号された状態でマウントされているため、鍵を無効化しても読み書きは続く。
+**今回の構成では、稼働中は何も起きなかった。** ディスクの暗号化に使う鍵はすでに展開済みで、鍵を無効化しても読み書きは続く。保存データが平文になるわけではない。
+
+これは無条件ではない。VMには[鍵を失効させたときに自動停止する設定](https://docs.cloud.google.com/compute/docs/disks/customer-managed-encryption)（`key_revocation_action_type`）があり、`STOP`にすると失効から7時間以内に停止する。既定は`NONE`で、今回は指定していない。
 
 問題は再起動したときに出る。
 
@@ -266,7 +272,9 @@ projects/PROJECT_ID/locations/asia-northeast1/keyRings/tf-adv-gke-cmek-ring/cryp
 ... is not enabled, current state is: DISABLED.
 ```
 
-起動できない。**「無効化しても平気だった」ように見えるのは、たまたま誰も再起動していないだけ。** 次の自動アップグレードや再起動で顕在化する。
+起動できない。**「無効化しても平気だった」ように見えるのは、たまたま誰も停止・起動していないだけ。**
+
+ただしここで失敗したのは既存ディスクをそのまま起動する経路。自動アップグレードや自動修復はノードごと作り直すので、新しいディスクは当時のprimaryで暗号化される。同じ失敗になるとは限らない。
 
 ### 11. その後GKEが自動修復し、ノードは新しい鍵バージョンで作り直された
 
@@ -366,7 +374,7 @@ $ gcloud logging read 'protoPayload.serviceName="cloudkms.googleapis.com" AND pr
 （0件）
 ```
 
-データアクセス監査ログが既定で無効なため。「どのノードがいつ鍵を使ったか」を追跡したい場合は明示的に有効化する（課金対象）。
+データアクセス監査ログが既定で無効なため。この0件は、有効にしていないことの結果。`Encrypt`と`Decrypt`は[Cloud KMSの監査ログ対象](https://docs.cloud.google.com/kms/docs/audit-logging)に`DATA_READ`として載っている。「どのノードがいつ鍵を使ったか」を追跡したい場合は明示的に有効化する（課金対象）。
 
 ## 後片付け
 
@@ -375,7 +383,7 @@ $ terraform destroy
 Destroy complete! Resources: 27 destroyed.
 ```
 
-キーリングと鍵は削除できないので残る。ただし**鍵バージョンは破棄がスケジュールされる**（既定で24時間後）。
+`terraform destroy`はキーリングと鍵を消さないので残る。ただし**鍵バージョンは破棄がスケジュールされる**（既定で24時間後）。
 
 ```console
 $ gcloud kms keys list --keyring=tf-adv-gke-cmek-ring --location=asia-northeast1 \
@@ -384,7 +392,9 @@ NAME                       PURPOSE          PRIMARY_ID  PRIMARY_STATE
 tf-adv-gke-cmek-boot-disk  ENCRYPT_DECRYPT  2           DESTROY_SCHEDULED
 ```
 
-このため、同じ名前をimportして再利用しても鍵は使えない。再検証するなら`kms_key_ring_name` / `kms_crypto_key_name`に別名を指定する。課金は鍵バージョン単位でごくわずか。
+この状態のままimportしても鍵は使えない。[復元してenableすれば使える](https://docs.cloud.google.com/kms/docs/destroy-restore)が、再検証するなら`kms_key_ring_name` / `kms_crypto_key_name`に別名を指定するほうが早い。
+
+再利用できないのは**削除した鍵の名前**のほうで、残っている鍵のimportとは別の話。課金は鍵バージョン単位でごくわずか。
 
 ## 参考資料
 
