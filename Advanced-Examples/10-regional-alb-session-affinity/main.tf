@@ -91,7 +91,7 @@ resource "google_compute_region_health_check" "hc" {
   }
 }
 
-# :81 — LB issues GCLB cookie.
+# :81 — LB issues the GCILB cookie (GCLB is the global/classic name).
 # Ref: https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_region_backend_service
 resource "google_compute_region_backend_service" "bs_generated" {
   name                    = "tf-adv-elb10-bs-gclb"
