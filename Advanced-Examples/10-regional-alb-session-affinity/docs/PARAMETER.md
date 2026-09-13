@@ -65,6 +65,6 @@
 
 | Name | Description |
 | ---- | ----------- |
-| curl\_generated\_cookie | Port 81 GENERATED\_COOKIE. First response should Set-Cookie GCLB=... |
+| curl\_generated\_cookie | Port 81 GENERATED\_COOKIE. First response should Set-Cookie GCILB=... |
 | curl\_http\_cookie | Port 83 HTTP\_COOKIE named ROUTE. |
 | vip | Regional external Application Load Balancer VIP. |
