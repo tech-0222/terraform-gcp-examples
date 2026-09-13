@@ -76,7 +76,7 @@ resource "google_compute_network_endpoint" "ep" {
   for_each               = local.backends
   network_endpoint_group = google_compute_network_endpoint_group.neg.name
   zone                   = var.zone
-  instance               = google_compute_instance.be[each.key].self_link
+  instance               = google_compute_instance.be[each.key].name
   ip_address             = google_compute_address.be[each.key].address
   port                   = 8080
 }
