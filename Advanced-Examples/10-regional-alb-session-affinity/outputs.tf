@@ -4,7 +4,7 @@ output "vip" {
 }
 
 output "curl_generated_cookie" {
-  description = "Port 81 GENERATED_COOKIE. First response should Set-Cookie GCLB=..."
+  description = "Port 81 GENERATED_COOKIE. First response should Set-Cookie GCILB=..."
   value       = <<-EOT
     VIP=$(terraform output -raw vip)
     curl -si "http://$${VIP}:81/" | grep -i set-cookie

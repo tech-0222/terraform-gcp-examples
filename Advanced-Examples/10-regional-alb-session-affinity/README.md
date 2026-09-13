@@ -6,19 +6,42 @@
 
 | ポート | session_affinity | Cookie |
 |---|---|---|
-| :81 | `GENERATED_COOKIE` | LB が `GCLB=` を発行 |
-| :83 | `HTTP_COOKIE` + RING_HASH | アプリが `ROUTE=backend-a` または `backend-a2`（Path=/） |
+| :81 | `GENERATED_COOKIE` | LB が `GCILB=` を発行 |
+| :83 | `HTTP_COOKIE` + RING_HASH | アプリが `ROUTE=backend-a` または `backend-a2`（Path=/）。**LB も同名で上書きする** |
 
 ネットワークの正本は 08 の `docs/RESOURCE-PARAMETERS.md` です。
 
 ## 確認すること
 
-- `:81` 初回に `Set-Cookie` があり、Cookie 付き 5 回が同じ identity
+- `:81` 初回に `Set-Cookie: GCILB=` があり、Cookie 付き 5 回が同じ identity
 - `:83` 初回に `ROUTE=` があり、Cookie 付き 5 回が同じ identity
 - Cookie なしでは a / a2 が混ざることがある（参考）
 - destroy できる
 
-複数のフロントエンドが関与すると「常に同一」は保証されないことがあります。
+`GCILB` はリージョン外部・内部の Application Load Balancer の名前。グローバルとクラシックは `GCLB`。
+
+**`HTTP_COOKIE` は Cookie の値をハッシュするだけで、値を名前として読まない。** アプリ側で行き先を指定したことにはならない。
+
+対応はデプロイごとに変わる。2回の試行で観測した値（各10回）。
+
+| 送った値 | 1回目のデプロイ | 作り直した後 |
+|---|---|---|
+| `ROUTE=backend-a` | `backend-a2` | `backend-a2` |
+| `ROUTE=backend-a2` | `backend-a` | `backend-a2` |
+
+2回目では違う値が同じ先に落ちている。**違う文字列なら違うバックエンド、とは限らない。**
+
+`http_cookie.name` をアプリと同じ `ROUTE` にしているため、`Set-Cookie` が2つ返る。名前・ホスト・Path が同じなので、**あとに届いたほうだけが残る。**
+
+**どちらが残るかは固定ではない。** `curl -b -c` で持ち回ると、1回目はLBの値、2回目はアプリの値が残り、その後は値が動かなくなった（アプリの値が自分自身に対応する位置で止まる）。
+
+[セッションアフィニティは best-effort](https://docs.cloud.google.com/load-balancing/docs/https/request-distribution)で、健全なバックエンドの数が変わらないかぎり、という条件が付く。固定先を UNHEALTHY にすると同じ Cookie が生存側へ流れ、復帰すると元へ戻った（各20回）。
+
+**どのVMが応答したかはLBのログに出る。** `httpRequest.serverIp` にIPとポートが入る。`resource.labels.backend_name` は NEG 名なので、そこだけ見ると分からない。
+
+ただしログには送信 Cookie もアフィニティの判定理由も入らない。**分かるのは送信先までで、「Cookie が原因で固定された」ことではない。**
+
+メトリクス（`request_count` / `backend_request_count`）の `backend_name` も NEG 名で、今回引いた2指標にはVM単位のラベルが無かった。
 
 ## 作成される Google Cloud リソース
 
