@@ -127,7 +127,7 @@ kubectl wait --for=condition=ready pod/curlpod --timeout=90s
 kubectl exec curlpod -- curl -m 5 -v "http://$(terraform output -raw target_vm_ip)/"
 ```
 
-`Connection timed out`で失敗します。宛先VM側で`tcpdump`すると、Podからのパケットが一切届いていないことが確認できます。
+`Connection timed out`で失敗する。宛先VM側で`tcpdump`しても、Podからのパケットは拾えなかった。ただし掲載した出力は件数の要約で、観測も15秒間だけ。その外で届いていないことまでは言えない。
 
 ```bash
 gcloud compute ssh "$(terraform output -raw target_vm_name)" \
@@ -161,7 +161,7 @@ kubectl -n kube-system rollout status ds/ip-masq-agent --timeout=60s
 kubectl exec curlpod -- curl -m 5 -v "http://$(terraform output -raw target_vm_ip)/"
 ```
 
-`HTTP/1.1 200 OK`、本文は`hello from target-vm`が返れば成功です。宛先VM側の`tcpdump`では、送信元がPod IP（`172.16.x.x`）ではなくNode IP（GKE SubnetのIP）に変わっていることが確認できます。
+`HTTP/1.1 200 OK`、本文は`hello from target-vm`が返れば成功。宛先VM側の`tcpdump`では、送信元がPod IP（`172.16.x.x`）から GKE Subnet のIPに変わる。Node IP と考えられるが、`kubectl get nodes -o wide` の `INTERNAL-IP` とは突き合わせていない。
 
 ## 削除方法
 
