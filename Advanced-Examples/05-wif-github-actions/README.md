@@ -53,6 +53,15 @@ GitHub Actions から **JSON 鍵なし** で GCP の Service Account を借用�
 
 リポジトリ直下の `.github/workflows/wif-demo.yml` は本モジュール apply 後に手動実行する検証用 workflow です。
 
+**プロジェクト番号とIDはリポジトリ変数から読みます。** 実行前に Settings > Secrets and variables > Actions > Variables へ次を登録してください。値を workflow に直接書くと、公開リポジトリに検証環境の識別子が残ります。
+
+| 変数 | 値 |
+|---|---|
+| `GCP_PROJECT_NUMBER` | 12桁のプロジェクト番号 |
+| `GCP_PROJECT_ID` | apply したプロジェクトのID |
+
+未設定のまま実行すると、認証に入る前に変数名を挙げて止まります。
+
 ## 使用方法
 
 ```bash

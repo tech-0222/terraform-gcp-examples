@@ -200,7 +200,7 @@ terraform destroy
 
 ## 検証状況
 
-2026-08-12に`tech-0222-tf-examples`で実環境検証を実施しました。
+2026-08-12に`YOUR_PROJECT_ID`で実環境検証を実施しました。
 
 - `terraform init`、`terraform fmt -check`、`terraform validate`が成功
 - `terraform plan`で14リソースの作成、変更0、削除0を確認

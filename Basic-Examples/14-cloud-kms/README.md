@@ -114,4 +114,4 @@ terraform destroy
 
 ## 検証状況
 
-実GCP環境（`tech-0222-tf-examples`）で `fmt / init / validate / plan / apply` を実施し、CryptoKey を使った encrypt / decrypt に成功しました。`terraform destroy` も実施済みですが、KeyRing はGCP側の仕様により完全削除されない点に注意してください。
+実GCP環境（`YOUR_PROJECT_ID`）で `fmt / init / validate / plan / apply` を実施し、CryptoKey を使った encrypt / decrypt に成功しました。`terraform destroy` も実施済みですが、KeyRing はGCP側の仕様により完全削除されない点に注意してください。

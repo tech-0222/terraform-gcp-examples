@@ -122,4 +122,4 @@ terraform destroy
 
 ## 検証状況
 
-実GCP環境（`tech-0222-tf-examples`）で `fmt / init / validate / plan / apply` を実施し、Instance が `RUNNABLE`（`POSTGRES_15` / `db-f1-micro`）であることと Database `appdb` を確認しました。Public IP（`nc -zv` でTCP:5432）への接続がAuthorized Network未設定によりタイムアウトすることも確認済みです。`terraform destroy` まで完了しています。
+実GCP環境（`YOUR_PROJECT_ID`）で `fmt / init / validate / plan / apply` を実施し、Instance が `RUNNABLE`（`POSTGRES_15` / `db-f1-micro`）であることと Database `appdb` を確認しました。Public IP（`nc -zv` でTCP:5432）への接続がAuthorized Network未設定によりタイムアウトすることも確認済みです。`terraform destroy` まで完了しています。

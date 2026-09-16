@@ -1,3 +1,12 @@
+# Workload Identity Federation の動作確認用。05-wif-github-actions を apply
+# したあとに手動で実行する。
+#
+# プロジェクト番号とIDはリポジトリ変数から読む。値を直接書くと、公開
+# リポジトリに検証環境の識別子が残る。Settings > Secrets and variables >
+# Actions > Variables に次を登録する。
+#
+#   GCP_PROJECT_NUMBER   terraform output などで確認できる12桁の番号
+#   GCP_PROJECT_ID       apply したプロジェクトのID
 name: wif-demo
 
 on:
@@ -13,13 +22,27 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # 変数が無いまま走ると、認証エラーだけが出て原因が分かりにくい。
+      - name: Check the repository variables are set
+        env:
+          NUMBER: ${{ vars.GCP_PROJECT_NUMBER }}
+          PROJECT: ${{ vars.GCP_PROJECT_ID }}
+        run: |
+          missing=""
+          [ -n "$NUMBER" ] || missing="$missing GCP_PROJECT_NUMBER"
+          [ -n "$PROJECT" ] || missing="$missing GCP_PROJECT_ID"
+          if [ -n "$missing" ]; then
+            echo "::error::リポジトリ変数が未設定です:$missing"
+            exit 1
+          fi
+
       - id: auth
         uses: google-github-actions/auth@v2
         with:
-          workload_identity_provider: "projects/527031335407/locations/global/workloadIdentityPools/tf-adv-github-pool/providers/tf-adv-github-provider"
-          service_account: "tf-adv-github-actions@tech-0222-tf-examples.iam.gserviceaccount.com"
+          workload_identity_provider: "projects/${{ vars.GCP_PROJECT_NUMBER }}/locations/global/workloadIdentityPools/tf-adv-github-pool/providers/tf-adv-github-provider"
+          service_account: "tf-adv-github-actions@${{ vars.GCP_PROJECT_ID }}.iam.gserviceaccount.com"
 
       - uses: google-github-actions/setup-gcloud@v2
 
       - name: Read demo object
-        run: gcloud storage cat "gs://tf-adv-wif-demo-tech-0222-tf-examples/hello-wif.txt"
+        run: gcloud storage cat "gs://tf-adv-wif-demo-${{ vars.GCP_PROJECT_ID }}/hello-wif.txt"

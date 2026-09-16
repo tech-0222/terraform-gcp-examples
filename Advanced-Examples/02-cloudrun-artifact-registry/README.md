@@ -62,7 +62,7 @@ cp terraform.tfvars.example terraform.tfvars
 ```
 
 ```hcl
-project_id     = "tech-0222-tf-examples"
+project_id     = "YOUR_PROJECT_ID"
 region         = "asia-northeast1"
 invoker_member = "user:you@example.com"
 ```

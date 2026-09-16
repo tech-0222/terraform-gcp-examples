@@ -155,7 +155,7 @@ terraform destroy
 
 ## 検証状況
 
-実GCP環境（`tech-0222-tf-examples`）で `fmt / init / validate / plan / apply` を実施し、以下を確認しました。
+実GCP環境（`YOUR_PROJECT_ID`）で `fmt / init / validate / plan / apply` を実施し、以下を確認しました。
 
 - Private Zoneに紐づいたVPC内のVMから`getent hosts`で名前解決できること
 - 紐づかない別VPCのVMからは解決できないこと（`getent`終了コード2）
