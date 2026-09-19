@@ -173,6 +173,10 @@ bash scripts/audit_iac_security.sh --high   # 要確認のものだけ
 | `GCP-0017` | Cloud SQL インスタンスが公開されている |
 | `GCP-0061` | GKE の master authorized networks が未設定 |
 
+**この3種は2026-09-19に確認し、現状維持と判断した。** 理由は各サンプルの README の「注意点 / 費用」に、Trivyのルール番号つきで書いてある。`GCP-0017` は `authorized_networks` が無いため実際には接続できず（`13` では `nc` で確認済み）、`GCP-0015` は平文で流れる経路が無い。`GCP-0061` だけは本当に公開エンドポイントなので、その旨を README に明記した。
+
+**`.trivyignore` で消さない。** 消すと判断した記録が残らず、あとから増えた同種の指摘も一緒に見えなくなる。
+
 Secret は Gitleaks の担当で、Trivy の Secret 検査は使わない。**Gitleaks は「鍵を書いていないか」、Trivy は「設定が危険でないか」**と役割を分ける。
 
 ### TFLint
