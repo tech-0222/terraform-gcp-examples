@@ -10,8 +10,10 @@ name: Check public text
 # edited を含めるのが要点。あとから本文やコメントを書き換えて混入する
 # 経路を塞ぐ。
 on:
+  # synchronize を入れないと、PRに push しても走らない。本文の検査だけなら
+  # 不要に見えるが、同じワークフローで追跡ファイル全件も見るので要る。
   pull_request:
-    types: [opened, edited, reopened]
+    types: [opened, edited, reopened, synchronize]
   issues:
     types: [opened, edited]
   # PR の会話コメントと Issue のコメントは、どちらもこのイベントで届く。
