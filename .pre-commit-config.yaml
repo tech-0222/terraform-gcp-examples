@@ -17,6 +17,14 @@ repos:
         pass_filenames: false
         stages: [pre-commit]
 
+      # 追跡下の .tf だけを見る。gitignore した各自の tfvars では落ちない。
+      - id: terraform-lint
+        name: Check Terraform formatting and lint
+        entry: bash scripts/lint_terraform.sh all
+        language: system
+        pass_filenames: false
+        stages: [pre-commit]
+
       - id: gitleaks-pre-push
         name: Detect secrets in commits to push
         entry: bash scripts/security/secret-scan.sh push

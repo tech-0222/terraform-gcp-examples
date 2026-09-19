@@ -22,3 +22,39 @@ jobs:
 
       - name: Lint shell scripts and workflows
         run: bash scripts/lint_sources.sh all
+
+  # 追跡下の .tf だけを見る。導入時点で292ファイルすべて整形済み（実測）。
+  terraform:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.14.3
+          terraform_wrapper: false
+
+      - uses: terraform-linters/setup-tflint@v6
+        with:
+          tflint_version: v0.64.0
+
+      - name: Install the TFLint plugins
+        run: tflint --init
+
+      - name: Check Terraform formatting and lint
+        run: bash scripts/lint_terraform.sh all
+
+  # IaC の設定ミス。**助言で、落とさない。** 導入時点で959件あり、その大半
+  # はサンプルの趣旨（最小構成）そのものだった。0 にすることは目的ではなく、
+  # 増えたときに気づけることが目的。
+  iac-security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: aquasecurity/setup-trivy@v0.3.1
+        with:
+          version: v0.74.0
+
+      - name: Audit IaC security settings
+        run: bash scripts/audit_iac_security.sh | tee -a "$GITHUB_STEP_SUMMARY"
