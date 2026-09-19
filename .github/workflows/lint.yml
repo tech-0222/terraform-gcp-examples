@@ -1,0 +1,24 @@
+name: Lint
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  # シェルとワークフローの静的検査。導入時点でどちらも0件（実測）なので
+  # 落とす対象にしている。既存は落ちず、これから書くものだけが落ちる。
+  #
+  # 検査を実行できないときは終了コード2で止まる。「何も無い」と
+  # 「調べられなかった」を同じ値で返さないため。
+  sources:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Lint shell scripts and workflows
+        run: bash scripts/lint_sources.sh all
