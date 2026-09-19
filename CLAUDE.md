@@ -120,6 +120,19 @@ terraform destroy
 - **`git add -A` や `git add .` を使わない。** ファイルを個別に指定する
 - コミットメッセージにセッションURL（`Claude-Session:` トレーラー等）を含めない。パブリックリポジトリに残る
 
+### Secret検査
+
+commitまたはpushの前には必ず `secret-scan` Skillを実行する。
+Gitleaksが失敗した状態ではcommit/pushしない。`--no-verify` や
+`SKIP=gitleaks` を自己判断で使わない。初回は次でhookを設定する。
+
+```bash
+bash scripts/security/install-hooks.sh
+```
+
+GitleaksはAPIキー・トークン・パスワード・秘密鍵を検出する。
+Project ID・メール・IPは別の確認対象なので、Gitleaksの成功だけで安全とは判断しない。
+
 このリポジトリにPR用のCIはない（`.github/workflows/wif-demo.yml` は手動実行のデモ）。マージ前の確認は自分で行う。
 
 ## 変更しないもの

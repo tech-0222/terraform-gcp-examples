@@ -1,0 +1,17 @@
+minimum_pre_commit_version: "3.2.0"
+repos:
+  - repo: local
+    hooks:
+      - id: gitleaks-staged
+        name: Detect secrets in staged changes
+        entry: bash scripts/security/secret-scan.sh staged
+        language: system
+        pass_filenames: false
+        stages: [pre-commit]
+
+      - id: gitleaks-pre-push
+        name: Detect secrets in commits to push
+        entry: bash scripts/security/secret-scan.sh push
+        language: system
+        pass_filenames: false
+        stages: [pre-push]
