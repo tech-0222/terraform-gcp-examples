@@ -133,6 +133,16 @@ bash scripts/security/install-hooks.sh
 GitleaksはAPIキー・トークン・パスワード・秘密鍵を検出する。
 Project ID・メール・IPは別の確認対象なので、Gitleaksの成功だけで安全とは判断しない。
 
+### Terraform の書式
+
+```bash
+bash scripts/lint_terraform.sh
+```
+
+**追跡下の `.tf` だけを見る。** `terraform fmt -recursive` は gitignore した各自の `terraform.tfvars` まで対象にするため、そのままでは他人の手元の整列で落ちる。導入時点で追跡下292ファイルはすべて整形済みだったので、落とす対象にしている。
+
+**`terraform fmt` は `-check` を付けないとファイルを書き換える。** `-diff` だけでは確認にならない。
+
 ### シェルとワークフローの静的検査
 
 `.sh` と `.github/workflows/` を変更したら ShellCheck と actionlint をかける。**導入時点でどちらも0件だったので、落とす対象にしている。**

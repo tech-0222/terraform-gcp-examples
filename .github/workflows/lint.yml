@@ -22,3 +22,17 @@ jobs:
 
       - name: Lint shell scripts and workflows
         run: bash scripts/lint_sources.sh all
+
+  # 追跡下の .tf だけを見る。導入時点で292ファイルすべて整形済み（実測）。
+  terraform:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.14.3
+          terraform_wrapper: false
+
+      - name: Check Terraform formatting
+        run: bash scripts/lint_terraform.sh
