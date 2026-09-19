@@ -52,7 +52,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      - uses: aquasecurity/setup-trivy@v0.2.3
+      - uses: aquasecurity/setup-trivy@v0.3.1
         with:
           version: v0.74.0
 
