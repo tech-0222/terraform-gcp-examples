@@ -29,6 +29,27 @@ permissions:
   contents: read
 
 jobs:
+  # **CIのログを濾すのではなく、ログの元を断つ。**
+  #
+  # 公開リポジトリでは Actions のログもジョブサマリも誰でも読める。すべての
+  # `run:` の出力を検査するのは現実的でないので、出力の元になる入力のほうを
+  # 固定する。入力は4つしかない。
+  #
+  #   リポジトリの中身        ← このジョブ
+  #   リポジトリシークレット  現在0件。あれば GitHub が自動でマスクする
+  #   PR・Issue・コメント     下の scan ジョブ
+  #   コミットメッセージ      commit-msg フック
+  #
+  # 導入時点で追跡ファイル618件すべてが通った。これから入るものだけが落ちる。
+  repository:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch'
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Scan every tracked file
+        run: python3 scripts/check_public_text.py --repo
+
   scan:
     runs-on: ubuntu-latest
     steps:

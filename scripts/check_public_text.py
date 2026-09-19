@@ -51,8 +51,13 @@ RULES: tuple[tuple[str, re.Pattern[str]], ...] = (
      re.compile(r"(?<![A-Za-z0-9-])tech-0222-tf-examples(?![A-Za-z0-9-])")),
     ("GCP Project Number",
      re.compile(r"(?<!\d)527031335407(?!\d)")),
+    # GCP が払い出すサービスアカウントは除く。CLAUDE.md が「GCPが払い出した
+    # リソースのIP・名前」を対象外としているのと同じ理由で、書き手を特定
+    # しない。実測では6ファイルがこれに当たり、すべて PROJECT_NUMBER は
+    # プレースホルダー化済みだった。
     ("メールアドレス",
-     re.compile(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}")),
+     re.compile(r"[A-Za-z0-9._%+-]+@(?!.*\.gserviceaccount\.com)"
+                r"(?!system\.gserviceaccount\.com)[A-Za-z0-9.-]+\.[A-Za-z]{2,}")),
     ("秘密鍵",
      re.compile(r"-----BEGIN [A-Z ]*PRIVATE KEY-----")),
 )
@@ -60,7 +65,10 @@ RULES: tuple[tuple[str, re.Pattern[str]], ...] = (
 # 置き換え済みの表記と、署名として認めている宛先は落とさない。
 ALLOWED = re.compile(
     r"YOUR_PROJECT_ID|YOUR_PROJECT_NUMBER|noreply@anthropic\.com|"
-    r"example\.com|user:USER@EXAMPLE\.COM",
+    r"example\.com|user:USER@EXAMPLE\.COM|"
+    # 監査ログに出る Google 側のシステム実行者。`@google.com` 全体は
+    # 通さない（実在の個人を見逃すため）、この1語だけを除く。
+    r"system@google\.com",
     re.IGNORECASE)
 
 
@@ -76,12 +84,69 @@ def findings(text: str) -> list[str]:
     return out
 
 
+# この検査自身は、検出するパターンを書いているので必ず引っかかる。
+# 例外はここに明示する。増やすときは、なぜ要らないのかを書く。
+SELF = ("scripts/check_public_text.py", "scripts/tests/test_public_text.py",
+        "scripts/check_commit_message.py", "scripts/tests/test_commit_message.py")
+
+
+def scan_repository() -> int:
+    """Check what CI actually reads: every tracked file.
+
+    **CIのログを濾すのではなく、ログの元を断つ。** リポジトリの中身が
+    綺麗で、リポジトリシークレットが無く、PR・Issue・コミットメッセージ
+    を検査しているなら、公開ログに出る元が残らない。ここはその前提の
+    うち一番大きいものを固定する。
+    """
+    import subprocess
+
+    done = subprocess.run(["git", "ls-files"], capture_output=True, text=True)
+    if done.returncode != 0:
+        print("追跡ファイルを列挙できません", file=sys.stderr)
+        return 2
+
+    skipped = 0
+    failed = 0
+    scanned = 0
+    for name in done.stdout.splitlines():
+        if not name or name in SELF:
+            skipped += 1
+            continue
+        path = Path(name)
+        if path.suffix.lower() in (".svg", ".png", ".jpg", ".jpeg", ".ico", ".woff2"):
+            skipped += 1
+            continue
+        try:
+            text = path.read_text(encoding="utf-8")
+        except (OSError, UnicodeDecodeError):
+            skipped += 1
+            continue
+        scanned += 1
+        hits = findings(text)
+        if hits:
+            failed += 1
+            print(f"::error::{name}")
+            print("\n".join(hits))
+
+    if failed:
+        print(f"\n{failed} ファイルに公開してはいけない情報があります。"
+              "**値そのものはここに出しません。**")
+        return 1
+    print(f"  OK  追跡ファイル {scanned} 件（除外 {skipped} 件）")
+    return 0
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("path", nargs="?", help="検査するファイル")
     parser.add_argument("--stdin", action="store_true", help="標準入力から読む")
     parser.add_argument("--label", default="テキスト", help="報告に出す対象の名前")
+    parser.add_argument("--repo", action="store_true",
+                        help="追跡ファイル全件を見る（CIの入力そのものを確かめる）")
     args = parser.parse_args()
+
+    if args.repo:
+        return scan_repository()
 
     if args.stdin:
         text = sys.stdin.read()
