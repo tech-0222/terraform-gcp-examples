@@ -133,6 +133,48 @@ bash scripts/security/install-hooks.sh
 GitleaksはAPIキー・トークン・パスワード・秘密鍵を検出する。
 Project ID・メール・IPは別の確認対象なので、Gitleaksの成功だけで安全とは判断しない。
 
+### Terraform の書式
+
+```bash
+bash scripts/lint_terraform.sh
+```
+
+**追跡下の `.tf` だけを見る。** `terraform fmt -recursive` は gitignore した各自の `terraform.tfvars` まで対象にするため、そのままでは他人の手元の整列で落ちる。導入時点で追跡下292ファイルはすべて整形済みだったので、落とす対象にしている。
+
+**`terraform fmt` は `-check` を付けないとファイルを書き換える。** `-diff` だけでは確認にならない。
+
+### IaC のセキュリティ設定（助言）
+
+```bash
+bash scripts/audit_iac_security.sh          # 件数と内訳
+bash scripts/audit_iac_security.sh --high   # 要確認のものだけ
+```
+
+**落とさない。** 導入時点で959件（HIGH 146 / MEDIUM 397 / LOW 416）あり、大半はサンプルの趣旨そのものだった。KubernetesのデモマニフェストのKSV-*が258件、全サブネットのVPCフローログ未有効が102件など。ここをゲートにすると既存サンプルに触れなくなるだけで、質は上がらない。
+
+**0 にすることは目的ではない。増えたときに気づけることが目的。**
+
+ただし全部が意図ではない。次の3つは趣旨では説明できないので、スクリプトが「要確認」として分けて出す。
+
+| ルール | 内容 |
+|---|---|
+| `GCP-0015` | Cloud SQL への SSL 接続が強制されていない |
+| `GCP-0017` | Cloud SQL インスタンスが公開されている |
+| `GCP-0061` | GKE の master authorized networks が未設定 |
+
+Secret は Gitleaks の担当で、Trivy の Secret 検査は使わない。**Gitleaks は「鍵を書いていないか」、Trivy は「設定が危険でないか」**と役割を分ける。
+
+### TFLint
+
+`.tflint.hcl` で terraform ruleset（同梱）と google ruleset を有効にしている。**導入時点で0件。** 0件が「検査していない」ではないことは、わざと違反を置いて確認してある。
+
+```bash
+tflint --init                          # 初回。プラグインを取得する
+bash scripts/lint_terraform.sh all     # fmt と tflint
+```
+
+プラグインが入っていないと、ルールが少ないまま静かに0件で通る。スクリプトはその状態を終了コード2で止める。
+
 ### シェルとワークフローの静的検査
 
 `.sh` と `.github/workflows/` を変更したら ShellCheck と actionlint をかける。**導入時点でどちらも0件だったので、落とす対象にしている。**
