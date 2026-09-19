@@ -143,6 +143,17 @@ bash scripts/lint_terraform.sh
 
 **`terraform fmt` は `-check` を付けないとファイルを書き換える。** `-diff` だけでは確認にならない。
 
+### TFLint
+
+`.tflint.hcl` で terraform ruleset（同梱）と google ruleset を有効にしている。**導入時点で0件。** 0件が「検査していない」ではないことは、わざと違反を置いて確認してある。
+
+```bash
+tflint --init                          # 初回。プラグインを取得する
+bash scripts/lint_terraform.sh all     # fmt と tflint
+```
+
+プラグインが入っていないと、ルールが少ないまま静かに0件で通る。スクリプトはその状態を終了コード2で止める。
+
 ### シェルとワークフローの静的検査
 
 `.sh` と `.github/workflows/` を変更したら ShellCheck と actionlint をかける。**導入時点でどちらも0件だったので、落とす対象にしている。**

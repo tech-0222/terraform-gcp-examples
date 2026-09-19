@@ -34,5 +34,12 @@ jobs:
           terraform_version: 1.14.3
           terraform_wrapper: false
 
-      - name: Check Terraform formatting
-        run: bash scripts/lint_terraform.sh
+      - uses: terraform-linters/setup-tflint@v6
+        with:
+          tflint_version: v0.64.0
+
+      - name: Install the TFLint plugins
+        run: tflint --init
+
+      - name: Check Terraform formatting and lint
+        run: bash scripts/lint_terraform.sh all
