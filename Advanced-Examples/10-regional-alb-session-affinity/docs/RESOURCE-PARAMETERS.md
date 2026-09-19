@@ -11,7 +11,7 @@
 
 | 項目 | 本サンプル | Terraform / 公式 |
 |---|---|---|
-| :81 | `GENERATED_COOKIE` | LB が Cookie を発行。TTL `affinity_cookie_ttl_sec`（既定 3600） |
+| :81 | `GENERATED_COOKIE` | LB が Cookie を発行。TTL `affinity_cookie_ttl_sec`（本サンプルの変数既定値は3600。`affinityCookieTtlSec`を未指定にした場合の製品既定値は0） |
 | :83 | `HTTP_COOKIE` | `consistent_hash.http_cookie.name = ROUTE`、`path = /`。`locality_lb_policy = RING_HASH` |
 | 未指定時 | NONE | 08 は未指定 |
 
