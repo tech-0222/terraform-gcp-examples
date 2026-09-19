@@ -19,6 +19,11 @@
 #   GCP-0017  Cloud SQL インスタンスが公開されている
 #   GCP-0061  GKE の master authorized networks が未設定
 #
+# この3種は2026-09-19に内容を確認し、**現状維持と判断した。** 理由は各サンプル
+# の README に書いてある。GCP-0017 は authorized_networks が無いため実際には
+# 接続できず（13 では nc で確認済み）、GCP-0015 は平文で流れる経路が無い。
+# GCP-0061 だけは本当に公開エンドポイントなので、その旨を README に明記した。
+#
 # だから件数を出して推移を見る。**増えたときに気づける**ことが目的で、
 # 0 にすることは目的ではない。
 #
@@ -84,6 +89,7 @@ WATCH = {"GCP-0015", "GCP-0017", "GCP-0061"}
 watched = [row for row in rows if row[1] in WATCH]
 if watched:
     print("\n  要確認（サンプルの趣旨では説明できないもの）")
+    print("    いずれも判断済み。理由は各サンプルの README の「注意点 / 費用」にある。")
     for sev, rule, title, target in sorted(watched):
         print(f"    [{sev}] {rule}  {target}")
         print(f"           {title}")
