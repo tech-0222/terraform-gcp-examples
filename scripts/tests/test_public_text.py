@@ -75,3 +75,39 @@ def test_unreadable_input_is_an_execution_failure(tmp_path):
     done = subprocess.run([sys.executable, str(SCRIPT), str(tmp_path / 'nope')],
                           capture_output=True, text=True)
     assert done.returncode == 2
+
+
+def test_every_allowlist_entry_has_a_reason():
+    """除外リストは、放っておくと検査を黙らせる道具になる。
+
+    値と理由を対で持たせ、理由の無い項目を置けないようにする。増やす
+    ときに「なぜ公開されて構わないか」を書かせるのが目的。
+    """
+    import importlib.util
+    spec = importlib.util.spec_from_file_location('c', SCRIPT)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+
+    assert mod.ALLOWED_VALUES, '除外リストが空'
+    for value, reason in mod.ALLOWED_VALUES.items():
+        assert reason.strip(), f'理由が無い: {value}'
+        assert len(reason) >= 10, f'理由が短すぎる: {value}'
+
+
+def test_the_allowlist_judges_the_match_not_the_line():
+    """行から除外語を削る方式にしない。
+
+    一度それで書いたところ、サービスアカウントの末尾だけが削られ、
+    残りが再びメールとして一致した。検出が2件から3件に増えた。
+    """
+    # 末尾を削ると ...@container-engine-robot.iam が残って再一致する形。
+    code, out = run("実行者: service-123@container-engine-robot.iam.gserviceaccount.com\n")
+    assert code == 0, out
+
+
+def test_a_real_looking_address_still_fails_next_to_an_allowed_one():
+    """除外が行全体に効いてしまうと、同じ行の本物を見逃す。"""
+    code, out = run("連絡先 someone@personal.example.org と "
+                    "service-1@x.gserviceaccount.com\n")
+    assert code == 1
+    assert 'メールアドレス' in out

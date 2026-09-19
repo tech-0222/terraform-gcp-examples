@@ -56,31 +56,69 @@ RULES: tuple[tuple[str, re.Pattern[str]], ...] = (
     # しない。実測では6ファイルがこれに当たり、すべて PROJECT_NUMBER は
     # プレースホルダー化済みだった。
     ("メールアドレス",
-     re.compile(r"[A-Za-z0-9._%+-]+@(?!.*\.gserviceaccount\.com)"
-                r"(?!system\.gserviceaccount\.com)[A-Za-z0-9.-]+\.[A-Za-z]{2,}")),
+     re.compile(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}")),
     ("秘密鍵",
      re.compile(r"-----BEGIN [A-Z ]*PRIVATE KEY-----")),
 )
 
-# 置き換え済みの表記と、署名として認めている宛先は落とさない。
-ALLOWED = re.compile(
-    r"YOUR_PROJECT_ID|YOUR_PROJECT_NUMBER|noreply@anthropic\.com|"
-    r"example\.com|user:USER@EXAMPLE\.COM|"
-    # 監査ログに出る Google 側のシステム実行者。`@google.com` 全体は
-    # 通さない（実在の個人を見逃すため）、この1語だけを除く。
-    r"system@google\.com",
-    re.IGNORECASE)
+# 落とさないもの。**理由を必ず書く。**
+#
+# 除外リストは、放っておくと検査を黙らせる道具になる。だから値と理由を
+# 対にして持ち、理由の無い項目を置けないようにしている（テストで固定）。
+# 増やすときは「なぜ公開されて構わないか」を1行で言えるかを先に考える。
+#
+# 2種類ある。構造的に安全なもの（ドメインの性質で決まる）と、個別に
+# 判断したもの。後者は増えるほど検査が弱くなるので、慎重に足す。
+ALLOWED_VALUES: dict[str, str] = {
+    # --- 構造的に安全 ---
+    "YOUR_PROJECT_ID": "置き換え済みのプレースホルダー",
+    "YOUR_PROJECT_NUMBER": "置き換え済みのプレースホルダー",
+    "example.com": "RFC 2606 の予約ドメイン。実在しない",
+    "USER@EXAMPLE.COM": "規約が示す置き換え後の表記",
+    "noreply@anthropic.com": "コミットの署名に使う宛先。個人を指さない",
+    ".gserviceaccount.com":
+        "GCP が払い出すサービスアカウント。CLAUDE.md が「GCPが払い出した"
+        "リソースの名前」を対象外としているのと同じ理由で、書き手を特定しない",
+    "system@google.com":
+        "監査ログに出る Google 側のシステム実行者。`@google.com` 全体は"
+        "通さない（実在の個人を見逃すため）、この1語だけを除く",
+    "users.noreply.github.com":
+        "GitHub が配る返信不可のアドレス。配送されず、記事では伏せ字と"
+        "組み合わせた例示にしか出てこない",
+
+    "XXXXX@github.com":
+        "記事中の伏せ字済みの例示。ユーザー名を XXXXX に置き換えてある",
+
+    # --- 個別に判断したもの ---
+    "info@inaccel.com":
+        "minikube addons list の実出力に含まれる第三者メンテナの公開連絡先。"
+        "伏せると『実行結果は実際の出力を使う』に反する",
+}
+
+ALLOWED = re.compile("|".join(re.escape(v) for v in ALLOWED_VALUES), re.IGNORECASE)
+
+
+def allowed(hit: str) -> bool:
+    """Is this specific match one of the values we decided is safe?
+
+    **行から除外語を消す方式にしてはいけない。** 一度それで書いたところ、
+    `service-X@container-engine-robot.iam.gserviceaccount.com` から末尾だけ
+    削られ、残った `...@container-engine-robot.iam` が再びメールとして
+    一致した。判定するのは一致した箇所そのもの。
+    """
+    return bool(ALLOWED.search(hit))
 
 
 def findings(text: str) -> list[str]:
     """What kinds of secret-ish things appear, and on which lines."""
     out: list[str] = []
     for number, line in enumerate(text.splitlines(), start=1):
-        if ALLOWED.search(line):
-            line = ALLOWED.sub("", line)
         for label, pattern in RULES:
-            if pattern.search(line):
+            for hit in pattern.finditer(line):
+                if allowed(hit.group(0)):
+                    continue
                 out.append(f"  {number}行目: {label}")
+                break
     return out
 
 
@@ -90,7 +128,7 @@ SELF = ("scripts/check_public_text.py", "scripts/tests/test_public_text.py",
         "scripts/check_commit_message.py", "scripts/tests/test_commit_message.py")
 
 
-def scan_repository() -> int:
+def scan_repository(under: str = "") -> int:
     """Check what CI actually reads: every tracked file.
 
     **CIのログを濾すのではなく、ログの元を断つ。** リポジトリの中身が
@@ -109,6 +147,8 @@ def scan_repository() -> int:
     failed = 0
     scanned = 0
     for name in done.stdout.splitlines():
+        if under and not name.startswith(under):
+            continue
         if not name or name in SELF:
             skipped += 1
             continue
@@ -132,7 +172,8 @@ def scan_repository() -> int:
         print(f"\n{failed} ファイルに公開してはいけない情報があります。"
               "**値そのものはここに出しません。**")
         return 1
-    print(f"  OK  追跡ファイル {scanned} 件（除外 {skipped} 件）")
+    where = f"{under} 配下の" if under else ""
+    print(f"  OK  {where}追跡ファイル {scanned} 件（除外 {skipped} 件）")
     return 0
 
 
@@ -142,11 +183,13 @@ def main() -> int:
     parser.add_argument("--stdin", action="store_true", help="標準入力から読む")
     parser.add_argument("--label", default="テキスト", help="報告に出す対象の名前")
     parser.add_argument("--repo", action="store_true",
-                        help="追跡ファイル全件を見る（CIの入力そのものを確かめる）")
+                        help="追跡ファイルを見る（CIの入力そのものを確かめる）")
+    parser.add_argument("--under", default="",
+                        help="走査を この接頭辞の配下に限る（例: content）")
     args = parser.parse_args()
 
     if args.repo:
-        return scan_repository()
+        return scan_repository(args.under)
 
     if args.stdin:
         text = sys.stdin.read()
