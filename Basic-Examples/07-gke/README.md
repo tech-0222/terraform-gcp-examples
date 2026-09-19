@@ -116,4 +116,5 @@ terraform destroy
 - Spot ノードは回収される可能性があります（学習・短時間検証向け）
 - Autopilot ではなく Standard + Spot 1ノードでコストを抑えています
 - 本サンプルは公開制御プレーン（private endpoint なし）の最小構成です
+- コントロールプレーンは公開エンドポイントで、`master_authorized_networks_config` を設定していません（Trivy `GCP-0061`）。検証のたびに接続元IPを許可する手数を避けるため意図的にそうしています。**エンドポイントは任意のIPから到達できます**（認証は必要）。本番では接続元を限定するか private cluster にしてください
 - Cloud NAT / Ingress / Workload アプリは含みません
