@@ -10,6 +10,16 @@ repos:
         stages: [pre-commit]
 
       # 導入時点で0件（実測）。既存は落ちず、これから書くものだけが落ちる。
+      # コミットメッセージにセッションURLが入るのを止める。2026-09-19 に
+      # ツール側の指示を機械的に適用して3コミット分が公開履歴に入った。
+      # 変更内容にはGitleaks、PR本文には別の検査があるのに、ここだけ
+      # 無検査だった。
+      - id: commit-message
+        name: Check the commit message for session URLs
+        entry: python3 scripts/check_commit_message.py
+        language: system
+        stages: [commit-msg]
+
       - id: lint-sources
         name: Lint shell scripts and GitHub Actions
         entry: bash scripts/lint_sources.sh all

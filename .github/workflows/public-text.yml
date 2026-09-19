@@ -1,0 +1,94 @@
+name: Check public text
+
+# PR や Issue の本文とコメントは GitHub が公開する。コードは Gitleaks、
+# コミットメッセージは commit-msg フックで見ているのに、ここだけ無検査
+# だった。
+#
+# **ローカルのフックでは止められない。** `gh pr create` はフックを通らず、
+# Web UI からも書ける。だから経路によらず必ず通る CI で落とす。
+#
+# edited を含めるのが要点。あとから本文やコメントを書き換えて混入する
+# 経路を塞ぐ。
+on:
+  # synchronize を入れないと、PRに push しても走らない。本文の検査だけなら
+  # 不要に見えるが、同じワークフローで追跡ファイル全件も見るので要る。
+  pull_request:
+    types: [opened, edited, reopened, synchronize]
+  issues:
+    types: [opened, edited]
+  # PR の会話コメントと Issue のコメントは、どちらもこのイベントで届く。
+  issue_comment:
+    types: [created, edited]
+  # コード行に付けるインラインのレビューコメント。
+  pull_request_review_comment:
+    types: [created, edited]
+  # レビュー自体に添える本文。
+  pull_request_review:
+    types: [submitted, edited]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  # **CIのログを濾すのではなく、ログの元を断つ。**
+  #
+  # 公開リポジトリでは Actions のログもジョブサマリも誰でも読める。すべての
+  # `run:` の出力を検査するのは現実的でないので、出力の元になる入力のほうを
+  # 固定する。入力は4つしかない。
+  #
+  #   リポジトリの中身        ← このジョブ
+  #   リポジトリシークレット  現在0件。あれば GitHub が自動でマスクする
+  #   PR・Issue・コメント     下の scan ジョブ
+  #   コミットメッセージ      commit-msg フック
+  #
+  # 導入時点で追跡ファイル618件すべてが通った。これから入るものだけが落ちる。
+  repository:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch'
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Scan every tracked file
+        run: python3 scripts/check_public_text.py --repo
+
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      # 本文は信頼できない入力。`${{ }}` でシェルに直接展開すると
+      # コマンド注入になる。環境変数で渡して、シェルには触らせない。
+      - name: Scan the pull request body
+        if: github.event_name == 'pull_request'
+        env:
+          TITLE: ${{ github.event.pull_request.title }}
+          BODY: ${{ github.event.pull_request.body }}
+        run: |
+          printf '%s\n%s\n' "$TITLE" "$BODY" \
+            | python3 scripts/check_public_text.py --stdin --label "PR本文とタイトル"
+
+      - name: Scan the issue body
+        if: github.event_name == 'issues'
+        env:
+          TITLE: ${{ github.event.issue.title }}
+          BODY: ${{ github.event.issue.body }}
+        run: |
+          printf '%s\n%s\n' "$TITLE" "$BODY" \
+            | python3 scripts/check_public_text.py --stdin --label "Issue本文とタイトル"
+
+      - name: Scan the comment
+        if: github.event_name == 'issue_comment' || github.event_name == 'pull_request_review_comment'
+        env:
+          BODY: ${{ github.event.comment.body }}
+        run: |
+          printf '%s\n' "$BODY" \
+            | python3 scripts/check_public_text.py --stdin --label "コメント"
+
+      - name: Scan the review body
+        if: github.event_name == 'pull_request_review'
+        env:
+          BODY: ${{ github.event.review.body }}
+        run: |
+          printf '%s\n' "$BODY" \
+            | python3 scripts/check_public_text.py --stdin --label "レビュー本文"
