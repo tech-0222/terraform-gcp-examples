@@ -40,6 +40,17 @@ READMEに載せる実行結果は、実際に `terraform apply` 等を実行し�
 
 **0件を「存在しない」と書く前に、名前と綴りを疑う。** grep のパターンが違っただけ、というのが実際にあった。
 
+## Skill（作業の型）
+
+| Skill | 起動 | 用途 |
+| --- | --- | --- |
+| `terraform-verify` | 自動／`/terraform-verify` | 変更の検証。書式・TFLint・シェル・ワークフロー・Secret・IaC助言・validate |
+| `secret-scan` | commit・push前に自動 | Gitleaks による Secret 検査 |
+
+`terraform-verify` は何度実行しても安全なので、必要と判断したときに自発的に実行してよい（手順5の `terraform init` だけはプロバイダを取得する）。対になるブログ側は `hugo-blog` の `blog-verify`。
+
+**commit前に `terraform-verify` を通す。** 個々の検査の位置づけと、落とす／助言の区別はそこにある。
+
 ## 検証フロー
 
 ```bash
