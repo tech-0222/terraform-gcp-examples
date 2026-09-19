@@ -257,7 +257,8 @@ Artifact Registry に push した接続確認用イメージも repository 削�
 - **Cloud SQL は継続課金されるため、検証後は必ず destroy してください**
 - Cloud Run は min instance 0
 - Cloud SQL は学習用に `deletion_protection = false` / backup disabled
-- Public IPv4 は有効ですが、Cloud Run は Unix socket + Cloud SQL Auth Proxy 経路を使用します
+- Public IPv4 は有効ですが、Cloud Run は Unix socket + Cloud SQL Auth Proxy 経路を使用します（Trivy `GCP-0017`。`authorized_networks` が無いため、この公開IPへ直接接続する経路はありません）
+- `ssl_mode` を設定していません（Trivy `GCP-0015`）。接続は Auth Proxy 経由で、その時点で暗号化されます。**本番で直接IP接続を許すなら `ssl_mode` を設定してください**
 - 公開 invoker (`allUsers`) はデフォルト無効です
 - 本番では HA、backup、PITR、private IP、connection pooling、Secret rotation、State backend/IAM などを別途設計してください
 - write-only argument を使っても、Terraform State 自体の保護が不要になるわけではありません

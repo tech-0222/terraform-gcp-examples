@@ -117,7 +117,8 @@ terraform destroy
 - Cloud SQL Instance は起動中、継続して料金が発生します
 - 検証時は作成後に必ず destroy してください
 - 学習用のため `deletion_protection = false` としています。本番では有効化を推奨します
-- Public IPv4 は有効ですが Authorized Network は設定しません
+- Public IPv4 は有効ですが Authorized Network は設定しません（Trivy `GCP-0017`。`nc -zv` で接続がタイムアウトすることを確認済み）
+- `ssl_mode` を設定していません（Trivy `GCP-0015`）。Authorized Network も DB ユーザーも作らないため、平文で流れる接続経路自体がありません
 - DB User / Password はこの基本サンプルの対象外です
 
 ## 検証状況

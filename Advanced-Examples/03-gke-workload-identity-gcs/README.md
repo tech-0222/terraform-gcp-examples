@@ -114,3 +114,4 @@ terraform destroy
 - Spot ノードは予告なく回収される可能性があります
 - apply 中に Job がイメージ pull / WI 伝播待ちで失敗した場合は、数分待って `terraform apply` を再実行してください
 - Organization Policy で外部イメージや WI が制限されている場合は設定を合わせてください
+- コントロールプレーンは公開エンドポイントで、`master_authorized_networks_config` を設定していません（Trivy `GCP-0061`）。検証のたびに接続元IPを許可する手数を避けるため意図的にそうしています。**エンドポイントは任意のIPから到達できます**（認証は必要）。本番では接続元を限定するか private cluster にしてください
