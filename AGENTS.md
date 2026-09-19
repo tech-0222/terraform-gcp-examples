@@ -5,6 +5,8 @@
 commitまたはpushの前には `.agents/skills/secret-scan/SKILL.md` に従い、
 Gitleaksを実行する。失敗時に `--no-verify` やskipで回避しない。
 
+commit前は `.agents/skills/terraform-verify/SKILL.md` に従って検証する。
+
 `.sh` と `.github/workflows/` を変更したら、あわせて静的検査をかける。
 導入時点で0件のため、落とす対象にしている。
 
