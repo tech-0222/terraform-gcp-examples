@@ -143,6 +143,27 @@ bash scripts/lint_terraform.sh
 
 **`terraform fmt` は `-check` を付けないとファイルを書き換える。** `-diff` だけでは確認にならない。
 
+### IaC のセキュリティ設定（助言）
+
+```bash
+bash scripts/audit_iac_security.sh          # 件数と内訳
+bash scripts/audit_iac_security.sh --high   # 要確認のものだけ
+```
+
+**落とさない。** 導入時点で959件（HIGH 146 / MEDIUM 397 / LOW 416）あり、大半はサンプルの趣旨そのものだった。KubernetesのデモマニフェストのKSV-*が258件、全サブネットのVPCフローログ未有効が102件など。ここをゲートにすると既存サンプルに触れなくなるだけで、質は上がらない。
+
+**0 にすることは目的ではない。増えたときに気づけることが目的。**
+
+ただし全部が意図ではない。次の3つは趣旨では説明できないので、スクリプトが「要確認」として分けて出す。
+
+| ルール | 内容 |
+|---|---|
+| `GCP-0015` | Cloud SQL への SSL 接続が強制されていない |
+| `GCP-0017` | Cloud SQL インスタンスが公開されている |
+| `GCP-0061` | GKE の master authorized networks が未設定 |
+
+Secret は Gitleaks の担当で、Trivy の Secret 検査は使わない。**Gitleaks は「鍵を書いていないか」、Trivy は「設定が危険でないか」**と役割を分ける。
+
 ### TFLint
 
 `.tflint.hcl` で terraform ruleset（同梱）と google ruleset を有効にしている。**導入時点で0件。** 0件が「検査していない」ではないことは、わざと違反を置いて確認してある。
