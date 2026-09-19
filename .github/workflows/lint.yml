@@ -23,6 +23,9 @@ jobs:
       - name: Lint shell scripts and workflows
         run: bash scripts/lint_sources.sh all
 
+      - name: Check .agents mirrors .claude
+        run: bash scripts/check_skill_sync.sh
+
   # 追跡下の .tf だけを見る。導入時点で292ファイルすべて整形済み（実測）。
   terraform:
     runs-on: ubuntu-latest

@@ -25,6 +25,15 @@ repos:
         pass_filenames: false
         stages: [pre-commit]
 
+      # .agents と .claude に同じ skill を二重に置いている。片方だけ直すと
+      # 黙ってズレる。差分は allowed-tools 行だけ、という前提を固定する。
+      - id: skill-sync
+        name: Check .agents mirrors .claude
+        entry: bash scripts/check_skill_sync.sh
+        language: system
+        pass_filenames: false
+        stages: [pre-commit]
+
       - id: gitleaks-pre-push
         name: Detect secrets in commits to push
         entry: bash scripts/security/secret-scan.sh push

@@ -190,6 +190,16 @@ bash scripts/lint_terraform.sh all     # fmt と tflint
 
 プラグインが入っていないと、ルールが少ないまま静かに0件で通る。スクリプトはその状態を終了コード2で止める。
 
+### `.agents` と `.claude` の同期
+
+同じ skill を2箇所に置いている。読む側が違うため。**差分は front matter の `allowed-tools:` 1行だけで、本文は同一。**
+
+```bash
+bash scripts/check_skill_sync.sh
+```
+
+片方だけ直すと黙ってズレ、あとからどちらが正しいか見分けられない。比較するのは `.agents/` にあるものだけで、`.claude/` にしか無い skill は対象外（片側だけに在ることと、両方に在って食い違うことは別）。
+
 ### シェルとワークフローの静的検査
 
 `.sh` と `.github/workflows/` を変更したら ShellCheck と actionlint をかける。**導入時点でどちらも0件だったので、落とす対象にしている。**
