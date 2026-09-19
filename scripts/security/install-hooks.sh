@@ -12,5 +12,5 @@ if ! command -v pre-commit >/dev/null 2>&1; then
   exit 2
 fi
 
-pre-commit install --install-hooks --hook-type pre-commit --hook-type pre-push
+pre-commit install --install-hooks --hook-type pre-commit --hook-type pre-push --hook-type commit-msg
 echo "pre-commit / pre-push のGitleaks hookを設定しました。"
