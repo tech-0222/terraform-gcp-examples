@@ -133,6 +133,16 @@ bash scripts/security/install-hooks.sh
 GitleaksはAPIキー・トークン・パスワード・秘密鍵を検出する。
 Project ID・メール・IPは別の確認対象なので、Gitleaksの成功だけで安全とは判断しない。
 
+### シェルとワークフローの静的検査
+
+`.sh` と `.github/workflows/` を変更したら ShellCheck と actionlint をかける。**導入時点でどちらも0件だったので、落とす対象にしている。**
+
+```bash
+bash scripts/lint_sources.sh all
+```
+
+pre-commit hook と CI（`Lint` ワークフロー）からも走る。バイナリが無ければ Docker、どちらも無ければ終了コード2で止まる。`source` するライブラリは `-x -P SCRIPTDIR` で追跡している。
+
 このリポジトリにPR用のCIはない（`.github/workflows/wif-demo.yml` は手動実行のデモ）。マージ前の確認は自分で行う。
 
 ## 変更しないもの

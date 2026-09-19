@@ -9,6 +9,14 @@ repos:
         pass_filenames: false
         stages: [pre-commit]
 
+      # 導入時点で0件（実測）。既存は落ちず、これから書くものだけが落ちる。
+      - id: lint-sources
+        name: Lint shell scripts and GitHub Actions
+        entry: bash scripts/lint_sources.sh all
+        language: system
+        pass_filenames: false
+        stages: [pre-commit]
+
       - id: gitleaks-pre-push
         name: Detect secrets in commits to push
         entry: bash scripts/security/secret-scan.sh push

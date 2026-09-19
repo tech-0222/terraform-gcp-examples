@@ -1,5 +1,10 @@
 #!/usr/bin/env bash
 # terraform graph 生成のデフォルト設定
+#
+# GRAPH_* は source した側（generate-terraform-graphs.sh）が読む。単体で
+# 解析すると未使用に見えるため、ファイル全体で SC2034 を切る。指示は最初の
+# コマンドより前に置かないと効かない。
+# shellcheck disable=SC2034
 set -euo pipefail
 
 GRAPH_OUTPUT_FILE="DEPENDENCY-GRAPH.svg"
