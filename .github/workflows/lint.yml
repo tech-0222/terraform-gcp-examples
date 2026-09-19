@@ -41,7 +41,12 @@ jobs:
         with:
           tflint_version: v0.64.0
 
+      # 未認証だと GitHub API のレート制限（403）に当たる。実際に
+      # 「API rate limit exceeded」で落ちた。GITHUB_TOKEN を渡すと
+      # 認証付きの上限になる。
       - name: Install the TFLint plugins
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
         run: tflint --init
 
       - name: Check Terraform formatting and lint
