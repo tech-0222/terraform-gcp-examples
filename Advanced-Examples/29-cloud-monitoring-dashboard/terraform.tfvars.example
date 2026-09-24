@@ -1,0 +1,6 @@
+project_id = "your-project-id"
+
+# 実行元のグローバル IP を /32 で指定する
+authorized_ipv4_cidr = "203.0.113.10/32"
+
+# environment = "test"
