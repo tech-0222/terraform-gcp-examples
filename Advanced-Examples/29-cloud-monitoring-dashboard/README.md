@@ -181,9 +181,9 @@ k8s_container は、Pod のラベル（`metadata.user_labels.app="crasher"`）�
 
 pinned filter はラベルを持たないウィジェットでは無視される（[資料](https://cloud.google.com/monitoring/dashboards/filter-permanent)）。Console でも、`environment: test` のまま Cloud Run と GKE のグラフにデータが出ていた。
 
-### 5. `severity>=ERROR` だけではシステムのログが多くなった
+### 5. `severity>=ERROR` だけでは GKE 基盤の Pod のログが大半になった
 
-30分の内訳。GKE は stderr を既定で ERROR にする（[About GKE logs](https://cloud.google.com/kubernetes-engine/docs/concepts/about-logs)）。
+30分の内訳。GKE は stderr を既定で ERROR にする（[About GKE logs の Best practices](https://cloud.google.com/kubernetes-engine/docs/concepts/about-logs#best_practices)）。
 
 ```text
    1070 kube-system	fluentbit
