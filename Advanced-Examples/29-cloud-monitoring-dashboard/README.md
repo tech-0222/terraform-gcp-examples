@@ -183,7 +183,7 @@ pinned filter はラベルを持たないウィジェットでは無視される
 
 ### 5. `severity>=ERROR` だけでは GKE 基盤の Pod のログが大半になった
 
-30分の内訳。GKE は stderr を既定で ERROR にする（[About GKE logs の Best practices](https://cloud.google.com/kubernetes-engine/docs/concepts/about-logs#best_practices)）。
+30分の内訳。GKE では、重大度を明示していない stderr のログは既定で ERROR として取り込まれる。構造化ログで `severity` を明示すればその値が使われる（[About GKE logs の Best practices](https://cloud.google.com/kubernetes-engine/docs/concepts/about-logs#best_practices)）。
 
 ```text
    1070 kube-system	fluentbit
