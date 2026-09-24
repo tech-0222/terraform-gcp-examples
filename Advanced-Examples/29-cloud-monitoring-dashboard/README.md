@@ -251,6 +251,7 @@ terraform destroy
 ## 注意 / 費用
 
 - 課金対象：GKE ゾーンクラスタ（管理費）、e2-medium の Spot ノード1台、e2-small の Spot VM 1台、Cloud NAT、Cloud Run（リクエスト時間）。ディスクと通信量も含め、実行前に料金を確認する
+- Cloud Logging（ログバケットへの取り込み。プロジェクトごとに毎月50GiBまで無料）と Cloud Monitoring（API での時系列の読み取り。請求先アカウントごとに毎月100万件まで無料、コンソールからは無料）にも使用量に応じた料金がある（[Pricing](https://cloud.google.com/stackdriver/pricing)）
 - `disable_on_destroy = false` なので、有効にした API は destroy 後も残る
 - `terraform destroy` が消すのは state にあるものだけ。gcloud・テンプレート・Console コピーで作ったダッシュボードは残る
 - Cloud Run は `allUsers` に `roles/run.invoker` を付けている。負荷をかけるための検証用の設定で、終わったら destroy する
