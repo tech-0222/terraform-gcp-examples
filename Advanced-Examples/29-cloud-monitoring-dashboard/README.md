@@ -159,13 +159,13 @@ Google サービスのうち、`VM Instances`・`GKE`・`Firewalls`・`Google Cl
 
 Terraform 管理のダッシュボードを gcloud で消すと、plan は `has been deleted` を検出して作り直しを提案した。apply で戻るが、ID は新しくなった（`66bacfff-…` → `0217702c-…`）。
 
-### 3. 値が 0 の数値を書くと恒常差分になる
+### 3. 座標としきい値の 0 で恒常差分になった
 
 API は 0 の座標を省いて返し、xyChart に `targetAxis: "Y1"` を補う。apply 直後の plan は `xPos = 0` を足す差分を出し続けた。JSON から 0 の座標だけを消すと、plan は終了コード 0 になった。`targetAxis` は provider の差分抑制で吸収されるため、書き足す必要はなかった。
 
 スコアカードのしきい値に `"value": 0` を書いた場合も、同じく `+ value = 0` が出続けた。キーごと省くと差分は消えた（しきい値は既定の 0）。
 
-`dashboard.tf` が読む JSON には、値が 0 の数値を書いていない。この挙動は `hashicorp/google` 7.46.1 で確かめた。
+確かめたのは `xPos` / `yPos` / しきい値の `value` の3か所で、`hashicorp/google` 7.46.1 での結果。ほかの項目でも起きうるので、apply のあとに plan で差分が無いことを確かめる。`dashboard.tf` が読む JSON には、この3か所の 0 を書いていない。
 
 ### 4. `environment` ラベルで絞れたのは GCE だけ
 
@@ -177,11 +177,11 @@ API は 0 の座標を省いて返し、xyChart に `targetAxis: "Y1"` を補う
 | `k8s_container` | 62 | 0 |
 | `cloud_run_revision` | 2 | 0 |
 
-k8s_container のユーザーラベルは Pod のラベルで、`metadata.user_labels.app="crasher"` なら一致した。
+k8s_container は、Pod のラベル（`metadata.user_labels.app="crasher"`）では一致し、クラスタとノードプールに付けた `environment` では一致しなかった。
 
 pinned filter はラベルを持たないウィジェットでは無視される（[資料](https://cloud.google.com/monitoring/dashboards/filter-permanent)）。Console でも、`environment: test` のまま Cloud Run と GKE のグラフにデータが出ていた。
 
-### 5. `severity>=ERROR` は GKE の stderr で埋まる
+### 5. `severity>=ERROR` だけではシステムのログが多くなった
 
 30分の内訳。GKE は stderr を既定で ERROR にする（[About GKE logs](https://cloud.google.com/kubernetes-engine/docs/concepts/about-logs)）。
 
@@ -206,7 +206,7 @@ google.cloud.run.v2.Services.UpdateService    # terraform apply
 google.cloud.run.v1.Services.ReplaceService   # gcloud run services update
 ```
 
-資料では、Cloud Run deployment のイベントは `ReplaceService` の監査ログから作られるとある（[Event types](https://cloud.google.com/monitoring/dashboards/event-types)）。ただし Console の Cloud Run Monitoring では、19:57 の印に「Cloud Run のデプロイ」が2件並んだ。同じ分の2件では切り分けられないため、Terraform だけで2分あけて2回更新した。監査ログは v2 の `UpdateService` だけで、印も「Cloud Run のデプロイ」が20:52と20:54 JSTに1件ずつ出た。**Terraform（v2 API）での更新もデプロイとして表示された。** 作成（`CreateService`）の時刻には印が出なかった。
+資料では、Cloud Run deployment のイベントは `ReplaceService` の監査ログから作られるとある（[Event types](https://cloud.google.com/monitoring/dashboards/event-types)）。ただし Console の Cloud Run Monitoring では、19:57 の印に「Cloud Run のデプロイ」が2件並んだ。同じ分の2件では切り分けられないため、Terraform だけで2分あけて2回更新した。監査ログは v2 の `UpdateService` だけで、印も「Cloud Run のデプロイ」が20:52と20:54 JSTに1件ずつ出た。**今回の環境では、Terraform（v2 API）での更新もデプロイとして表示された。** 資料のクエリは v1 の `ReplaceService` なので、Terraform で運用する場合は自分の環境で確かめる。 作成（`CreateService`）の時刻には印が出なかった。
 
 ### 8. 変数は参照したウィジェットだけを切り替える
 

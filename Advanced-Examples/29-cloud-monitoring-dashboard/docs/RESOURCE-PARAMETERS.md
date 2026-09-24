@@ -14,7 +14,7 @@
 | 変数（`$` で始まる） | `dashboardFilters[]`（`templateVariable` あり） | `$cluster`（`cluster_name`）、`$namespace`（`namespace_name`） |
 | アノテーション | `annotations.eventAnnotations[]` | `CLOUD_ALERTING_ALERT`、`CLOUD_RUN_DEPLOYMENT`、`GKE_WORKLOAD_DEPLOYMENT`、`GKE_POD_CRASH` |
 | レイアウト | `mosaicLayout`（`columns`、`tiles[]`） | 48列 |
-| ウィジェットの位置 | `tiles[].xPos` / `yPos` / `width` / `height` | **0 の座標は書かない**（恒常差分になる） |
+| ウィジェットの位置 | `tiles[].xPos` / `yPos` / `width` / `height` | **0 の座標は書かない**（google 7.46.1 で恒常差分になった） |
 | スコアカードのしきい値 | `scorecard.thresholds[]` | `direction = ABOVE`、`color = RED`。`value` は省略（0 を超えたら赤） |
 
 未指定の項目と API の挙動（実測）。
