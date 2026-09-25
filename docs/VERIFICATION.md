@@ -81,3 +81,41 @@ gcloud logging read 'resource.type="k8s_container" AND resource.labels.pod_name=
 | `memory_type=evictable` = 退避で回収できるメモリ | カーネルが容易に回収できるメモリの分類 |
 
 **0件や直感に合わない値を見たら、綴りと定義を先に疑う。**
+
+## 過去の検証で踏んだこと
+
+個々のサンプル固有の事実は各 README にある。ここには、別の検証でも同じ形で起きうるものだけを置く。
+
+### 前提を疑う
+
+- **参考にした手順や広く紹介されている手順は仮説として扱う。** 予算の Pub/Sub 通知でサービスエージェントに `roles/pubsub.publisher` を付ける説明が多いが、候補のアドレスはいずれも存在せず、付与なしで通知は届いた（`26`）。ブートディスクの CMEK も「ノードプールを作り直す」という前提で進めていたが、鍵バージョンを進めるだけならスケールアウトで新バージョンになった（`20`）
+- **一度しか実行していない結果は、再現性のある挙動とは限らない。** 以前の検証で得た「Blue=鍵v1 / Green=鍵v2」は、KMS の primary 切替の伝播がたまたま間に合っただけだった（`21`）
+- **エラーメッセージだけで推測せず、`--help` を読む。** `gcloud container node-pools rollback` は soak 中に拒否される。ヘルプに「cancel か失敗のあとに使う」とあり、正しくは `operations cancel` → `rollback` だった（`21`）
+- **REST と gcloud でフィールド名が違う。** `clusterAutoscaling` は `gcloud container clusters describe` の出力では `autoscaling`。REST の名前で書くと `null` が返る（`23`）
+
+### apply の成功は中身を保証しない
+
+- **`terraform apply` と `plan` の差分なしは、構築の完了ではない。** Ansible 検証では35リソースの作成に成功した一方、VM の中では role が見つからず失敗していた（`25`）
+- **Terraform が検知できないずれがある。** CMEK の鍵バージョンは設定に現れず、ローテーション後も `plan` は `No changes.`。`gcloud compute disks list` で見るしかない（`20`）
+- **「前後2点」の確認では断は見えない。** drain の前後だけを見ると疎通は続いていたが、毎秒サンプリングすると21秒の完全断があった（`20`）
+- **許可リストは、拒否されることまで確かめる。** 実在しない IP（RFC 5737 の `203.0.113.1/32`）を一時的に設定し、接続が拒否されることを見てから戻す（`15`）
+
+### destroy と残存物
+
+- **destroy しても、すぐに空にならないリソースがある。** Workload Identity Pool と Provider は30日間ソフトデリートで残り、同じ ID の再 apply が `409` になる。`undelete` して `import` すれば戻せる（`05`）
+- **Cloud KMS のキーリングと鍵は削除できない。** `destroy` は鍵バージョンの破棄をスケジュールするので、import して再利用しても使えない。再検証は別名で行う（`20`）
+- **プロジェクトの外にあるリソースは、残存確認の穴になる。** 予算は請求先アカウント配下で、`terraform state list` が0件でも消えたことにならない（`26`）
+- **長い GKE 操作の途中で Terraform の HTTP2 接続が切れることがある。** `apply` はエラーでも、GCP 側ではクラスタができている場合がある。state は tainted になり、次の `apply` は作り直しになる。`gcloud` で実物を見てから判断する（`16`）
+
+### 環境とツール
+
+- **`cmd | tee file` の直後の `$?` は `tee` の終了コード。** 失敗したコマンドを成功と記録した。`${PIPESTATUS[0]}` を使う
+- **`curl ifconfig.me` は IPv6 を返すことがある。** 許可リストに IPv4 を入れるなら `curl -4` を使う（`15`、`28`）
+- **Cloud Run の `*.run.app` では `/healthz` が予約されている。** Google Frontend が 404 を返し、コンテナに届かない。`/health` なら届く（`06`）
+- **`e2-small` では Secret Manager CSI が載らない。** CSI の DaemonSet と標準コンポーネントで CPU が埋まり、アプリの Pod が `Pending` になる（`19`）
+- **Dataplane V2 のクラスタに `network_policy` アドオンを設定しない。** `ADVANCED_DATAPATH` と併用できず apply が失敗する（`16`）
+- **非対話の SSH 経由で `kubectl run --rm -it` を使わない。** TTY が無く不安定になる。`sleep` させた Pod に `kubectl exec` する（`16`）
+
+### 監査ログに残らない操作
+
+上の「Cloud Logging を必ず確認する」に挙げた2件に加え、予算（Cloud Billing）の作成・更新も0件だった（`26`）。コストのガードレールを外した記録が追えない。
