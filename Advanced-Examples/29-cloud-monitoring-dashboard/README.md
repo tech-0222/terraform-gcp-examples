@@ -37,6 +37,7 @@ flowchart LR
 |---|---|
 | `google_compute_instance.web` | e2-small の Spot VM。5分ごとに60秒だけ CPU を回す |
 | `google_container_cluster.primary` / `google_container_node_pool.primary` | ゾーンクラスタ、e2-medium の Spot ノード1台 |
+| `google_service_account.node` / `google_project_iam_member.node` | ノード用のサービスアカウント。`roles/container.defaultNodeServiceAccount` だけを付ける |
 | `google_cloud_run_v2_service.api` | `mccutchen/go-httpbin`。`/status/500` で 500、`/delay/1` で1秒遅延 |
 | `google_monitoring_alert_policy.run_5xx` | Cloud Run の 5xx が1件でもあれば開く。通知チャネルなし |
 | `google_monitoring_dashboard.web` | `dashboards/web-service-overview.json` を渡す |
@@ -100,7 +101,7 @@ bash scripts/load.sh "$(terraform output -raw run_url)" 30
 ```
 
 ```text
-Apply complete! Resources: 21 added, 0 changed, 0 destroyed.
+Apply complete! Resources: 18 added, 0 changed, 0 destroyed.
 ```
 
 ### gcloud で同じダッシュボードを作る
@@ -208,15 +209,15 @@ google.cloud.run.v1.Services.ReplaceService   # gcloud run services update
 
 資料では、Cloud Run deployment のイベントは `ReplaceService` の監査ログから作られるとある（[Event types](https://cloud.google.com/monitoring/dashboards/event-types)）。ただし Console の Cloud Run Monitoring では、19:57 の印に「Cloud Run のデプロイ」が2件並んだ。同じ分の2件では切り分けられないため、Terraform だけで2分あけて2回更新した。監査ログは v2 の `UpdateService` だけで、印も「Cloud Run のデプロイ」が20:52と20:54 JSTに1件ずつ出た。**今回の環境では、Terraform（v2 API）での更新もデプロイとして表示された。** 資料のクエリは v1 の `ReplaceService` なので、Terraform で運用する場合は自分の環境で確かめる。 作成（`CreateService`）の時刻には印が出なかった。
 
-### 8. 変数は参照したウィジェットだけを切り替える
+### 7. 変数は参照したウィジェットだけを切り替える
 
 `$namespace` を `blog` にすると、フィルタに `${namespace}` を書いた GKE のメモリと再起動だけが変わった。Cloud Run・GCE・Logs パネル・Incident は変わらなかった。切り替えても `UpdateDashboard` の監査ログは0件で、plan も差分なしだった。
 
-### 9. API で加えた変更もバージョン履歴に載る
+### 8. API で加えた変更もバージョン履歴に載る
 
 Terraform で作成し、1回 apply で更新したダッシュボードの履歴には、2件のリビジョンが並んだ。履歴の JSON には、書いていない既定値（`"filter": ""` など）も展開されていた。
 
-### 7. 公式テンプレートは gcloud で入る
+### 9. 公式テンプレートは gcloud で入る
 
 `GoogleCloudPlatform/monitoring-dashboard-samples` のコミット `02e04b0` の `dashboards/google-cloud-run/cloudrun-monitoring.json` を `gcloud monitoring dashboards create` に渡すと、Custom Dashboard として作られた。`dashboardFilters` は `project_id`・`location`・`service_name` の pinned filter、`labels` は空。
 

@@ -49,6 +49,7 @@ Ref: [REST Resource: projects.dashboards](https://cloud.google.com/monitoring/ap
 | 監視 | `monitoring_config.enable_components` | `SYSTEM_COMPONENTS` |
 | ラベル | `resource_labels` | `environment` など。**コンテナのメトリクスのユーザーラベルには入らない**（実測） |
 | ノード | `node_config.machine_type` / `spot` | `e2-medium`、Spot |
+| ノードのサービスアカウント | `node_config.service_account` と `google_project_iam_member` | 専用 SA に `roles/container.defaultNodeServiceAccount`（ログ・メトリクスの書き込みとオートスケーリング用メトリクス）。このロールでコンテナのログ、コンテナとノードのメトリクスが届くことを確認した |
 
 ## GCE
 

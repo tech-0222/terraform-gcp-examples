@@ -60,16 +60,13 @@ resource "google_service_account" "node" {
   display_name = "GKE node (${var.cluster_name})"
 }
 
+# GKE が推奨する、ノード用サービスアカウントの最小権限ロール。
+# ログとメトリクスの書き込み、オートスケーリング用メトリクスを含む。
+# イメージは Docker Hub から取るので、Artifact Registry の読み取りは付けない。
+# Ref: https://cloud.google.com/kubernetes-engine/docs/how-to/service-accounts
 resource "google_project_iam_member" "node" {
-  for_each = toset([
-    "roles/logging.logWriter",
-    "roles/monitoring.metricWriter",
-    "roles/monitoring.viewer",
-    "roles/artifactregistry.reader",
-  ])
-
   project = var.project_id
-  role    = each.value
+  role    = "roles/container.defaultNodeServiceAccount"
   member  = "serviceAccount:${google_service_account.node.email}"
 }
 
