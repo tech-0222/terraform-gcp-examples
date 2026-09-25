@@ -144,6 +144,16 @@ bash scripts/security/install-hooks.sh
 GitleaksはAPIキー・トークン・パスワード・秘密鍵を検出する。
 Project ID・メール・IPは別の確認対象なので、Gitleaksの成功だけで安全とは判断しない。
 
+### 公開する文章の検査
+
+**このリポジトリは公開されている。** PR・Issue の本文とコメントは、`gh pr create` などで出す**前に**次を通す。
+
+```bash
+python3 scripts/check_public_text.py --stdin < body.txt
+```
+
+CI も同じ検査を走らせるが、動くのは公開されたあと。本文はあとから編集しても、編集履歴に最初の版が残る。**最初の版から書かない。** リポジトリ外（対になるブログを含む）の Issue 番号・ファイル名・パスは書かず、「リポジトリ外の文書」など一般的な言い方にする。コミットメッセージは commit-msg フックが同じ規則で止める。
+
 ### Terraform の書式
 
 ```bash

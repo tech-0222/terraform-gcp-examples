@@ -111,3 +111,38 @@ def test_a_real_looking_address_still_fails_next_to_an_allowed_one():
                     "service-1@x.gserviceaccount.com\n")
     assert code == 1
     assert 'メールアドレス' in out
+
+
+def test_a_reference_to_the_blog_repository_is_refused():
+    """リポジトリ外の Issue 番号は、ここを読む人には追えない。最初の版から止める。"""
+    code, out = run("## Why\n\nhugo-blog#12 の対応として追加する。\n")
+    assert code == 1
+    assert '対になるブログのリポジトリへの参照' in out
+
+
+def test_the_word_poc_alone_is_not_refused():
+    code, out = run("PoC の段階では確認していなかった。\n")
+    assert code == 0, out
+
+
+def test_blog_references_are_not_applied_to_tracked_files():
+    """CLAUDE.md は「対になるブログ」としてリポジトリ名を正当に書いている。
+    ファイル全体の走査に掛けると CI が既存ファイルで落ちる。"""
+    sys.path.insert(0, str(SCRIPT.parent))
+    import check_public_text as cpt
+    assert cpt.findings("対になるブログは `../hugo-blog`。\n") == []
+    assert cpt.findings("対になるブログは `../hugo-blog`。\n",
+                        cpt.RULES + cpt.TEXT_ONLY_RULES) != []
+
+
+def test_the_commit_message_refuses_a_blog_reference(tmp_path):
+    msg = tmp_path / "MSG"
+    msg.write_text("docs: hugo-blog#12 に合わせて README を直す\n", encoding="utf-8")
+    done = subprocess.run([sys.executable, str(SCRIPT.parent / 'check_commit_message.py'), str(msg)],
+                          capture_output=True, text=True)
+    assert done.returncode == 1
+    assert 'hugo-blog' in done.stdout
+    msg.write_text("docs: README の説明を直す\n", encoding="utf-8")
+    done = subprocess.run([sys.executable, str(SCRIPT.parent / 'check_commit_message.py'), str(msg)],
+                          capture_output=True, text=True)
+    assert done.returncode == 0

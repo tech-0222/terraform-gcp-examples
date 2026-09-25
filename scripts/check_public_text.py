@@ -22,6 +22,7 @@ Web UI から書くこともできる。**だから CI で落とす。** PR や 
   Project ID / Number     このリポジトリの実値
   メールアドレス          gcloud アカウントなど
   秘密鍵のヘッダ          貼り付け事故
+  リポジトリ外への参照    本文だけ（後述）
 
 **検出値そのものは出力しない。** 出すと、検査の実行ログ（公開リポジトリ
 では誰でも読める）に転載することになる。secret-scan.sh と同じ扱いで、
@@ -69,6 +70,21 @@ RULES: tuple[tuple[str, re.Pattern[str]], ...] = (
 #
 # 2種類ある。構造的に安全なもの（ドメインの性質で決まる）と、個別に
 # 判断したもの。後者は増えるほど検査が弱くなるので、慎重に足す。
+# **本文だけに掛ける規則。** ファイル全体の走査（--repo）には掛けない。
+#
+# 公開した文章は、あとから編集しても PR や Issue の編集履歴に最初の版が残る。
+# CI はこの検査を公開のあとにしか走らせられないので、gh pr create などの前に
+# 手で流して止める。
+#
+# 対になるブログのリポジトリは、このリポジトリの外にある。その Issue 番号や
+# ファイル名は、ここを読む人には追えない。本文では「リポジトリ外の文書」など
+# 一般的な言い方にする。ファイルに掛けないのは、CLAUDE.md や skill が
+# 「対になるブログ」としてリポジトリ名を正当に書いているから。
+TEXT_ONLY_RULES: tuple[tuple[str, re.Pattern[str]], ...] = (
+    ("対になるブログのリポジトリへの参照",
+     re.compile(r"hugo-blog", re.IGNORECASE)),
+)
+
 ALLOWED_VALUES: dict[str, str] = {
     # --- 構造的に安全 ---
     "YOUR_PROJECT_ID": "置き換え済みのプレースホルダー",
@@ -109,11 +125,11 @@ def allowed(hit: str) -> bool:
     return bool(ALLOWED.search(hit))
 
 
-def findings(text: str) -> list[str]:
+def findings(text: str, rules=RULES) -> list[str]:
     """What kinds of secret-ish things appear, and on which lines."""
     out: list[str] = []
     for number, line in enumerate(text.splitlines(), start=1):
-        for label, pattern in RULES:
+        for label, pattern in rules:
             for hit in pattern.finditer(line):
                 if allowed(hit.group(0)):
                     continue
@@ -208,7 +224,7 @@ def main() -> int:
         print(f"  OK  {args.label}（空）")
         return 0
 
-    hits = findings(text)
+    hits = findings(text, RULES + TEXT_ONLY_RULES)
     if not hits:
         print(f"  OK  {args.label}")
         return 0
@@ -218,6 +234,7 @@ def main() -> int:
     print("\n**値そのものはここに出しません。** 該当行を開いて置き換えてください。")
     print("Project ID や Project Number はプレースホルダーに、"
           "セッションURLは削除します。")
+    print("リポジトリ外への参照は「リポジトリ外の文書」など一般的な言い方にします。")
     return 1
 
 

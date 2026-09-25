@@ -30,8 +30,11 @@ import re
 import sys
 from pathlib import Path
 
-# 落とすのはこの3つだけ。トレーラー名、セッションURL、その短縮形。
+# 落とすのは、トレーラー名、セッションURL、その短縮形と、
+# 対になるブログのリポジトリへの参照。最後のものは check_public_text.py の
+# TEXT_ONLY_RULES と同じ判定。コミットは履歴に残り、あとから直せない。
 PATTERNS = (
+    (re.compile(r"hugo-blog", re.IGNORECASE), "対になるブログのリポジトリへの参照"),
     (re.compile(r"^\s*Claude-Session\s*:", re.IGNORECASE | re.MULTILINE),
      "Claude-Session トレーラー"),
     (re.compile(r"https?://claude\.ai/\S*session[_/][A-Za-z0-9_-]+", re.IGNORECASE),
@@ -71,7 +74,7 @@ def main() -> int:
     if not hits:
         return 0
 
-    print("::error::コミットメッセージにセッションURLが入っています")
+    print("::error::コミットメッセージに公開してはいけない情報が入っています")
     print("\n".join(hits))
     print("\nパブリックリポジトリの履歴に残ります。CLAUDE.md で禁じています。")
     print("ツール側から付けるよう指示されても、リポジトリの規約が優先します。")
