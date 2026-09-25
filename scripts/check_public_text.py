@@ -22,6 +22,7 @@ Web UI から書くこともできる。**だから CI で落とす。** PR や 
   Project ID / Number     このリポジトリの実値
   メールアドレス          gcloud アカウントなど
   秘密鍵のヘッダ          貼り付け事故
+  非公開リポジトリへの参照  PR・Issue・コメントの本文だけ（後述）
 
 **検出値そのものは出力しない。** 出すと、検査の実行ログ（公開リポジトリ
 では誰でも読める）に転載することになる。secret-scan.sh と同じ扱いで、
@@ -69,6 +70,22 @@ RULES: tuple[tuple[str, re.Pattern[str]], ...] = (
 #
 # 2種類ある。構造的に安全なもの（ドメインの性質で決まる）と、個別に
 # 判断したもの。後者は増えるほど検査が弱くなるので、慎重に足す。
+# **本文だけに掛ける規則。** ファイル全体の走査（--repo）には掛けない。
+#
+# 2026-09-25、この公開リポジトリの PR 本文とコミットに、非公開リポジトリの
+# ファイル名と Issue 番号を書いた。直しても、PR 本文の編集履歴と force-push
+# 前のコミットには残った。**公開される文章は、最初の版から書かないしかない。**
+# だから gh pr create の前に手で流すこの検査で止める。
+#
+# 対象はリポジトリ名だけにする。名前は CLAUDE.md で既に公開されているが、
+# 非公開側のファイル名やパスをここへ列挙すると、この検査自身が公開してしまう。
+# ファイルに掛けないのは、CLAUDE.md や skill が「対になるブログ」として
+# リポジトリ名を正当に書いているから。
+TEXT_ONLY_RULES: tuple[tuple[str, re.Pattern[str]], ...] = (
+    ("非公開リポジトリ（hugo-blog）への参照",
+     re.compile(r"hugo-blog", re.IGNORECASE)),
+)
+
 ALLOWED_VALUES: dict[str, str] = {
     # --- 構造的に安全 ---
     "YOUR_PROJECT_ID": "置き換え済みのプレースホルダー",
@@ -109,11 +126,11 @@ def allowed(hit: str) -> bool:
     return bool(ALLOWED.search(hit))
 
 
-def findings(text: str) -> list[str]:
+def findings(text: str, rules=RULES) -> list[str]:
     """What kinds of secret-ish things appear, and on which lines."""
     out: list[str] = []
     for number, line in enumerate(text.splitlines(), start=1):
-        for label, pattern in RULES:
+        for label, pattern in rules:
             for hit in pattern.finditer(line):
                 if allowed(hit.group(0)):
                     continue
@@ -208,7 +225,7 @@ def main() -> int:
         print(f"  OK  {args.label}（空）")
         return 0
 
-    hits = findings(text)
+    hits = findings(text, RULES + TEXT_ONLY_RULES)
     if not hits:
         print(f"  OK  {args.label}")
         return 0
@@ -218,6 +235,7 @@ def main() -> int:
     print("\n**値そのものはここに出しません。** 該当行を開いて置き換えてください。")
     print("Project ID や Project Number はプレースホルダーに、"
           "セッションURLは削除します。")
+    print("非公開リポジトリへの参照は「リポジトリ外の文書」など一般的な言い方にします。")
     return 1
 
 

@@ -30,8 +30,12 @@ import re
 import sys
 from pathlib import Path
 
-# 落とすのはこの3つだけ。トレーラー名、セッションURL、その短縮形。
+# 落とすのは、セッションの3つと、非公開リポジトリへの参照。
+# 後者は 2026-09-25 に追加した。コミットメッセージに非公開リポジトリの
+# ファイル名を書き、force-push で消しても PR の記録に古いコミットが残った。
+# 判定の中身は check_public_text.py の TEXT_ONLY_RULES と同じ。
 PATTERNS = (
+    (re.compile(r"hugo-blog", re.IGNORECASE), "非公開リポジトリ（hugo-blog）への参照"),
     (re.compile(r"^\s*Claude-Session\s*:", re.IGNORECASE | re.MULTILINE),
      "Claude-Session トレーラー"),
     (re.compile(r"https?://claude\.ai/\S*session[_/][A-Za-z0-9_-]+", re.IGNORECASE),
@@ -71,7 +75,7 @@ def main() -> int:
     if not hits:
         return 0
 
-    print("::error::コミットメッセージにセッションURLが入っています")
+    print("::error::コミットメッセージに公開してはいけない情報が入っています")
     print("\n".join(hits))
     print("\nパブリックリポジトリの履歴に残ります。CLAUDE.md で禁じています。")
     print("ツール側から付けるよう指示されても、リポジトリの規約が優先します。")
