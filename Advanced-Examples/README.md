@@ -101,6 +101,7 @@ terraform.tfvars.example
 | 26 | `26-billing-budget-pubsub` | Cloud Billingの予算アラート。Pub/Sub通知が実際に届くかとメッセージの中身、上限を超えても課金が止まらないこと、監査ログに残らないことを実測 | 実装済み |
 | 27 | `27-regional-alb-certificate-manager` | Certificate ManagerのDNS認証とLB認証を並べて比較。リージョンALBでGoogle-managed証明書を使う唯一の経路。発行までの時間、ロードバランサ無しでの発行、ACTIVE後のTLS接続を実測 | 実装済み |
 | 28 | `28-gke-pod-eviction` | kubeletによるPod退避（Eviction）を実際に起こして観察。MemoryPressureとDiskPressureを、kubectl / Cloud Monitoring / Cloud Logging / gcloud の4系統で追う | 実装済み |
+| 29 | `29-cloud-monitoring-dashboard` | Cloud Monitoring の Custom Dashboard を同じ JSON から gcloud と Terraform で作る。pinned filter・変数・Logs パネル・Incident・イベント注釈、etag と `dashboard_json` の恒常差分を確かめる | 実装済み |
 
 ## 追加するとき
 
