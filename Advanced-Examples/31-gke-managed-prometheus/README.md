@@ -97,7 +97,7 @@ collector-r7hz2                 2/2     Running   0          57s
 gmp-operator-6b4f84fd77-xwcgd   1/1     Running   0          2m44s
 ```
 
-Terraform側では`monitoring_config.managed_prometheus.enabled = true`を明示しているが、GKE Standard 1.27以降・Autopilot 1.25以降ではこの指定が無くても既定で有効（Standardは作成時に無効化できるが、Autopilotはできない）。
+Terraform側では`monitoring_config.managed_prometheus.enabled = true`を**明示的に指定している**。GKE Standard 1.27以降・Autopilot 1.25以降ではこの指定が無くても既定で有効というのは公式仕様として確認した内容であり、「指定を省略しても有効になること」自体は本サンプルでは実測していない（Standardは作成時に無効化できるが、Autopilotはできない）。
 
 ### 2. PodMonitoringの`port`を文字列で書くと名前として扱われる
 
@@ -167,6 +167,8 @@ alertmanager-0                   2/2   Running
 rule-evaluator-...                2/2   Running
 ```
 
+Managed Alertmanagerは執筆時点でPreview機能であり、GA機能と同等のサポートは保証されない。
+
 ### 6. alertingの一連の流れ
 
 Node Exporter DaemonSetへ一時的に存在しないnodeSelectorを付けてPodを消し、`up==0`を45秒超続けた。
@@ -175,13 +177,13 @@ Node Exporter DaemonSetへ一時的に存在しないnodeSelectorを付けてPod
 inactive → firing（45秒後）→ Alertmanagerへ到達（receiver: noop）→ Pod復旧 → resolved
 ```
 
-Alertmanagerの既定ルートは`noop`で、通知先を設定しない限りどこにも送られない（本記事の対象外）。firingしたアラートの`generatorURL`は、該当PromQLを埋め込んだCloud Monitoring Metrics Explorerへ直接リンクしていた。
+今回の検証環境では、Alertmanagerのルートは`noop`になっており、通知先を設定しない限りどこにも送られなかった（本記事の対象外）。firingしたアラートの`generatorURL`は、該当PromQLを埋め込んだCloud Monitoring Metrics Explorerへ直接リンクしていた。
 
 ### 7. 可視化2パターン
 
-**パターンA（Cloud Monitoring Dashboard）**: 第1回で使ったPromQL（CPU・メモリ・ディスク使用率）はいずれも変更なしでCloud MonitoringのPromQL APIから取得できた。ディスク使用率のクエリは`mountpoint="/var"`を指定しているが、GKEのContainer-Optimized OSにも`/var`という独立したマウントポイントが存在し（`device=/dev/sda1, fstype=ext4`）、そのまま動いた。
+**パターンA（Cloud Monitoring Dashboard）**: 第1回で使ったPromQL（CPU・メモリ・ディスク使用率）はいずれも変更なしでCloud MonitoringのPromQL APIから取得できた。ディスク使用率のクエリは`mountpoint="/var"`を指定しているが、GKEのContainer-Optimized OSにも`/var`という独立したマウントポイントが存在し（`device=/dev/sda1, fstype=ext4`）、そのまま動いた。`gcloud monitoring dashboards create`でCPU使用率のPromQLを埋め込んだ`xyChart`を1つ作成し、同じクエリを`query_range`で実行すると13点の時系列が返ることを確認した（Dashboard自体の画面描画は未確認）。
 
-**パターンB（Grafana継続利用）**: `data source syncer`はクエリ経路には入らない。実際のPromQLクエリはGrafanaから`https://monitoring.googleapis.com/v1/projects/PROJECT_ID/location/global/prometheus/`へ直接送られる。syncerは、GrafanaのPrometheus data sourceにこのURLとOAuth2トークンを書き込む・更新するだけのCronJob。このクラスタではWorkload Identity Federationを有効にしていないが、syncer PodはTerraformで作成しノードプールに割り当てた専用のサービスアカウント（`roles/monitoring.viewer`付き。GCPが自動生成する既定のCompute Engineサービスアカウントとは別物）で認証でき、問題なく動いた。
+**パターンB（Grafana継続利用）**: `data source syncer`はクエリ経路には入らない。実際のPromQLクエリはGrafanaから`https://monitoring.googleapis.com/v1/projects/PROJECT_ID/location/global/prometheus/`へ直接送られる。syncerは、GrafanaのPrometheus data sourceにこのURLとOAuth2トークンを書き込む・更新するだけのCronJob。このクラスタではWorkload Identity Federationを有効にしていないが、syncer PodはTerraformで作成しノードプールに割り当てた専用のサービスアカウント（`roles/monitoring.viewer`付き。GCPが自動生成する既定のCompute Engineサービスアカウントとは別物）で認証でき、問題なく動いた。Workload Identity Federation + 専用SAの構成では、公式ドキュメントの手順で`roles/monitoring.viewer`に加え`roles/iam.serviceAccountTokenCreator`も付与しており、「専用SAならViewerだけでよい」とは限らない。
 
 第1回のGrafana Dashboard JSONは、エクスポート時のテンプレート変数`${DS_PROMETHEUS}`をGMPのdata source UIDに置き換えるだけでimportできた。3つのPanel（CPU・メモリ・ディスク使用率）が参照しているPromQLは、data source経由の問い合わせで同じ値が返ることを確認した（ブラウザ上でのPanel描画は未確認）。
 
@@ -197,7 +199,7 @@ $ curl -s http://localhost:8080/metrics | grep "^# HELP"
 # HELP kube_pod_status_unschedulable [STABLE] ...
 ```
 
-`kube_pod_info`・`kube_node_info`・`kube_deployment_status_replicas`などは無い。これらが要る場合は自前でkube-state-metricsを入れ、PodMonitoringで拾う必要がある（その場合はnamespaceが同じ`gke-managed-.*`パターンに一致しないよう注意する。managed側のPodMonitoringには`metricRelabeling`で`namespace=~"gke-managed-.*"`をdropする設定が既定で入っている）。
+`kube_pod_info`・`kube_node_info`・`kube_deployment_status_replicas`などは無い。これらが要る場合は自前でkube-state-metricsを入れ、PodMonitoringで拾う必要がある。managed側の`ClusterPodMonitoring`には`metricRelabeling`で`namespace=~"gke-managed-.*"`をdropする設定が入っているが、このdrop設定はmanaged側自身のscrape対象だけに効くため、自前で追加する別のCRには影響しない。両方を有効にした場合の重複リスクは、drop設定の有無ではなく、同じメトリクス名を別々のCRが別々にscrapeして送る点にある。
 
 ### 9. `metricRelabeling`でメトリクスを止められる
 
@@ -209,7 +211,11 @@ $ curl -s http://localhost:8080/metrics | grep "^# HELP"
 terraform destroy
 ```
 
-**GKEは最もコストが高い。検証が終わったら速やかに削除する。** 過去に取り込まれた時系列データはCloud Monitoringの保持期間（24か月。先頭1週間は元粒度、以降1分粒度、最終的に10分粒度へdownsample）中は残る。収集を止めても既存データは削除されない。
+**GKEは最もコストが高い。検証が終わったら速やかに削除する。**
+
+パターンAの確認用に作成したCloud Monitoring Dashboardは`gcloud monitoring dashboards delete`で個別に削除した（Terraformの管理対象外のため）。
+
+destroy後、新規サンプルの取り込みが止まったことをCloud Monitoringへの問い合わせで確認した。`up{job="node-exporter"}`を単純に検索するのではなく、過去の`time`パラメータを指定して最後のサンプル（07:37:54Z、node poolの削除完了3m23s後と一致）を特定し、それ以降は0件であることを確認した。過去に取り込まれた時系列データはCloud Monitoringの保持期間（24か月。先頭1週間は元粒度、以降1分粒度、最終的に10分粒度へdownsample）中は残る。収集を止めても既存データは削除されない。
 
 ## 注意 / 費用
 
