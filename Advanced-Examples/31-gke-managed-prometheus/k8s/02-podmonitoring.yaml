@@ -10,7 +10,3 @@ spec:
   endpoints:
     - port: 9100
       interval: 30s
-      metricRelabeling:
-        - action: drop
-          sourceLabels: ["__name__"]
-          regex: "node_textfile_scrape_error"

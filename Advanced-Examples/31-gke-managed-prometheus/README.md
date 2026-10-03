@@ -114,7 +114,7 @@ relabel_configs:
 
 ### 3. target statusの確認は`OperatorConfig`が`gmp-public`にある
 
-公式ドキュメントの例は`gmp-system`名前空間の`OperatorConfig/config`を想定しているが、実機では`OperatorConfig/config`は`gmp-public`名前空間に既定で存在しており、`gmp-system`へ新規作成しようとすると次のエラーで拒否された。
+最初に`gmp-system`名前空間へ`OperatorConfig/config`を新規作成しようとしたところ、次のエラーで拒否された。実機で確認すると、`OperatorConfig/config`は`gmp-public`名前空間に既定で存在していた。
 
 ```
 ValidatingAdmissionPolicy 'operatorconfigs.monitoring.googleapis.com' with binding
@@ -140,7 +140,7 @@ status:
       - health: up
 ```
 
-設定変更がPodへ反映されるまで、ConfigMapの更新から約4分かかった（kubeletのConfigMap同期間隔による）。
+設定変更がPodへ反映されるまで、`patch`実行から約4分かかった。ConfigMapの配布・設定の再読み込み・target statusの更新のどこで時間を要したかは切り分けていない。
 
 ### 4. 同じメトリクスがCloud MonitoringのPromQL APIで取得できる
 
@@ -181,9 +181,9 @@ Alertmanagerの既定ルートは`noop`で、通知先を設定しない限り�
 
 **パターンA（Cloud Monitoring Dashboard）**: 第1回で使ったPromQL（CPU・メモリ・ディスク使用率）はいずれも変更なしでCloud MonitoringのPromQL APIから取得できた。ディスク使用率のクエリは`mountpoint="/var"`を指定しているが、GKEのContainer-Optimized OSにも`/var`という独立したマウントポイントが存在し（`device=/dev/sda1, fstype=ext4`）、そのまま動いた。
 
-**パターンB（Grafana継続利用）**: `data source syncer`はクエリ経路には入らない。実際のPromQLクエリはGrafanaから`https://monitoring.googleapis.com/v1/projects/PROJECT_ID/location/global/prometheus/`へ直接送られる。syncerは、GrafanaのPrometheus data sourceにこのURLとOAuth2トークンを書き込む・更新するだけのCronJob。このクラスタではWorkload Identity Federationを有効にしていないが、syncer PodはノードのデフォルトCompute Engineサービスアカウント（`roles/monitoring.viewer`付き）で認証でき、問題なく動いた。
+**パターンB（Grafana継続利用）**: `data source syncer`はクエリ経路には入らない。実際のPromQLクエリはGrafanaから`https://monitoring.googleapis.com/v1/projects/PROJECT_ID/location/global/prometheus/`へ直接送られる。syncerは、GrafanaのPrometheus data sourceにこのURLとOAuth2トークンを書き込む・更新するだけのCronJob。このクラスタではWorkload Identity Federationを有効にしていないが、syncer PodはTerraformで作成しノードプールに割り当てた専用のサービスアカウント（`roles/monitoring.viewer`付き。GCPが自動生成する既定のCompute Engineサービスアカウントとは別物）で認証でき、問題なく動いた。
 
-第1回のGrafana Dashboard JSONは、エクスポート時のテンプレート変数`${DS_PROMETHEUS}`をGMPのdata source UIDに置き換えるだけで、3つのPanel（CPU・メモリ・ディスク使用率）とも変更なしで表示できた。
+第1回のGrafana Dashboard JSONは、エクスポート時のテンプレート変数`${DS_PROMETHEUS}`をGMPのdata source UIDに置き換えるだけでimportできた。3つのPanel（CPU・メモリ・ディスク使用率）が参照しているPromQLは、data source経由の問い合わせで同じ値が返ることを確認した（ブラウザ上でのPanel描画は未確認）。
 
 ### 8. managed kube-state-metricsは4メトリクスだけ
 
@@ -201,7 +201,7 @@ $ curl -s http://localhost:8080/metrics | grep "^# HELP"
 
 ### 9. `metricRelabeling`でメトリクスを止められる
 
-`node_textfile_scrape_error`に対して`action: drop`を追加し、適用時刻（07:33:26 UTC）を記録した。約4分後の設定反映後、このメトリクスのsample timestampが07:33台で止まり、以降進まなくなった（他のメトリクスは更新が続いた）。
+`node_textfile_scrape_error`に対して`action: drop`を追加し、適用時刻（07:33:26 UTC）を記録した。約4分後の設定反映後に1回確認したところ、このメトリクスのsample timestampは07:33台で止まっており、同時刻の他のメトリクス（`up`）は更新が続いていた。その後も継続して停止したままかは追跡していない。
 
 ## 削除方法
 
