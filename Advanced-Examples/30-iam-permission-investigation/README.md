@@ -311,7 +311,14 @@ gcloud iam simulator replay-recent-access \
 | Simulator: subject のカスタムロールを外す | 差分0件 |
 | Simulator: デフォルト Compute SA の Editor を外す | `ACCESS_REVOKED` 3件（`monitoring.timeSeries.create` / `autoscaling.sites.writeMetrics` / `logging.logEntries.create`） |
 
-新規の SA に推奨も Insight も出ないのは仕様どおりです。最小観測期間は既定で90日（プロジェクト単位なら30日か60日に変更可）、新しく付けた Role の Insight 生成には最大15日かかります（[Role recommendations](https://cloud.google.com/policy-intelligence/docs/role-recommendations-overview)）。
+今回の SA に推奨も Insight も出なかった理由には、公式に書かれた2つの条件が関わりえます（[Role recommendations](https://cloud.google.com/policy-intelligence/docs/role-recommendations-overview)）。
+
+- 観測期間: 最小観測期間は既定で90日（プロジェクト単位なら30日か60日に変更可）。新しく付けた Role の Insight 生成には最大15日かかる
+- 利用条件: basic Role（Owner / Editor / Viewer）以外の Role への推奨、プロジェクト以外（バケットなど）に付けた Role への推奨、Policy insights は、Security Command Center の Premium / Enterprise をプロジェクトか組織のレベルで有効にしたときの機能とされている
+
+subject に付けたのはカスタムロールとバケット単位の `objectViewer` で、Insight が出ていたのも basic Role の3件だけでした。検証環境で SCC Premium / Enterprise が有効かは確かめていないため、**0件の原因を観測期間と利用条件のどちらかには絞れません。** カスタムロールなどの見直しに Recommender を使うなら、先に SCC の階層を確かめてください。
+
+`ACCESS_REVOKED` の3件は、過去に観測されたアクセスを変更後の Policy で評価し直した結果です。観測されていないアクセスは分からないため、Editor を外す前の判断材料の1つとして扱います。
 
 Simulator が再生したアクセスログは676件で、**最新の日付は検証日の10日前**でした。当日の subject の操作は含まれておらず、差分0件は「外しても安全」という意味ではありません。エラーは359件あり、大半は `Permission denied (or resource does not exist) when getting policy` でした。権限不足か不存在かはメッセージから区別できませんが、確かめた範囲では対象は過去の検証で削除した VM でした。
 
