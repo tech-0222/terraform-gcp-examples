@@ -1,0 +1,4 @@
+project_id    = "your-project-id"
+terraform_sa  = "tf-adv-iam-terraform@your-project-id.iam.gserviceaccount.com"
+vm_runtime_sa = "tf-adv-iam-vm-runtime@your-project-id.iam.gserviceaccount.com"
+subnet        = "projects/your-project-id/regions/asia-northeast1/subnetworks/tf-adv-iam-vpc-subnet"
