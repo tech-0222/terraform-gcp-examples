@@ -1,0 +1,16 @@
+project_id = "your-project-id"
+
+# 検証用 SA を借用する人（terraform apply を実行する人）
+operator_member = "user:you@example.com"
+
+# Console の権限差を確かめる専用ユーザー。強い権限を持つ普段のユーザーは指定しない
+# console_member = "user:iam-lab@example.com"
+
+# 段階的に切り替える付与（README の「確認方法」の順に変える）
+# subject_bucket_role          = "roles/storage.objectViewer"
+# console_bucket_role          = "roles/storage.objectViewer"
+# console_project_role         = ""
+# subject_compute_role         = "none" # none / create_only / instance_admin
+# subject_can_act_as_runtime   = false
+# terraform_compute_role       = "none"
+# terraform_can_act_as_runtime = false
