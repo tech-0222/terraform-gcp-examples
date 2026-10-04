@@ -316,7 +316,7 @@ gcloud iam simulator replay-recent-access \
 - 観測期間: 最小観測期間は既定で90日（プロジェクト単位なら30日か60日に変更可）。新しく付けた Role の Insight 生成には最大15日かかる
 - 利用条件: basic Role（Owner / Editor / Viewer）以外の Role への推奨、プロジェクト以外（バケットなど）に付けた Role への推奨、Policy insights は、Security Command Center の Premium / Enterprise をプロジェクトか組織のレベルで有効にしたときの機能とされている
 
-subject に付けたのはカスタムロールとバケット単位の `objectViewer` で、Insight が出ていたのも basic Role の3件だけでした。検証環境で SCC Premium / Enterprise が有効かは確かめていないため、**0件の原因を観測期間と利用条件のどちらかには絞れません。** カスタムロールなどの見直しに Recommender を使うなら、先に SCC の階層を確かめてください。
+subject に付けたのはカスタムロールとバケット単位の `objectViewer` で、Insight が出ていたのも basic Role の3件だけでした。検証環境で SCC Premium / Enterprise が有効かは確かめていないため、**0件の原因を観測期間と利用条件のどちらかには絞れません。** カスタムロールや basic Role 以外の Predefined Role の見直しに Recommender を使うなら、先に SCC の利用条件を確かめてください。
 
 `ACCESS_REVOKED` の3件は、過去に観測されたアクセスを変更後の Policy で評価し直した結果です。観測されていないアクセスは分からないため、Editor を外す前の判断材料の1つとして扱います。
 
@@ -373,6 +373,8 @@ gcloud compute instances list --project=<PROJECT_ID>
 gcloud storage buckets list --project=<PROJECT_ID>
 gcloud asset search-all-resources --scope=projects/<PROJECT_ID> --query="name:tf-adv-iam"
 ```
+
+Console の確認に使ったユーザー（`console_member`）は Terraform の管理外です。destroy で IAM の付与は外れますが、ユーザー本体は管理コンソールで停止するか削除してください。
 
 **カスタムロールは削除後もすぐには消えません。** 7日以内なら復元でき、完全に削除されて同じ ID で作り直せるようになるのは、削除の要求から最大44日後です（[Create and manage custom roles](https://cloud.google.com/iam/docs/creating-custom-roles)）。再検証では `role_id` を変えてください。
 
